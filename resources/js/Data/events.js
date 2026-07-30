@@ -1,0 +1,62 @@
+export const events = [
+    {
+        id: 1,
+        image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1400&q=85',
+        type: 'campus',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+    {
+        id: 2,
+        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1400&q=85',
+        type: 'digital',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+    {
+        id: 3,
+        image: 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1400&q=85',
+        type: 'announcement',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+    {
+        id: 4,
+        image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=85',
+        type: 'campus',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+    {
+        id: 5,
+        image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1400&q=85',
+        type: 'digital',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+    {
+        id: 6,
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=900&q=80',
+        detailImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1400&q=85',
+        type: 'announcement',
+        title: 'The title is here',
+        date: '3 /June /2023',
+        description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+    },
+];
+
+export const fallbackClasses = {
+    campus: 'from-[#203f67] via-[#647c55] to-[#d8dfeb]',
+    digital: 'from-[#171717] via-[#242424] to-[#0d0d0d]',
+    announcement: 'from-[#233557] via-[#4d8b16] to-[#d8e7ff]',
+};

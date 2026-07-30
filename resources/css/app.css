@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Siemreap&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Quill Editor Global Styles (for the editor only) */
+.ql-container .ql-editor {
+    min-height: 150px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* Frontend Display Styles for Quill Editor Content */
+/* Remove default Quill padding from frontend containers so they align perfectly */
+.ql-editor {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+/* Restore padding when inside the actual editor container */
+.ql-container .ql-editor {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+/* Using !important to override vue-quill.snow.css which loads later */
+.ql-editor p {
+    margin-bottom: 1rem !important;
+    line-height: 1.625 !important;
+}
+.ql-editor h1 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+}
+.ql-editor h2 {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+.ql-editor h3 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    margin-top: 1.25rem !important;
+    margin-bottom: 0.75rem !important;
+}
+.ql-editor ul, .ql-editor ol {
+    padding-left: 0 !important;
+    margin-bottom: 1rem !important;
+}
+.ql-editor li {
+    padding-left: 1.5em !important;
+    margin-bottom: 0.5rem !important;
+}
+/* Ensure nested lists from Quill indent correctly */
+.ql-editor li.ql-indent-1 { padding-left: 3em !important; }
+.ql-editor li.ql-indent-2 { padding-left: 4.5em !important; }
+.ql-editor li.ql-indent-3 { padding-left: 6em !important; }
+.ql-editor li.ql-indent-4 { padding-left: 7.5em !important; }
+.ql-editor li.ql-indent-5 { padding-left: 9em !important; }
+.ql-editor li.ql-indent-6 { padding-left: 10.5em !important; }
+.ql-editor li.ql-indent-7 { padding-left: 12em !important; }
+.ql-editor li.ql-indent-8 { padding-left: 13.5em !important; }
+.ql-editor a {
+    color: #2563eb !important;
+    text-decoration: none !important;
+}
+.ql-editor a:hover {
+    text-decoration: underline !important;
+}
+.ql-editor img {
+    border-radius: 0.75rem !important;
+    margin: 1.5rem 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+.ql-editor blockquote {
+    border-left: 4px solid #cbd5e1 !important;
+    padding-left: 1rem !important;
+    font-style: italic !important;
+    margin-bottom: 1rem !important;
+    color: #334155 !important;
+}
+.ql-editor strong, .ql-editor b {
+    font-weight: 700 !important;
+}
+.ql-editor > *:last-child {
+    margin-bottom: 0 !important;
+}
