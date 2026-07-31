@@ -19,6 +19,7 @@
                 'home_video_bg_image' => \App\Models\Setting::getValue('home_video_bg_image', ''),
                 'home_video_bg_color' => \App\Models\Setting::getValue('home_video_bg_color', '#0f2154'),
                 'home_activities_slides' => json_decode(\App\Models\Setting::getValue('home_activities_slides', '[]'), true),
+                'home_graduate_attributes' => json_decode(\App\Models\Setting::getValue('home_graduate_attributes', '{}'), true),
                 'home_stats' => json_decode(\App\Models\Setting::getValue('home_stats', '[]'), true),
             ]
         ]);
@@ -115,9 +116,11 @@ require __DIR__.'/auth.php';
         }
 
         if ($page->is_office) {
+            $officeData = json_decode($page->content, true) ?? [];
+            $officeData['title'] = $page->title;
             return Inertia::render('OfficePages/OfficeShow', [
                 'office' => $slug,
-                'officeData' => json_decode($page->content, true),
+                'officeData' => $officeData,
             ]);
         }
 

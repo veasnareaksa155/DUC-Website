@@ -8,6 +8,7 @@ class Faculty extends Model
 {
     protected $fillable = [
         'name',
+        'cover_image',
         'org_chart_image',
         'mission',
         'vision',

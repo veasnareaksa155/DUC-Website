@@ -305,7 +305,8 @@ const pageContentForm = useForm({
     title: '',
     content: {},
     is_office: false,
-    office_type: ''
+    office_type: '',
+    apply_to_all_offices: false
 });
 
 
@@ -361,9 +362,42 @@ const startEditPage = (page) => {
         }));
     } else if (pageContentForm.is_office) {
         pageContentForm.content.subtitle = parseTranslatable(pageContentForm.content.subtitle);
-        pageContentForm.content.about = parseTranslatable(pageContentForm.content.about);
-        pageContentForm.content.mission = parseTranslatable(pageContentForm.content.mission);
-        pageContentForm.content.vision = parseTranslatable(pageContentForm.content.vision);
+        
+        // Default title font size to 30px if not set
+        if (!pageContentForm.content.title_font_size) {
+            pageContentForm.content.title_font_size = 'text-2xl sm:text-3xl lg:text-4xl';
+        }
+        
+        let customSections = pageContentForm.content.custom_sections || [];
+        
+        // Migrate legacy data if no custom sections exist
+        if (customSections.length === 0) {
+            let about = parseTranslatable(pageContentForm.content.about);
+            let mission = parseTranslatable(pageContentForm.content.mission);
+            let vision = parseTranslatable(pageContentForm.content.vision);
+            
+            if (about.en || about.km) {
+                customSections.push({ title: { en: 'About', km: 'អំពី' }, content: about });
+            }
+            if (mission.en || mission.km) {
+                customSections.push({ title: { en: 'Mission', km: 'បេសកកម្ម' }, content: mission });
+            }
+            if (vision.en || vision.km) {
+                customSections.push({ title: { en: 'Vision', km: 'ចក្ខុវិស័យ' }, content: vision });
+            }
+            
+            // Remove legacy keys
+            delete pageContentForm.content.about;
+            delete pageContentForm.content.mission;
+            delete pageContentForm.content.vision;
+        } else {
+            customSections = customSections.map(sec => ({
+                title: parseTranslatable(sec.title),
+                content: parseTranslatable(sec.content)
+            }));
+        }
+        
+        pageContentForm.content.custom_sections = customSections;
     } else {
         pageContentForm.content.custom_sections = (pageContentForm.content.custom_sections || []).map(sec => ({
             title: parseTranslatable(sec.title),
@@ -407,7 +441,10 @@ const startCreatePage = (type) => {
 
 const submitPage = () => {
     pageContentForm.post(route('admin.pages.save'), {
-        onSuccess: () => showToast('Page saved successfully!')
+        onSuccess: () => {
+            showToast('Page saved successfully!');
+            pageContentForm.apply_to_all_offices = false;
+        }
     });
 };
 
@@ -449,6 +486,23 @@ const addCustomSection = () => {
 const removeCustomSection = (idx) => {
     if (pageContentForm.content.custom_sections) {
         pageContentForm.content.custom_sections.splice(idx, 1);
+    }
+};
+
+// Helpers to move custom section up/down
+const moveCustomSectionUp = (idx) => {
+    if (pageContentForm.content.custom_sections && idx > 0) {
+        const temp = pageContentForm.content.custom_sections[idx];
+        pageContentForm.content.custom_sections[idx] = pageContentForm.content.custom_sections[idx - 1];
+        pageContentForm.content.custom_sections[idx - 1] = temp;
+    }
+};
+
+const moveCustomSectionDown = (idx) => {
+    if (pageContentForm.content.custom_sections && idx < pageContentForm.content.custom_sections.length - 1) {
+        const temp = pageContentForm.content.custom_sections[idx];
+        pageContentForm.content.custom_sections[idx] = pageContentForm.content.custom_sections[idx + 1];
+        pageContentForm.content.custom_sections[idx + 1] = temp;
     }
 };
 
@@ -973,6 +1027,7 @@ const editingFaculty = ref(null);
 const facultyForm = useForm({
     id: null,
     name: { en: '', km: '' },
+    cover_image: '',
     org_chart_image: '',
     mission: { en: '', km: '' },
     vision: { en: '', km: '' },
@@ -985,6 +1040,7 @@ const startEditFaculty = (fac = null) => {
         editingFaculty.value = fac.id;
         facultyForm.id = fac.id;
         facultyForm.name = parseTranslatable(fac.name);
+        facultyForm.cover_image = fac.cover_image || '';
         facultyForm.org_chart_image = fac.org_chart_image || '';
         facultyForm.mission = parseTranslatable(fac.mission);
         facultyForm.vision = parseTranslatable(fac.vision);
@@ -1522,22 +1578,47 @@ const homeSettingsForm = useForm({
         img: slide.img || '',
         alt: parseTranslatable(slide.alt)
     })),
-    home_graduate_attributes: {
-        title: parseTranslatable(props.homeSettings?.home_graduate_attributes?.title || { en: 'Graduate Attributes', km: 'គុណសម្បត្តិនៃអ្នកបញ្ចប់ការសិក្សា' }),
-        card_1: {
-            title: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_1?.title || { en: 'Knowledge & Professionalism', km: 'ចំណេះដឹង និងវិជ្ជាជីវៈ' }),
-            description: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_1?.description || { en: 'Communicate effectively with the body of knowledge that underpins professional practice.', km: 'ទាក់ទងដោយប្រសិទ្ធភាពជាមួយនឹងចំណេះដឹងដែលជាមូលដ្ឋានគ្រឹះនៃប្រតិបត្តិការវិជ្ជាជីវៈ។' })
-        },
-        card_2: {
-            title: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_2?.title || { en: 'Active Learning', km: 'ការសិក្សាសកម្ម' }),
-            description: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_2?.description || { en: 'The beautiful thing about learning is that no one can take it away from you — but the magical thing about active learning is that you own what you build.', km: 'អ្វីដែលស្រស់ស្អាតអំពីការរៀនសូត្រគឺគ្មាននរណាម្នាក់អាចយកវាចេញពីអ្នកបានឡើយ...' })
-        },
-        card_3: {
-            title: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_3?.title || { en: 'Communication & Teamwork', km: 'ការប្រាសព្វប្រស្រ័យ និងការងារក្រុម' }),
-            description: parseTranslatable(props.homeSettings?.home_graduate_attributes?.card_3?.description || { en: 'Have enhanced cultural, social, and ethical awareness as engaged members of the community.', km: 'មានការយល់ដឹងអំពីវប្បធម៌ សង្គម និងសីលធម៌ខ្ពស់...' }),
-            image: props.homeSettings?.home_graduate_attributes?.card_3?.image || ''
+    home_graduate_attributes: (() => {
+        let ga = props.homeSettings?.home_graduate_attributes || {};
+        let cards = ga.cards;
+        
+        // Migrate old card_1, card_2, card_3 if cards doesn't exist
+        if (!cards) {
+            cards = [];
+            if (ga.card_1 || !ga.title) {
+                cards.push({
+                    title: parseTranslatable(ga.card_1?.title || { en: 'Knowledge & Professionalism', km: 'ចំណេះដឹង និងវិជ្ជាជីវៈ' }),
+                    description: parseTranslatable(ga.card_1?.description || { en: 'Communicate effectively with the body of knowledge that underpins professional practice.', km: 'ទាក់ទងដោយប្រសិទ្ធភាពជាមួយនឹងចំណេះដឹងដែលជាមូលដ្ឋានគ្រឹះនៃប្រតិបត្តិការវិជ្ជាជីវៈ។' }),
+                    image: ''
+                });
+            }
+            if (ga.card_2 || !ga.title) {
+                cards.push({
+                    title: parseTranslatable(ga.card_2?.title || { en: 'Active Learning', km: 'ការសិក្សាសកម្ម' }),
+                    description: parseTranslatable(ga.card_2?.description || { en: 'The beautiful thing about learning is that no one can take it away from you — but the magical thing about active learning is that you own what you build.', km: 'អ្វីដែលស្រស់ស្អាតអំពីការរៀនសូត្រគឺគ្មាននរណាម្នាក់អាចយកវាចេញពីអ្នកបានឡើយ...' }),
+                    image: ''
+                });
+            }
+            if (ga.card_3 || !ga.title) {
+                cards.push({
+                    title: parseTranslatable(ga.card_3?.title || { en: 'Communication & Teamwork', km: 'ការប្រាសព្វប្រស្រ័យ និងការងារក្រុម' }),
+                    description: parseTranslatable(ga.card_3?.description || { en: 'Have enhanced cultural, social, and ethical awareness as engaged members of the community.', km: 'មានការយល់ដឹងអំពីវប្បធម៌ សង្គម និងសីលធម៌ខ្ពស់...' }),
+                    image: ga.card_3?.image || ''
+                });
+            }
+        } else {
+            cards = cards.map(c => ({
+                title: parseTranslatable(c.title),
+                description: parseTranslatable(c.description),
+                image: c.image || ''
+            }));
         }
-    },
+
+        return {
+            title: parseTranslatable(ga.title || { en: 'Graduate Attributes', km: 'គុណសម្បត្តិនៃអ្នកបញ្ចប់ការសិក្សា' }),
+            cards: cards
+        };
+    })(),
     home_stats: (props.homeSettings?.home_stats?.length ? props.homeSettings.home_stats : [
         { value: '1', label: { en: 'University Campus', km: 'ទីតាំងសាកលវិទ្យាល័យ' }, icon: 'building' },
         { value: '1000+', label: { en: 'Active Students', km: 'និស្សិតសរុប' }, icon: 'student' },
@@ -1585,6 +1666,37 @@ const toggleGradAttributesCollapse = () => {
 const toggleStatsCollapse = () => {
     isStatsCollapsed.value = !isStatsCollapsed.value;
     localStorage.setItem('duc_home_stats_collapsed', isStatsCollapsed.value ? 'true' : 'false');
+};
+
+const addGradAttributeCard = () => {
+    if (!homeSettingsForm.home_graduate_attributes.cards) {
+        homeSettingsForm.home_graduate_attributes.cards = [];
+    }
+    homeSettingsForm.home_graduate_attributes.cards.push({ title: { en: 'New Attribute', km: 'គុណសម្បត្តិថ្មី' }, description: { en: '', km: '' }, image: '' });
+    isGradAttributesCollapsed.value = false;
+    localStorage.setItem('duc_home_grad_attr_collapsed', 'false');
+};
+
+const removeGradAttributeCard = (idx) => {
+    if (homeSettingsForm.home_graduate_attributes.cards) {
+        homeSettingsForm.home_graduate_attributes.cards.splice(idx, 1);
+    }
+};
+
+const moveGradAttributeCardUp = (idx) => {
+    if (homeSettingsForm.home_graduate_attributes.cards && idx > 0) {
+        const temp = homeSettingsForm.home_graduate_attributes.cards[idx];
+        homeSettingsForm.home_graduate_attributes.cards[idx] = homeSettingsForm.home_graduate_attributes.cards[idx - 1];
+        homeSettingsForm.home_graduate_attributes.cards[idx - 1] = temp;
+    }
+};
+
+const moveGradAttributeCardDown = (idx) => {
+    if (homeSettingsForm.home_graduate_attributes.cards && idx < homeSettingsForm.home_graduate_attributes.cards.length - 1) {
+        const temp = homeSettingsForm.home_graduate_attributes.cards[idx];
+        homeSettingsForm.home_graduate_attributes.cards[idx] = homeSettingsForm.home_graduate_attributes.cards[idx + 1];
+        homeSettingsForm.home_graduate_attributes.cards[idx + 1] = temp;
+    }
 };
 
 const addStatItem = () => {
@@ -1708,7 +1820,7 @@ const stripHtml = (html) => {
 
     <div 
         class="h-screen font-sans flex overflow-hidden transition-colors duration-300" 
-        :class="isDarkMode ? 'bg-[#090d16] text-slate-100' : 'bg-[#f4f6fa] text-slate-800'"
+        :class="isDarkMode ? 'dark bg-[#090d16] text-slate-100' : 'bg-[#f4f6fa] text-slate-800'"
     >
         
         <!-- SIDEBAR -->
@@ -2354,69 +2466,46 @@ const stripHtml = (html) => {
                                     </div>
                                 </div>
 
-                                <!-- Card 1 -->
-                                <div class="p-4 rounded-2xl border space-y-3" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
-                                    <span class="text-xs font-black uppercase tracking-wider text-indigo-500">Attribute Card 1 (Knowledge & Professionalism)</span>
+                                <!-- Dynamic Graduate Attribute Cards -->
+                                <div v-for="(card, idx) in homeSettingsForm.home_graduate_attributes.cards" :key="idx" class="p-4 rounded-2xl border space-y-3 mb-4" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider text-indigo-500">Attribute Card #{{ idx + 1 }}</span>
+                                        <div class="flex items-center gap-3">
+                                            <button v-if="idx > 0" type="button" @click="moveGradAttributeCardUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
+                                            <button v-if="idx < homeSettingsForm.home_graduate_attributes.cards.length - 1" type="button" @click="moveGradAttributeCardDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
+                                            <button type="button" @click="removeGradAttributeCard(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove ✕</button>
+                                        </div>
+                                    </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="relative">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">EN</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_1.title.en" placeholder="Card Title" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                            <input type="text" v-model="card.title.en" placeholder="Card Title" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
                                         </div>
                                         <div class="relative">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">KM</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_1.title.km" placeholder="ចំណងជើងកាត" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                            <input type="text" v-model="card.title.km" placeholder="ចំណងជើងកាត" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_1.description.en" rows="2" placeholder="Description (EN)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_1.description.km" rows="2" placeholder="ការពិពណ៌នា (KM)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
-                                    </div>
-                                </div>
-
-                                <!-- Card 2 -->
-                                <div class="p-4 rounded-2xl border space-y-3" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
-                                    <span class="text-xs font-black uppercase tracking-wider text-indigo-500">Attribute Card 2 (Active Learning)</span>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">EN</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_2.title.en" placeholder="Card Title" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
-                                        </div>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">KM</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_2.title.km" placeholder="ចំណងជើងកាត" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_2.description.en" rows="2" placeholder="Description (EN)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_2.description.km" rows="2" placeholder="ការពិពណ៌នា (KM)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
-                                    </div>
-                                </div>
-
-                                <!-- Card 3 (with Image) -->
-                                <div class="p-4 rounded-2xl border space-y-3" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
-                                    <span class="text-xs font-black uppercase tracking-wider text-indigo-500">Attribute Card 3 (Communication & Teamwork with Image)</span>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">EN</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_3.title.en" placeholder="Card Title" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
-                                        </div>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">KM</span></div>
-                                            <input type="text" v-model="homeSettingsForm.home_graduate_attributes.card_3.title.km" placeholder="ចំណងជើងកាត" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_3.description.en" rows="2" placeholder="Description (EN)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
-                                        <textarea v-model="homeSettingsForm.home_graduate_attributes.card_3.description.km" rows="2" placeholder="ការពិពណ៌នា (KM)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
+                                        <textarea v-model="card.description.en" rows="2" placeholder="Description (EN)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
+                                        <textarea v-model="card.description.km" rows="2" placeholder="ការពិពណ៌នា (KM)" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 p-3 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'"></textarea>
                                     </div>
                                     <div class="pt-2">
-                                        <label class="block text-xs font-black uppercase tracking-wider mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Card 3 Feature Image</label>
-                                        <input type="file" accept="image/*" @input="homeSettingsForm.home_graduate_attributes.card_3.image = $event.target.files[0]" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:cursor-pointer hover:file:opacity-90 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white file:bg-indigo-600 file:text-white' : 'bg-white border-slate-200 file:bg-indigo-600 file:text-white'">
-                                        <div v-if="typeof homeSettingsForm.home_graduate_attributes.card_3.image === 'string' && homeSettingsForm.home_graduate_attributes.card_3.image" class="mt-2 flex items-center gap-2">
-                                            <img :src="homeSettingsForm.home_graduate_attributes.card_3.image" @click="openImagePreview(homeSettingsForm.home_graduate_attributes.card_3.image)" alt="Preview" class="w-16 h-12 rounded-lg object-cover border shadow-2xs shrink-0 cursor-pointer" />
+                                        <label class="block text-xs font-black uppercase tracking-wider mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Card Feature Image (Optional)</label>
+                                        <input type="file" accept="image/*" @input="card.image = $event.target.files[0]" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:cursor-pointer hover:file:opacity-90 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white file:bg-indigo-600 file:text-white' : 'bg-white border-slate-200 file:bg-indigo-600 file:text-white'">
+                                        <div v-if="typeof card.image === 'string' && card.image" class="mt-2 flex items-center gap-2">
+                                            <img :src="card.image" @click="openImagePreview(card.image)" alt="Preview" class="w-16 h-12 rounded-lg object-cover border shadow-2xs shrink-0 cursor-pointer" />
                                             <span class="text-[10px] font-black text-emerald-500">Image Saved</span>
+                                            <button type="button" @click="card.image = ''" class="text-[10px] font-bold text-red-500 hover:underline ml-2">Remove Image</button>
                                         </div>
                                     </div>
+                                </div>
+                                
+                                <div class="flex justify-center mt-2">
+                                    <button type="button" @click="addGradAttributeCard" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold px-4 py-2 rounded-full shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                        Add Attribute Card
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2812,8 +2901,8 @@ const stripHtml = (html) => {
                         </div>
 
                         <!-- Editor Form Panel -->
-                        <div class="rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 border shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white border-slate-100'">
-                            <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transition-opacity">
+                        <div class="rounded-3xl p-6 sm:p-8 relative transition-all duration-300 border shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white border-slate-100'">
+                            <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transition-opacity overflow-hidden rounded-3xl">
                                 <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M11 2v4.09C13.29 6.27 15.35 7.15 17 8.52V4.5C17 3.12 14.31 2 11 2zm6 7.5c-1.39-1.12-3.52-1.91-6-2.09V20.1C14.33 19.92 17 18.24 17 16V9.5zM4.5 9.5v6.5C4.5 18.24 7.17 19.92 10 20.1V7.41c-2.48.18-4.61.97-6 2.09zm0-5V8.52c1.65-1.37 3.71-2.25 6-2.43V2c-3.31 0-6 1.12-6 2.5z"></path></svg>
                             </div>
 
@@ -2828,17 +2917,21 @@ const stripHtml = (html) => {
 
                             <!-- Live form -->
                             <form v-else @submit.prevent="submitPage" class="space-y-8 relative z-10">
-                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/50 dark:bg-[#090d16]/50 p-5 rounded-2xl border border-slate-100 dark:border-[#1a2333]">
-                                    <div class="space-y-4 w-full md:w-auto">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md" :class="selectedPage.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'">
-                                                {{ selectedPage.id ? 'Edit Mode' : 'Create Mode' }}
-                                            </span>
-                                            <input type="text" v-model="pageContentForm.title" class="text-xl md:text-2xl font-black bg-transparent border-b-2 border-dashed focus:outline-none pb-0.5 px-1 w-full md:w-80 transition-colors" :class="isDarkMode ? 'border-slate-700 focus:border-blue-500 text-white placeholder:text-slate-600' : 'border-slate-300 focus:border-blue-500 text-slate-900 placeholder:text-slate-400'" placeholder="Enter Page Title..." />
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <label class="text-[10px] font-black tracking-widest uppercase text-slate-500">Page Slug</label>
-                                            <div class="flex items-center w-full md:w-72 shadow-sm rounded-xl overflow-hidden border transition-all" :class="isDarkMode ? 'border-[#1a2333] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20' : 'border-slate-200 focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20'">
+                                <div class="flex flex-col gap-4 bg-slate-50/50 dark:bg-[#090d16]/50 p-5 rounded-2xl border border-slate-100 dark:border-[#1a2333]">
+                                    <!-- Title Row -->
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shrink-0" :class="selectedPage.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'">
+                                            {{ selectedPage.id ? 'Edit Mode' : 'Create Mode' }}
+                                        </span>
+                                        <input type="text" v-model="pageContentForm.title" class="text-xl md:text-2xl font-black bg-transparent border-b-2 border-dashed focus:outline-none pb-0.5 px-1 w-full transition-colors" :class="isDarkMode ? 'border-slate-700 focus:border-blue-500 text-white placeholder:text-slate-600' : 'border-slate-300 focus:border-blue-500 text-slate-900 placeholder:text-slate-400'" placeholder="Enter Page Title..." />
+                                    </div>
+
+                                    <!-- Controls + Buttons Row -->
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <!-- Page Slug -->
+                                        <div class="flex items-center gap-2">
+                                            <label class="text-[10px] font-black tracking-widest uppercase text-slate-500 shrink-0">Page Slug</label>
+                                            <div class="flex items-center w-44 shadow-sm rounded-xl overflow-hidden border transition-all" :class="isDarkMode ? 'border-[#1a2333] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20' : 'border-slate-200 focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20'">
                                                 <span class="px-3 py-2 text-xs font-mono font-black" :class="isDarkMode ? 'bg-[#0c101b] text-slate-600' : 'bg-slate-100 text-slate-400'">/</span>
                                                 <input 
                                                     type="text" 
@@ -2849,20 +2942,52 @@ const stripHtml = (html) => {
                                                 />
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="flex gap-3 w-full md:w-auto">
-                                        <button v-if="selectedPage.id" type="button" @click="restoreDefaultPageContent(selectedPage.id)" class="flex-1 md:flex-none bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-600 dark:text-amber-400 rounded-xl px-4 py-3 text-xs font-black transition-all border border-amber-500/20 shadow-sm flex items-center justify-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                            Redo Defaults
-                                        </button>
-                                        <button v-if="selectedPage.id" type="button" @click="confirmDeletePage(selectedPage)" class="flex-1 md:flex-none bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-xl px-5 py-3 text-xs font-black transition-all border border-red-500/20 shadow-sm flex items-center justify-center gap-1.5 group/btn">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            Delete
-                                        </button>
-                                        <button type="submit" class="flex-[2] md:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/40 hover:scale-[1.02] text-white rounded-xl px-6 py-3 text-xs font-black shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                            Save Changes
-                                        </button>
+
+                                        <!-- Title Size -->
+                                        <div class="flex items-center gap-2">
+                                            <label class="text-[10px] font-black tracking-widest uppercase text-slate-500 shrink-0">Title Size</label>
+                                            <select 
+                                                v-model="pageContentForm.content.title_font_size" 
+                                                class="text-xs font-bold rounded-xl py-2 px-3 border focus:outline-none transition-all"
+                                                :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-650'"
+                                            >
+                                                <option value="text-2xl sm:text-3xl lg:text-4xl">Default (30px)</option>
+                                                <option value="text-xl sm:text-2xl lg:text-3xl">XS (24px)</option>
+                                                <option value="text-3xl sm:text-4xl lg:text-5xl">Medium (36px)</option>
+                                                <option value="text-4xl sm:text-5xl lg:text-6xl">Large (48px)</option>
+                                                <option value="text-5xl sm:text-6xl lg:text-7xl">XL (60px)</option>
+                                                <option value="text-6xl sm:text-7xl lg:text-8xl">Huge (72px)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Apply to All Offices -->
+                                        <label v-if="pageContentForm.is_office" class="flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-xl border border-dashed transition-all" :class="isDarkMode ? 'border-blue-500/30 bg-blue-500/10 text-blue-400 hover:border-blue-500' : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400'">
+                                            <input 
+                                                type="checkbox" 
+                                                v-model="pageContentForm.apply_to_all_offices" 
+                                                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                            />
+                                            <span class="text-[11px] font-extrabold">Apply to ALL Offices</span>
+                                        </label>
+
+                                        <!-- Spacer -->
+                                        <div class="flex-1"></div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="flex gap-2 shrink-0">
+                                            <button v-if="selectedPage.id" type="button" @click="restoreDefaultPageContent(selectedPage.id)" class="bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-600 dark:text-amber-400 rounded-xl px-4 py-2.5 text-xs font-black transition-all border border-amber-500/20 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                Redo Defaults
+                                            </button>
+                                            <button v-if="selectedPage.id" type="button" @click="confirmDeletePage(selectedPage)" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-xl px-4 py-2.5 text-xs font-black transition-all border border-red-500/20 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                Delete
+                                            </button>
+                                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/40 hover:scale-[1.02] text-white rounded-xl px-5 py-2.5 text-xs font-black shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5 whitespace-nowrap">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                                                Save Changes
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -3106,7 +3231,11 @@ const stripHtml = (html) => {
                                             <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-4 p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
                                                 <div class="flex justify-between items-center">
                                                     <span class="text-xs font-bold">Custom Block #{{ idx + 1 }}</span>
-                                                    <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove Section ✕</button>
+                                                    <div class="flex items-center gap-3">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove Section ✕</button>
+                                                    </div>
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
@@ -3266,64 +3395,61 @@ const stripHtml = (html) => {
                                             <textarea v-model="pageContentForm.content.subtitle.km" rows="3" class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2 resize-y" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" placeholder="អត្ថបទណែនាំសង្ខេប..."></textarea>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">About Overview (EN)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.about.en" 
-     
-></QuillEditor></div>
+                                    <!-- Office Custom Sections -->
+                                    <div class="border-t pt-4 mt-4" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
+                                        <div class="flex justify-between items-center mb-3">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Custom Office Sections</label>
+                                            <button type="button" @click="addCustomSection" class="text-xs font-bold text-blue-500 hover:underline">+ Add Section</button>
                                         </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">About Overview (KM)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.about.km" 
-     
-></QuillEditor></div>
+                                        
+                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-8 border-2 border-dashed rounded-xl" :class="isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-400'">
+                                            <p class="text-xs font-bold">This office has no custom sections yet.</p>
+                                            <button type="button" @click="addCustomSection" class="mt-2 text-xs font-bold text-blue-500">Click here to add one</button>
                                         </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (EN)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.mission.en" 
-     
-></QuillEditor></div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (KM)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.mission.km" 
-     
-></QuillEditor></div>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (EN)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.vision.en" 
-     
-></QuillEditor></div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (KM)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.vision.km" 
-     
-></QuillEditor></div>
+                                        
+                                        <div class="space-y-6">
+                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-4 p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-xs font-bold">Section #{{ idx + 1 }}</span>
+                                                    <div class="flex items-center gap-3">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove ✕</button>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
+                                                        <input type="text" v-model="section.title.en" placeholder="E.g., About Us, Responsibilities" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
+                                                        <input type="text" v-model="section.title.km" placeholder="E.g., អំពីយើង, តួនាទី" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
+                                                        <select v-model="section.title_font_size" class="w-full rounded-xl text-xs font-bold border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'">
+                                                            <option value="">Default (30px / Large)</option>
+                                                            <option value="text-base sm:text-lg">XS (18px)</option>
+                                                            <option value="text-lg sm:text-xl">Small (20px)</option>
+                                                            <option value="text-xl sm:text-2xl">Medium (24px)</option>
+                                                            <option value="text-2xl sm:text-3xl">Large (30px)</option>
+                                                            <option value="text-3xl sm:text-4xl">XL (36px)</option>
+                                                            <option value="text-4xl sm:text-5xl">Huge (48px)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3345,9 +3471,13 @@ const stripHtml = (html) => {
                                             <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-4 p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
                                                 <div class="flex justify-between items-center">
                                                     <span class="text-xs font-bold">Custom Block #{{ idx + 1 }}</span>
-                                                    <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove Block ✕</button>
+                                                    <div class="flex items-center gap-3">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove Block ✕</button>
+                                                    </div>
                                                 </div>
-                                                <div class="grid grid-cols-2 gap-4">
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>
                                                         <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
                                                         <input 
@@ -3367,6 +3497,18 @@ const stripHtml = (html) => {
                                                             class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5"
                                                             :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
                                                         />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
+                                                        <select v-model="section.title_font_size" class="w-full rounded-xl text-xs font-bold border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'">
+                                                            <option value="">Default (30px / Large)</option>
+                                                            <option value="text-base sm:text-lg">XS (18px)</option>
+                                                            <option value="text-lg sm:text-xl">Small (20px)</option>
+                                                            <option value="text-xl sm:text-2xl">Medium (24px)</option>
+                                                            <option value="text-2xl sm:text-3xl">Large (30px)</option>
+                                                            <option value="text-3xl sm:text-4xl">XL (36px)</option>
+                                                            <option value="text-4xl sm:text-5xl">Huge (48px)</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-1 gap-4">
@@ -4066,7 +4208,7 @@ const stripHtml = (html) => {
                 <!-- TAB: TRANSLATIONS MANAGER -->
                 <div v-if="activeTab === 'translations'" class="animate-fadeIn space-y-8">
                     <!-- Sticky Header -->
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-50 px-6 -mx-6 pt-6 -mt-6 pb-4 mb-6 bg-[#f4f6fa]/95 dark:bg-[#090d16]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm transition-all">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-50 p-4 sm:px-6 bg-white/70 dark:bg-[#0c101b]/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-blue-900/5 dark:shadow-black/20 transition-all">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 11.37 7.31 16.5 1 18"></path></svg>
@@ -4508,6 +4650,20 @@ const stripHtml = (html) => {
                                     class="w-full rounded-xl text-sm border focus:outline-none px-4 py-2"
                                     :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
                                 />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Cover Image (For Faculty Menu)</label>
+                            <input 
+                                type="file" 
+                                accept="image/*"
+                                @input="facultyForm.cover_image = $event.target.files[0]" 
+                                class="w-full rounded-xl text-sm border focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:cursor-pointer hover:file:opacity-90 transition-all"
+                                :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500 file:bg-blue-600 file:text-white' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650 file:bg-blue-600 file:text-white'" 
+                            />
+                            <div v-if="typeof facultyForm.cover_image === 'string' && facultyForm.cover_image" class="mt-2 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Image uploaded and saved. Select a new file to replace it.
                             </div>
                         </div>
                         <div>

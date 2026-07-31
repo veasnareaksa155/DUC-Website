@@ -114,44 +114,47 @@ const fourYears = computed(() => {
 });
 
 const graduateAttributes = computed(() => {
-    const defaultData = {
-        title: "Graduate Attributes",
-        card_1: {
-            title: "Knowledge & Professionalism",
-            description: "Communicate effectively with the body of knowledge that underpins professional practice."
-        },
-        card_2: {
-            title: "Active Learning",
-            description: "The beautiful thing about learning is that no one can take it away from you — but the magical thing about active learning is that you own what you build."
-        },
-        card_3: {
-            title: "Communication & Teamwork",
-            description: "Have enhanced cultural, social, and ethical awareness as engaged members of the community.",
-            image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80"
+    let ga = props.homeSettings?.home_graduate_attributes || {};
+    let cards = ga.cards;
+    
+    // Fallback migration logic in case the new structure isn't saved yet
+    if (!cards) {
+        cards = [];
+        if (ga.card_1 || !ga.title) {
+            cards.push({
+                title: ga.card_1?.title || { en: 'Knowledge & Professionalism', km: 'ចំណេះដឹង និងវិជ្ជាជីវៈ' },
+                description: ga.card_1?.description || { en: 'Communicate effectively with the body of knowledge that underpins professional practice.', km: 'ទាក់ទងដោយប្រសិទ្ធភាពជាមួយនឹងចំណេះដឹងដែលជាមូលដ្ឋានគ្រឹះនៃប្រតិបត្តិការវិជ្ជាជីវៈ។' },
+                image: ''
+            });
         }
-    };
-
-    if (props.homeSettings && props.homeSettings.home_graduate_attributes) {
-        const ga = props.homeSettings.home_graduate_attributes;
-        return {
-            title: ga.title || defaultData.title,
-            card_1: {
-                title: ga.card_1?.title || defaultData.card_1.title,
-                description: ga.card_1?.description || defaultData.card_1.description,
-            },
-            card_2: {
-                title: ga.card_2?.title || defaultData.card_2.title,
-                description: ga.card_2?.description || defaultData.card_2.description,
-            },
-            card_3: {
-                title: ga.card_3?.title || defaultData.card_3.title,
-                description: ga.card_3?.description || defaultData.card_3.description,
-                image: (typeof ga.card_3?.image === 'string' && ga.card_3.image.trim() !== '') ? ga.card_3.image : defaultData.card_3.image
-            }
-        };
+        if (ga.card_2 || !ga.title) {
+            cards.push({
+                title: ga.card_2?.title || { en: 'Active Learning', km: 'ការសិក្សាសកម្ម' },
+                description: ga.card_2?.description || { en: 'The beautiful thing about learning is that no one can take it away from you — but the magical thing about active learning is that you own what you build.', km: 'អ្វីដែលស្រស់ស្អាតអំពីការរៀនសូត្រគឺគ្មាននរណាម្នាក់អាចយកវាចេញពីអ្នកបានឡើយ...' },
+                image: ''
+            });
+        }
+        if (ga.card_3 || !ga.title) {
+            cards.push({
+                title: ga.card_3?.title || { en: 'Communication & Teamwork', km: 'ការប្រាសព្វប្រស្រ័យ និងការងារក្រុម' },
+                description: ga.card_3?.description || { en: 'Have enhanced cultural, social, and ethical awareness as engaged members of the community.', km: 'មានការយល់ដឹងអំពីវប្បធម៌ សង្គម និងសីលធម៌ខ្ពស់...' },
+                image: (typeof ga.card_3?.image === 'string' && ga.card_3.image.trim() !== '') ? ga.card_3.image : "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80"
+            });
+        }
+    } else {
+        // Sanitize cards to prevent empty object image rendering issues
+        cards = cards.map(card => {
+            return {
+                ...card,
+                image: (typeof card.image === 'string' && card.image.trim() !== '') ? card.image : null
+            };
+        });
     }
 
-    return defaultData;
+    return {
+        title: ga.title || { en: 'Graduate Attributes', km: 'គុណសម្បត្តិនៃអ្នកបញ្ចប់ការសិក្សា' },
+        cards: cards
+    };
 });
 
 const videoSection = ref(null);
@@ -573,33 +576,29 @@ const stripHtml = (html) => {
                         <div class="mx-auto mt-2 h-1 w-32 bg-amber-400 rounded-full"></div>
                     </div>
 
-                    <div class="mt-12 grid gap-8 md:grid-cols-12 w-full items-stretch">
-                        <div class="md:col-span-6 flex flex-col gap-8">
-                            <div class="rounded-2xl bg-[#dce6f7] p-6 shadow-xs border border-white/60 flex-1 hover:-translate-y-1 transition duration-300">
-                                <h3 class="text-lg font-bold text-[#0f2154]">{{ $t(graduateAttributes.card_1.title) }}</h3>
-                                <p class="mt-3 text-sm text-slate-600 leading-relaxed">
-                                    {{ $t(graduateAttributes.card_1.description) }}
-                                </p>
-                            </div>
-
-                            <div class="rounded-2xl bg-[#dce6f7] p-6 shadow-xs border border-white/60 flex-1 hover:-translate-y-1 transition duration-300">
-                                <h3 class="text-lg font-bold text-[#0f2154]">{{ $t(graduateAttributes.card_2.title) }}</h3>
-                                <p class="mt-3 text-sm text-slate-600 leading-relaxed">
-                                    {{ $t(graduateAttributes.card_2.description) }}
+                    <div class="mt-12 flex flex-col md:flex-row gap-8 w-full items-stretch">
+                        <!-- Text-only cards column -->
+                        <div v-if="graduateAttributes.cards.some(c => !c.image)" class="flex-1 flex flex-col gap-8">
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => !c.image)" :key="'text-'+index" class="rounded-[32px] bg-[#dce6f7] p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                                <h3 class="text-xl font-bold text-slate-900 tracking-tight">{{ $t(card.title) }}</h3>
+                                <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
+                                    {{ $t(card.description) }}
                                 </p>
                             </div>
                         </div>
-
-                        <div class="md:col-span-6 rounded-2xl bg-[#dce6f7] p-6 shadow-xs border border-white/60 flex flex-col justify-between hover:-translate-y-1 transition duration-300">
-                            <div>
-                                <h3 class="text-lg font-bold text-[#0f2154]">{{ $t(graduateAttributes.card_3.title) }}</h3>
-                                <p class="mt-3 text-sm text-slate-600 leading-relaxed">
-                                    {{ $t(graduateAttributes.card_3.description) }}
-                                </p>
-                            </div>
-
-                            <div class="mt-6 overflow-hidden rounded-xl bg-gray-200 aspect-video md:aspect-auto md:h-48 lg:h-56">
-                                <img :src="graduateAttributes.card_3.image" :alt="$t(graduateAttributes.card_3.title)" class="h-full w-full object-cover" />
+                        
+                        <!-- Image cards column -->
+                        <div v-if="graduateAttributes.cards.some(c => c.image)" class="flex-1 flex flex-col gap-8">
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => c.image)" :key="'img-'+index" class="rounded-[32px] bg-[#dce6f7] p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                                <div class="flex flex-col">
+                                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">{{ $t(card.title) }}</h3>
+                                    <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
+                                        {{ $t(card.description) }}
+                                    </p>
+                                </div>
+                                <div class="mt-8 overflow-hidden rounded-[24px] bg-gray-200 w-full flex-1 min-h-[250px] shadow-inner">
+                                    <img :src="card.image" :alt="$t(card.title)" class="w-full h-full object-cover" />
+                                </div>
                             </div>
                         </div>
                     </div>

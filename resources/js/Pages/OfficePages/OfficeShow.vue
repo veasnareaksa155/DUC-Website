@@ -79,7 +79,65 @@ const officeConfig = {
 };
 
 const currentOffice = computed(() => {
-    return props.officeData || officeConfig[props.office] || officeConfig.academic_affairs_office;
+    const fallback = officeConfig[props.office] || officeConfig.academic_affairs_office;
+    if (props.officeData) {
+        return {
+            ...fallback,
+            ...props.officeData,
+            title: props.officeData.title || fallback.title
+        };
+    }
+    return fallback;
+});
+
+const parseFontSize = (fontSizeVal) => {
+    if (!fontSizeVal) return { class: '', style: {} };
+    const str = String(fontSizeVal).trim();
+    if (/^\d+(\.\d+)?(px|rem|em|%)?$/.test(str)) {
+        const num = parseFloat(str);
+        const unit = /[a-z%]+$/i.exec(str) ? /[a-z%]+$/i.exec(str)[0] : 'px';
+        return { class: '', style: { fontSize: `${num}${unit}` } };
+    }
+    return { class: str, style: {} };
+};
+
+const colors = [
+    'bg-blue-50 text-blue-600',
+    'bg-amber-50 text-amber-600',
+    'bg-emerald-50 text-emerald-600',
+    'bg-purple-50 text-purple-600',
+    'bg-rose-50 text-rose-600'
+];
+
+const icons = [
+    'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', // Info
+    'M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z', // Bookmark
+    'M15 12a3 3 0 11-6 0 3 3 0 016 0z', // Eye (inner)
+    'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', // Briefcase
+    'M13 10V3L4 14h7v7l9-11h-7z' // Lightning
+];
+
+const getIconColorClass = (idx) => colors[idx % colors.length];
+const getIconPath = (idx) => icons[idx % icons.length];
+
+const normalizedSections = computed(() => {
+    let office = currentOffice.value;
+    if (office.custom_sections && office.custom_sections.length > 0) {
+        return office.custom_sections;
+    }
+    
+    // Fallback to legacy structure
+    let sections = [];
+    if (office.about) {
+        sections.push({ title: { en: 'About', km: 'អំពី' }, content: office.about });
+    }
+    if (office.mission) {
+        sections.push({ title: { en: 'Mission', km: 'បេសកកម្ម' }, content: office.mission });
+    }
+    if (office.vision) {
+        sections.push({ title: { en: 'Vision', km: 'ចក្ខុវិស័យ' }, content: office.vision });
+    }
+    return sections;
 });
 </script>
 
@@ -99,14 +157,12 @@ const currentOffice = computed(() => {
 
        <main class="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-10">
             <!-- Hero Image (Full Extent Container) -->
-            <section class="relative animate-fade-in-up">
-                <div class="group relative overflow-hidden lg:rounded-[2.5rem] rounded-[1rem] shadow-[0_20px_50px_rgb(0,0,0,0.1)] h-[400px] md:h-[500px] lg:h-[600px] w-full">
-                    <div class="absolute inset-0 bg-blue-900/10 group-hover:bg-transparent transition-colors duration-700 z-10 mix-blend-overlay"></div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent z-10 opacity-60"></div>
+            <section v-if="currentOffice.image" class="relative animate-fade-in-up">
+                <div class="relative overflow-hidden lg:rounded-2xl rounded-xl shadow-[0_20px_50px_rgb(0,0,0,0.1)] w-full bg-white">
                     <img 
                         :src="currentOffice.image" 
                         :alt="$t(currentOffice.title)" 
-                        class="h-full w-full object-cover transform transition-transform duration-1000 ease-out group-hover:scale-105"
+                        class="w-full h-auto block"
                     />
                 </div>
             </section>
@@ -115,70 +171,45 @@ const currentOffice = computed(() => {
             <section class="animate-fade-in-up flex flex-col items-center text-center max-w-4xl mx-auto space-y-6" style="animation-delay: 0.1s">
             
                 <!-- Office Title -->
-                <h1 class="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#283593] sm:text-5xl lg:text-6xl drop-shadow-sm">
+                <h1 
+                    :class="['font-extrabold leading-[1.1] tracking-tight text-[#283593] drop-shadow-sm', parseFontSize(currentOffice.title_font_size).class || 'text-2xl sm:text-3xl lg:text-4xl']"
+                    :style="parseFontSize(currentOffice.title_font_size).style"
+                >
                     {{ $t(currentOffice.title) }}
                 </h1>
                 
                 <!-- Office Subtitle -->
-                <p class="text-xl font-medium leading-relaxed text-slate-700 sm:text-2xl max-w-3xl" v-if="currentOffice.subtitle">
+                <p 
+                    class="text-xl font-medium leading-relaxed text-slate-700 sm:text-2xl max-w-3xl" 
+                    v-if="currentOffice.subtitle && $t(currentOffice.subtitle).trim() && $t(currentOffice.subtitle).trim().toLowerCase() !== $t(currentOffice.title).trim().toLowerCase()"
+                >
                     {{ $t(currentOffice.subtitle) }}
                 </p>
             </section>
 
-            <!-- Organizational Details Section (About, Mission, Vision) -->
+            <!-- Organizational Details Section (Dynamic Custom Sections) -->
             <section class="animate-fade-in-up pt-1" style="animation-delay: 0.2s">
                 <div class="grid gap-8 lg:grid-cols-1">
                     
-                    <!-- About Card -->
-                    <div class="text-justify rounded-[2.5rem] border border-white/60 bg-white/80 p-8 sm:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" v-if="currentOffice.about">
+                    <div v-for="(section, idx) in normalizedSections" :key="idx" class="text-justify rounded-[2.5rem] border border-white/60 bg-white/80 p-8 sm:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl shrink-0" :class="getIconColorClass(idx)">
                                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(idx)" />
+                                    <!-- Additional path for Vision Eye icon -->
+                                    <path v-if="idx % 5 === 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </div>
-                            <h2 class="text-3xl font-extrabold text-[#283593]">
-                                {{ $t('About') }}
+                            <h2 
+                                :class="['font-extrabold text-[#283593]', parseFontSize(section.title_font_size).class || 'text-2xl md:text-3xl']"
+                                :style="parseFontSize(section.title_font_size).style"
+                            >
+                                {{ $t(section.title) }}
                             </h2>
                         </div>
-                        <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(currentOffice.about)"></div>
+                        <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(section.content)"></div>
                     </div>
 
-                    <!-- Mission & Vision Shared Card -->
-                    <div class="text-justify rounded-[2.5rem] border border-white/60 bg-white/80 p-8 sm:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] grid md:grid-cols-2 gap-12" v-if="currentOffice.mission || currentOffice.vision">
-                        
-                        <!-- Mission -->
-                        <div v-if="currentOffice.mission">
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
-                                    </svg>
-                                </div>
-                                <h2 class="text-3xl font-extrabold text-[#283593]">
-                                    {{ $t('Mission') }}
-                                </h2>
-                            </div>
-                            <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(currentOffice.mission)"></div>
-                        </div>
-                        
-                        <!-- Vision -->
-                        <div v-if="currentOffice.vision">
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </div>
-                                <h2 class="text-3xl font-extrabold text-[#283593]">
-                                    {{ $t('Vision') }}
-                                </h2>
-                            </div>
-                            <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(currentOffice.vision)"></div>
-                        </div>
-
-                    </div>
                 </div>
             </section>
 

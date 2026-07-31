@@ -11,7 +11,11 @@ const props = defineProps({
 });
 
 const getFacultyImage = (faculty) => {
-    // If the database has a custom uploaded image, use it!
+    // If the database has a custom uploaded cover image, use it!
+    if (faculty.cover_image && !faculty.cover_image.includes('placeholder')) {
+        return faculty.cover_image;
+    }
+    // Fallback to org_chart_image for legacy support
     if (faculty.org_chart_image && !faculty.org_chart_image.includes('placeholder')) {
         return faculty.org_chart_image;
     }

@@ -203,7 +203,7 @@ onMounted(() => {
 
             <!-- Title -->
             <section class="animate-fade-in-up flex flex-col items-center text-center max-w-4xl mx-auto space-y-4" style="animation-delay: 0.1s">
-                <h1 class="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#283593] sm:text-5xl lg:text-6xl drop-shadow-sm">
+                <h1 :class="['font-extrabold leading-[1.1] tracking-tight text-[#283593] drop-shadow-sm', props.pageData?.title_font_size || 'text-4xl sm:text-5xl lg:text-6xl']">
                     {{ $t('About Us') }}
                 </h1>
             </section>

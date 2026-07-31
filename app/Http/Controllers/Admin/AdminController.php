@@ -120,6 +120,7 @@ class AdminController extends Controller
             'content' => 'required|array',
             'is_office' => 'nullable|boolean',
             'office_type' => 'nullable|string',
+            'apply_to_all_offices' => 'nullable|boolean',
         ]);
 
         $content = $validated['content'];
@@ -142,6 +143,16 @@ class AdminController extends Controller
                 'office_type' => $validated['office_type'] ?? null,
             ]
         );
+
+        // Bulk apply title_font_size to ALL offices if requested
+        if (!empty($validated['apply_to_all_offices']) && isset($content['title_font_size'])) {
+            $officePages = PageContent::where('is_office', true)->get();
+            foreach ($officePages as $offPage) {
+                $offContent = json_decode($offPage->content, true) ?? [];
+                $offContent['title_font_size'] = $content['title_font_size'];
+                $offPage->update(['content' => json_encode($offContent)]);
+            }
+        }
 
         ActivityLog::log("Updated page content for '" . $validated['title'] . "'", 'pages');
 
@@ -228,6 +239,7 @@ class AdminController extends Controller
             'name' => 'required|array',
             'name.en' => 'required|string|max:255',
             'name.km' => 'nullable|string|max:255',
+            'cover_image' => 'nullable',
             'org_chart_image' => 'nullable',
             'mission' => 'nullable|array',
             'mission.en' => 'nullable|string',
@@ -241,6 +253,12 @@ class AdminController extends Controller
             'custom_sections' => 'nullable|array',
         ]);
 
+        $cover_image = $validated['cover_image'] ?? null;
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('faculties', 'public');
+            $cover_image = '/storage/' . $path;
+        }
+
         $org_chart_image = $validated['org_chart_image'] ?? null;
         if ($request->hasFile('org_chart_image')) {
             $path = $request->file('org_chart_image')->store('faculties', 'public');
@@ -251,6 +269,7 @@ class AdminController extends Controller
             ['id' => $validated['id'] ?? null],
             [
                 'name' => $validated['name'],
+                'cover_image' => $cover_image,
                 'org_chart_image' => $org_chart_image,
                 'mission' => $validated['mission'],
                 'vision' => $validated['vision'],
@@ -1142,6 +1161,16 @@ class AdminController extends Controller
         }
 
         $home_graduate_attributes = $validated['home_graduate_attributes'] ?? [];
+        if (isset($home_graduate_attributes['cards']) && is_array($home_graduate_attributes['cards'])) {
+            foreach ($home_graduate_attributes['cards'] as $index => &$card) {
+                if ($request->hasFile("home_graduate_attributes.cards.{$index}.image")) {
+                    $path = $request->file("home_graduate_attributes.cards.{$index}.image")->store('home', 'public');
+                    $card['image'] = '/storage/' . $path;
+                }
+            }
+        }
+        
+        // Fallback for older image uploads
         if ($request->hasFile('home_graduate_attributes.card_3.image')) {
             $path = $request->file('home_graduate_attributes.card_3.image')->store('home', 'public');
             if (!isset($home_graduate_attributes['card_3']) || !is_array($home_graduate_attributes['card_3'])) {
