@@ -91,12 +91,17 @@ const activitiesSlides = computed(() => {
 
 // ================= DYNAMIC SECTIONS FALLBACKS =================
 const scholarship = computed(() => {
+    const defaultFooterText = { en: "Your journey to excellence starts here!", km: "ដំណើរកម្សាន្តរបស់អ្នកឆ្ពោះទៅរកភាពឆ្នើមចាប់ផ្តើមពីទីនេះ!" };
     if (props.homeSettings?.home_scholarship?.title) {
-        return props.homeSettings.home_scholarship;
+        return {
+            footer_text: defaultFooterText,
+            ...props.homeSettings.home_scholarship
+        };
     }
     return {
         title: "Welcome to the Digital University of Cambodia",
         description: "Empowering the next generation of digital leaders, innovators, and change makers. We are proud to offer a 100% Full Scholarship exclusively for Cambodian students, ensuring that financial barriers never stand in the way of world-class education.\nUnlock your potential, master the skills of tomorrow, and shape the future of our nation completely tuition-free.",
+        footer_text: defaultFooterText,
         bg_image: "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80"
     };
 });
@@ -427,8 +432,8 @@ const stripHtml = (html) => {
                         </div>
                         <div class="text-slate-600 space-y-4 leading-relaxed text-sm md:text-base">
                             <div class="whitespace-pre-wrap ql-editor px-0" v-html="$t(scholarship.description)"></div>
-                            <p class="font-semibold text-[#2f47aa] italic">
-                                {{ $t('Your journey to excellence starts here!') }}
+                            <p v-if="scholarship.footer_text" class="font-semibold text-[#2f47aa] italic">
+                                {{ $t(scholarship.footer_text) }}
                             </p>
                         </div>
                     </div>

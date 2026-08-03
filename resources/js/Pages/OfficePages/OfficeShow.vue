@@ -167,7 +167,7 @@ const normalizedSections = computed(() => {
                 </div>
             </section>
 
-            <!-- Title & Subtitle Focus -->
+            <!-- Title Focus -->
             <section class="animate-fade-in-up flex flex-col items-center text-center max-w-4xl mx-auto space-y-6" style="animation-delay: 0.1s">
             
                 <!-- Office Title -->
@@ -177,14 +177,6 @@ const normalizedSections = computed(() => {
                 >
                     {{ $t(currentOffice.title) }}
                 </h1>
-                
-                <!-- Office Subtitle -->
-                <p 
-                    class="text-xl font-medium leading-relaxed text-slate-700 sm:text-2xl max-w-3xl" 
-                    v-if="currentOffice.subtitle && $t(currentOffice.subtitle).trim() && $t(currentOffice.subtitle).trim().toLowerCase() !== $t(currentOffice.title).trim().toLowerCase()"
-                >
-                    {{ $t(currentOffice.subtitle) }}
-                </p>
             </section>
 
             <!-- Organizational Details Section (Dynamic Custom Sections) -->
