@@ -504,8 +504,8 @@ class AdminController extends Controller
     public function restoreDefaultPageContent($id = 'all')
     {
         $rectorContent = [
-            'rector_name' => ['en' => 'H.E. DR. DUCH KANEL', 'km' => 'ឯកឧត្តម បណ្ឌិត ឌុច កាណែល'],
-            'rector_title' => ['en' => 'Rector of Digital University of Cambodia', 'km' => 'សាកលវិទ្យាធិការ នៃសាកលវិទ្យាល័យឌីជីថលកម្ពុជា'],
+            'rector_name' => ['en' => 'H.E. Dr. KHEM Phearun', 'km' => 'ឯកឧត្តម បណ្ឌិត ខឹម ភារុណ'],
+            'rector_title' => ['en' => 'Rector of the Digital University of Cambodia', 'km' => 'សាកលវិទ្យាធិការ នៃសាកលវិទ្យាល័យឌីជីថលកម្ពុជា'],
             'paragraphs_en' => "<p>The Digital University of Cambodia (DUC) was established to spearhead technological innovation, offering higher education aligned with modern digital economic transformation.</p><p>Our academic programs foster creative problem-solving, digital literacy, and leadership in emerging industries.</p>",
             'paragraphs_km' => "<p>សាកលវិទ្យាល័យឌីជីថលកម្ពុជា (DUC) ត្រូវបានបង្កើតឡើងដើម្បីដឹកនាំនវានុវត្តន៍បច្ចេកវិទ្យា ដោយផ្តល់ជូននូវការអប់រំឧត្តមសិក្សាស្របតាមការផ្លាស់ប្តូរសេដ្ឋកិច្ចឌីជីថលទំនើប។</p><p>កម្មវិធីសិក្សារបស់យើងបណ្តុះបណ្តាលការដោះស្រាយបញ្ហាប្រកបដោយភាពច្នៃប្រឌិត ចំណេះដឹងឌីជីថល និងភាពជាអ្នកដឹកនាំក្នុងឧស្សាហកម្មដែលកំពុងលេចធ្លោ។</p>"
         ];

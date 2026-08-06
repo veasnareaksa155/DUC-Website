@@ -14,8 +14,29 @@ const props = defineProps({
 
 const page = usePage();
 
-const rectorName = computed(() => props.pageData?.rector_name || "H.E. Dr. KHEM Phearun");
-const rectorTitle = computed(() => props.pageData?.rector_title || "the Rector of the Digital University of Cambodia");
+const rectorName = computed(() => {
+    const locale = page.props?.locale || 'en';
+    const raw = props.pageData?.rector_name;
+    if (raw) {
+        if (typeof raw === 'object' && raw !== null) {
+            return raw[locale] || raw.en || raw.km || '';
+        }
+        return raw;
+    }
+    return locale === 'km' ? "ឯកឧត្តម បណ្ឌិត ខឹម ភារុណ" : "H.E. Dr. KHEM Phearun";
+});
+
+const rectorTitle = computed(() => {
+    const locale = page.props?.locale || 'en';
+    const raw = props.pageData?.rector_title;
+    if (raw) {
+        if (typeof raw === 'object' && raw !== null) {
+            return raw[locale] || raw.en || raw.km || '';
+        }
+        return raw;
+    }
+    return locale === 'km' ? "សាកលវិទ្យាធិការ នៃសាកលវិទ្យាល័យឌីជីថលកម្ពុជា" : "Rector of the Digital University of Cambodia";
+});
 const paragraphs = computed(() => {
     const locale = page.props?.locale || 'en';
     if (props.pageData) {
@@ -63,11 +84,11 @@ const paragraphs = computed(() => {
 
                 <div class="pt-2 md:pt-4 min-w-0">
                     <h2
-                    class="text-[32px] font-black leading-tight text-[#1c244b] tracking-tight"
-                >
-                {{ $t(rectorName) }}
-                </h2>
-                <p class="text-[30px]">{{ $t(rectorTitle) }}</p>
+                        class="text-[32px] font-black leading-tight text-[#1c244b] tracking-tight"
+                    >
+                        {{ rectorName }}
+                    </h2>
+                    <p class="text-[24px] font-semibold text-slate-700 mt-1">{{ rectorTitle }}</p>
 
 
                 <div
