@@ -4,6 +4,7 @@ import { Head, usePage } from "@inertiajs/vue3";
 import SiteHeader from "@/Components/SiteHeader.vue";
 import SiteFooter from "@/Components/SiteFooter.vue";
 import directorImage from "./images/rectorImage.jpg";
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 const props = defineProps({
     pageData: {

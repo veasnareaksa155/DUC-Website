@@ -116,7 +116,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'id' => 'nullable|integer',
             'slug' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
+            'title' => 'required',
             'content' => 'required|array',
             'is_office' => 'nullable|boolean',
             'office_type' => 'nullable|string',
@@ -154,7 +154,8 @@ class AdminController extends Controller
             }
         }
 
-        ActivityLog::log("Updated page content for '" . $validated['title'] . "'", 'pages');
+        $titleLog = is_array($validated['title']) ? ($validated['title']['en'] ?? reset($validated['title'])) : $validated['title'];
+        ActivityLog::log("Updated page content for '" . $titleLog . "'", 'pages');
 
         return redirect()->back()->with('success', 'Page content saved successfully.');
     }
@@ -561,6 +562,7 @@ class AdminController extends Controller
             [
                 'title' => 'Personnel and Human Resources Office',
                 'slug' => 'personnel_and_human_resources',
+                'image' => 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Responsible for human resource planning, staff recruitment, and staff welfare.', 'km' => 'ទទួលខុសត្រូវលើការរៀបចំផែនការធនធានមនុស្ស ការជ្រើសរើសបុគ្គលិក និងសុខុមាលភាពបុគ្គលិក។'],
                 'mission' => ['en' => 'To support administrative staff and faculty members.', 'km' => 'ដើម្បីគាំទ្របុគ្គលិករដ្ឋបាល និងសាស្ត្រាចារ្យ។'],
                 'vision' => ['en' => 'A professional and motivated university workforce.', 'km' => 'កម្លាំងពលកម្មសាកលវិទ្យាល័យប្រកបដោយវិជ្ជាជីវៈ និងការលើកទឹកចិត្ត។']
@@ -568,6 +570,7 @@ class AdminController extends Controller
             [
                 'title' => 'Student Affairs Office',
                 'slug' => 'student_affairs_office',
+                'image' => 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Manages student welfare, extracurricular activities, and guidance.', 'km' => 'គ្រប់គ្រងសុខុមាលភាពនិស្សិត សកម្មភាពក្រៅផ្លូវការ និងការណែនាំ។'],
                 'mission' => ['en' => 'Promote vibrant student life and campus engagement.', 'km' => 'លើកកម្ពស់ជីវិតនិស្សិតដ៏រស់រវើក និងការចូលរួមក្នុងបរិវេណសាលា។'],
                 'vision' => ['en' => 'Comprehensive development for all students.', 'km' => 'ការអភិវឌ្ឍគ្រប់ជ្រុងជ្រោយសម្រាប់និស្សិតទាំងអស់។']
@@ -575,6 +578,7 @@ class AdminController extends Controller
             [
                 'title' => 'Academic Affairs Office',
                 'slug' => 'academic_affairs_office',
+                'image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Oversees curriculum development, course schedules, and degree validation.', 'km' => 'មើលការខុសត្រូវលើការអភិវឌ្ឍកម្មវិធីសិក្សា កាលវិភាគវគ្គសិក្សា និងការបញ្ជាក់សញ្ញាបត្រ។'],
                 'mission' => ['en' => 'Maintain academic excellence and quality standards.', 'km' => 'រក្សាឧត្តមភាពសិក្សា និងស្តង់ដារគុណភាព។'],
                 'vision' => ['en' => 'Top-tier digital education standards.', 'km' => 'ស្តង់ដារអប់រំឌីជីថលលំដាប់កំពូល។']
@@ -582,6 +586,7 @@ class AdminController extends Controller
             [
                 'title' => 'Administration and Accounting Office',
                 'slug' => 'administration_and_accounting_office',
+                'image' => 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Handles financial management, tuition billing, and procurement.', 'km' => 'ដោះស្រាយការគ្រប់គ្រងហិរញ្ញវត្ថុ ការចេញវិក្កយបត្រថ្លៃសិក្សា និងការទិញផ្គត់ផ្គង់។'],
                 'mission' => ['en' => 'Transparent and efficient financial operations.', 'km' => 'ប្រតិបត្តិការហិរញ្ញវត្ថុប្រកបដោយតម្លាភាព និងប្រសិទ្ធភាព។'],
                 'vision' => ['en' => 'Sustainable financial framework.', 'km' => 'ក្របខ័ណ្ឌហិរញ្ញវត្ថុប្រកបដោយនិរន្តរភាព។']
@@ -589,6 +594,7 @@ class AdminController extends Controller
             [
                 'title' => 'Dormitory Office',
                 'slug' => 'dormitory_office',
+                'image' => 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Manages student housing, safety, and residential services.', 'km' => 'គ្រប់គ្រងអន្តេវាសិកដ្ឋាននិស្សិត សុវត្ថិភាព និងសេវាកម្មស្នាក់នៅ។'],
                 'mission' => ['en' => 'Safe and comfortable living space for students.', 'km' => 'កន្លែងរស់នៅដែលមានសុវត្ថិភាព និងផាសុកភាពសម្រាប់និស្សិត។'],
                 'vision' => ['en' => 'Home away from home for DUC students.', 'km' => 'ផ្ទះទីពីរសម្រាប់និស្សិត DUC។']
@@ -596,6 +602,7 @@ class AdminController extends Controller
             [
                 'title' => 'Internal Quality Assurance Office',
                 'slug' => 'internal_quality_assurance_office',
+                'image' => 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Ensures educational quality standards and institutional accreditation.', 'km' => 'ធានាស្តង់ដារគុណភាពអប់រំ និងការទទួលស្គាល់គុណភាពអប់រំ។'],
                 'mission' => ['en' => 'Continuous quality improvement in education.', 'km' => 'ការកែលម្អគុណភាពអប់រំជាបន្តបន្ទាប់។'],
                 'vision' => ['en' => 'Internationally recognized quality assurance.', 'km' => 'ការធានាគុណភាពដែលទទួលស្គាល់ជាអន្តរជាតិ។']
@@ -603,6 +610,7 @@ class AdminController extends Controller
             [
                 'title' => 'Planning and Research Office',
                 'slug' => 'planning_and_research_office',
+                'image' => 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=1200',
                 'about' => ['en' => 'Drives institutional research projects, grants, and strategic planning.', 'km' => 'រុញច្រានគម្រោងស្រាវជ្រាវ ការផ្តល់អាហារូបករណ៍ និងការរៀបចំផែនការយុទ្ធសាស្ត្រ។'],
                 'mission' => ['en' => 'Foster research innovation and institutional development.', 'km' => 'បណ្តុះបណ្តាលនវានុវត្តន៍ស្រាវជ្រាវ និងការអភិវឌ្ឍស្ថាប័ន។'],
                 'vision' => ['en' => 'Hub for cutting-edge research in Cambodia.', 'km' => 'មជ្ឈមណ្ឌលសម្រាប់ការស្រាវជ្រាវឈានមុខគេនៅកម្ពុជា។']
@@ -654,7 +662,7 @@ class AdminController extends Controller
                             'about' => $off['about'],
                             'mission' => $off['mission'],
                             'vision' => $off['vision'],
-                            'image' => ''
+                            'image' => $off['image'] ?? ''
                         ])
                     ]
                 );

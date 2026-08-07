@@ -38,6 +38,17 @@ onMounted(() => {
     if (savedMode !== null) {
         isDarkMode.value = savedMode === 'true';
     }
+    
+    // Auto-restore active selected page slug on mount or refresh
+    try {
+        const savedSlug = localStorage.getItem('duc_admin_selected_page_slug');
+        if (savedSlug && props.pageContents) {
+            const pageToRestore = props.pageContents.find(p => p.slug === savedSlug);
+            if (pageToRestore) {
+                startEditPage(pageToRestore);
+            }
+        }
+    } catch (e) {}
 });
 
 const toggleDarkMode = () => {
@@ -299,6 +310,17 @@ const deleteNavItem = (id) => {
 
 // --- PAGES STATE & ACTIONS ---
 const selectedPage = ref(null);
+const pagesSearchQuery = ref('');
+const filteredPageContents = computed(() => {
+    if (!props.pageContents) return [];
+    const q = pagesSearchQuery.value.toLowerCase().trim();
+    if (!q) return props.pageContents;
+    return props.pageContents.filter(p => {
+        const title = (p.title || '').toLowerCase();
+        const slug = (p.slug || '').toLowerCase();
+        return title.includes(q) || slug.includes(q);
+    });
+});
 const pageContentForm = useForm({
     id: null,
     slug: '',
@@ -312,9 +334,14 @@ const pageContentForm = useForm({
 
 const startEditPage = (page) => {
     selectedPage.value = page;
+    try {
+        if (page && page.slug) {
+            localStorage.setItem('duc_admin_selected_page_slug', page.slug);
+        }
+    } catch (e) {}
     pageContentForm.id = page.id;
     pageContentForm.slug = page.slug;
-    pageContentForm.title = page.title;
+    pageContentForm.title = parseTranslatable(page.title);
     // Handle content being a JSON string or already an object
     if (typeof page.content === 'string') {
         try {
@@ -407,7 +434,7 @@ const startEditPage = (page) => {
 };
 
 watch(() => props.pageContents, (newPages) => {
-    if (selectedPage.value) {
+    if (selectedPage.value && !pageContentForm.isDirty) {
         const targetSlug = selectedPage.value.slug;
         const targetId = selectedPage.value.id;
         // Prefer slug match (stable after delete+restore which can change ID)
@@ -421,7 +448,7 @@ watch(() => props.pageContents, (newPages) => {
 const startCreatePage = (type) => {
     selectedPage.value = { 
         id: null, 
-        title: 'New ' + (type === 'office' ? 'Office' : 'Page'), 
+        title: { en: type === 'office' ? 'New Office' : 'New Page', km: type === 'office' ? 'ការិយាល័យថ្មី' : 'ទំព័រថ្មី' }, 
         slug: '', 
         is_office: type === 'office',
         content: type === 'office' 
@@ -430,7 +457,7 @@ const startCreatePage = (type) => {
     };
     
     pageContentForm.id = null;
-    pageContentForm.title = selectedPage.value.title;
+    pageContentForm.title = JSON.parse(JSON.stringify(selectedPage.value.title));
     pageContentForm.slug = '';
     pageContentForm.is_office = type === 'office';
     pageContentForm.office_type = '';
@@ -441,9 +468,15 @@ const startCreatePage = (type) => {
 
 const submitPage = () => {
     pageContentForm.post(route('admin.pages.save'), {
+        preserveScroll: true,
         onSuccess: () => {
             showToast('Page saved successfully!');
             pageContentForm.apply_to_all_offices = false;
+        },
+        onError: (errors) => {
+            console.error('Page save failed:', errors);
+            const firstError = Object.values(errors)[0] || 'Failed to save page content.';
+            showToast(firstError, 'error');
         }
     });
 };
@@ -472,6 +505,25 @@ const removeAboutGoal = (idx) => {
     if (pageContentForm.content && pageContentForm.content.goals) {
         pageContentForm.content.goals.splice(idx, 1);
     }
+};
+const moveAboutGoalUp = (idx) => {
+    if (pageContentForm.content.goals && idx > 0) {
+        const temp = pageContentForm.content.goals[idx];
+        pageContentForm.content.goals[idx] = pageContentForm.content.goals[idx - 1];
+        pageContentForm.content.goals[idx - 1] = temp;
+    }
+};
+const moveAboutGoalDown = (idx) => {
+    if (pageContentForm.content.goals && idx < pageContentForm.content.goals.length - 1) {
+        const temp = pageContentForm.content.goals[idx];
+        pageContentForm.content.goals[idx] = pageContentForm.content.goals[idx + 1];
+        pageContentForm.content.goals[idx + 1] = temp;
+    }
+};
+
+const toggleVisionFirst = () => {
+    if (!pageContentForm.content) pageContentForm.content = {};
+    pageContentForm.content.vision_first = !pageContentForm.content.vision_first;
 };
 
 // Helper to add custom section
@@ -2899,14 +2951,25 @@ const stripHtml = (html) => {
                                 </button>
                             </div>
 
-                            <div class="flex gap-2 mb-4 relative z-10">
+                            <div class="flex gap-2 mb-3 relative z-10">
                                 <button @click="startCreatePage('custom')" class="flex-1 py-2 text-[10px] font-extrabold rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-500/30 transition-all border border-blue-500/20">+ Custom Page</button>
                                 <button @click="startCreatePage('office')" class="flex-1 py-2 text-[10px] font-extrabold rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30 transition-all border border-amber-500/20">+ Office</button>
                             </div>
 
-                            <div class="space-y-1.5 relative z-10">
+                            <!-- Page Search Bar -->
+                            <div class="mb-3 relative z-10">
+                                <input 
+                                    type="text" 
+                                    v-model="pagesSearchQuery" 
+                                    placeholder="🔍 Search page or office..." 
+                                    class="w-full text-xs font-medium rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all" 
+                                    :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'"
+                                />
+                            </div>
+
+                            <div class="space-y-1.5 relative z-10 max-h-[500px] overflow-y-auto pr-1">
                                 <button 
-                                    v-for="page in props.pageContents" 
+                                    v-for="page in filteredPageContents" 
                                     :key="page.id"
                                     @click="startEditPage(page)"
                                     class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group"
@@ -2914,9 +2977,12 @@ const stripHtml = (html) => {
                                         ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
                                         : (isDarkMode ? 'text-slate-400 hover:bg-[#1a2333] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100')"
                                 >
-                                    <span>{{ page.title }}</span>
-                                    <span v-if="page.is_office" class="text-[9px] uppercase font-black px-2 py-1 rounded-md transition-colors" :class="selectedPage && selectedPage.id === page.id ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-600 group-hover:bg-amber-500/20'">Office</span>
+                                    <span>{{ parseTranslatable(page.title).en || parseTranslatable(page.title).km || page.title }}</span>
+                                    <span v-if="page.is_office" class="text-[9px] uppercase font-black px-2 py-1 rounded-md transition-colors shrink-0 ml-2" :class="selectedPage && selectedPage.id === page.id ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-600 group-hover:bg-amber-500/20'">Office</span>
                                 </button>
+                                <div v-if="filteredPageContents.length === 0" class="text-center py-6 text-xs text-slate-500">
+                                    No pages found matching "{{ pagesSearchQuery }}".
+                                </div>
                             </div>
                         </div>
 
@@ -2938,12 +3004,25 @@ const stripHtml = (html) => {
                             <!-- Live form -->
                             <form v-else @submit.prevent="submitPage" class="space-y-8 relative z-10">
                                 <div class="flex flex-col gap-4 bg-slate-50/50 dark:bg-[#090d16]/50 p-5 rounded-2xl border border-slate-100 dark:border-[#1a2333]">
-                                    <!-- Title Row -->
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shrink-0" :class="selectedPage.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'">
-                                            {{ selectedPage.id ? 'Edit Mode' : 'Create Mode' }}
-                                        </span>
-                                        <input type="text" v-model="pageContentForm.title" class="text-xl md:text-2xl font-black bg-transparent border-b-2 border-dashed focus:outline-none pb-0.5 px-1 w-full transition-colors" :class="isDarkMode ? 'border-slate-700 focus:border-blue-500 text-white placeholder:text-slate-600' : 'border-slate-300 focus:border-blue-500 text-slate-900 placeholder:text-slate-400'" placeholder="Enter Page Title..." />
+                                    <!-- Title Row (Bilingual Title Fields) -->
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shrink-0" :class="selectedPage.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'">
+                                                {{ selectedPage.id ? 'Edit Mode' : 'Create Mode' }} {{ pageContentForm.is_office ? 'Office' : 'Page' }}
+                                            </span>
+                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Page / Office Title (EN & KM)</span>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">EN</span></div>
+                                                <input type="text" v-model="pageContentForm.title.en" placeholder="Page Title (English)" class="w-full rounded-xl text-sm font-bold border pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" />
+                                            </div>
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">KM</span></div>
+                                                <input type="text" v-model="pageContentForm.title.km" placeholder="ចំណងជើងទំព័រ/ការិយាល័យ (ខ្មែរ)" class="w-full rounded-xl text-sm font-bold border pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Controls + Buttons Row -->
@@ -3007,6 +3086,69 @@ const stripHtml = (html) => {
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                                                 Save Changes
                                             </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Office Page Form -->
+                                <div v-if="pageContentForm.is_office" class="space-y-4">
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-200 bg-slate-50'">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label class="block text-xs font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Office Header Image</label>
+                                            <button 
+                                                v-if="pageContentForm.content.image" 
+                                                type="button" 
+                                                @click="pageContentForm.content.image = ''" 
+                                                class="text-xs font-bold text-red-500 hover:underline flex items-center gap-1"
+                                            >
+                                                ✕ Clear / Remove Image
+                                            </button>
+                                        </div>
+
+                                        <!-- Current Image Preview -->
+                                        <div v-if="pageContentForm.content.image" class="mb-3 flex items-center gap-4 p-2 rounded-xl border" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-white border-slate-200'">
+                                            <img 
+                                                v-if="typeof pageContentForm.content.image === 'string' && pageContentForm.content.image" 
+                                                :src="pageContentForm.content.image" 
+                                                alt="Current Office Image" 
+                                                class="h-16 w-28 object-cover rounded-lg border border-slate-300 shrink-0" 
+                                                @error="$event.target.style.display='none'"
+                                            />
+                                            <img 
+                                                v-else-if="pageContentForm.content.image && typeof pageContentForm.content.image === 'object'" 
+                                                :src="getObjectUrl(pageContentForm.content.image)" 
+                                                alt="New File Preview" 
+                                                class="h-16 w-28 object-cover rounded-lg border border-cyan-500 shrink-0" 
+                                            />
+                                            <div class="min-w-0 text-xs">
+                                                <p v-if="typeof pageContentForm.content.image === 'string'" class="font-mono text-[11px] truncate text-slate-500">{{ pageContentForm.content.image }}</p>
+                                                <p v-else-if="pageContentForm.content.image && typeof pageContentForm.content.image === 'object'" class="font-bold text-cyan-500">✨ New File Selected: {{ pageContentForm.content.image.name }}</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- File Upload -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-[11px] font-bold" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Upload Image File</label>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                @input="pageContentForm.content.image = $event.target.files[0]" 
+                                                class="w-full rounded-xl text-xs border focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-xs file:font-bold file:cursor-pointer hover:file:opacity-90 transition-all"
+                                                :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-slate-300 focus:border-blue-500 file:bg-blue-600 file:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-blue-600 file:bg-blue-600 file:text-white'" 
+                                            />
+                                        </div>
+
+                                        <!-- OR URL Input -->
+                                        <div class="mt-3">
+                                            <label class="block text-[11px] font-bold mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Or Paste Image URL</label>
+                                            <input 
+                                                type="text" 
+                                                :value="typeof pageContentForm.content.image === 'string' ? pageContentForm.content.image : ''"
+                                                @input="pageContentForm.content.image = $event.target.value"
+                                                placeholder="https://images.unsplash.com/photo-..." 
+                                                class="w-full rounded-xl text-xs border px-3 py-2 focus:outline-none" 
+                                                :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" 
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -3177,45 +3319,99 @@ const stripHtml = (html) => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (EN)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.mission.en" 
-     
-></QuillEditor></div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (KM)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.mission.km" 
-     
-></QuillEditor></div>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (EN)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.vision.en" 
-     
-></QuillEditor></div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (KM)</label>
-                                            <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor 
-    theme="snow" 
-    contentType="html" 
-    v-model:content="pageContentForm.content.vision.km" 
-     
-></QuillEditor></div>
-                                        </div>
+                                    <!-- Mission & Vision Container (Orderable) -->
+                                    <div class="space-y-4">
+                                        <template v-if="!pageContentForm.content.vision_first">
+                                            <!-- Mission Section Card (First) -->
+                                            <div class="border rounded-2xl p-5 space-y-4" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-200 bg-slate-50/50'">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-black uppercase tracking-widest flex items-center gap-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> #1 Mission Statement Section
+                                                    </label>
+                                                    <button type="button" @click="toggleVisionFirst" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-500/20 flex items-center gap-1 shadow-sm">
+                                                        ↓ Move Down (Place Vision First)
+                                                    </button>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (EN)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.mission.en"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (KM)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.mission.km"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Vision Section Card (Second) -->
+                                            <div class="border rounded-2xl p-5 space-y-4" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-200 bg-slate-50/50'">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-black uppercase tracking-widest flex items-center gap-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> #2 Vision Statement Section
+                                                    </label>
+                                                    <button type="button" @click="toggleVisionFirst" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-500/20 flex items-center gap-1 shadow-sm">
+                                                        ↑ Move Up (Place Vision First)
+                                                    </button>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (EN)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.vision.en"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (KM)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.vision.km"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <template v-else>
+                                            <!-- Vision Section Card (First) -->
+                                            <div class="border rounded-2xl p-5 space-y-4" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-200 bg-slate-50/50'">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-black uppercase tracking-widest flex items-center gap-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> #1 Vision Statement Section
+                                                    </label>
+                                                    <button type="button" @click="toggleVisionFirst" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-500/20 flex items-center gap-1 shadow-sm">
+                                                        ↓ Move Down (Place Mission First)
+                                                    </button>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (EN)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.vision.en"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Vision Statement (KM)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.vision.km"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Mission Section Card (Second) -->
+                                            <div class="border rounded-2xl p-5 space-y-4" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-200 bg-slate-50/50'">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-black uppercase tracking-widest flex items-center gap-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> #2 Mission Statement Section
+                                                    </label>
+                                                    <button type="button" @click="toggleVisionFirst" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-500/20 flex items-center gap-1 shadow-sm">
+                                                        ↑ Move Up (Place Mission First)
+                                                    </button>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (EN)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.mission.en"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Mission Description (KM)</label>
+                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" contentType="html" v-model:content="pageContentForm.content.mission.km"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
                                     <div class="border-t pt-4" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
                                         <div class="flex justify-between items-center mb-3">
@@ -3223,22 +3419,27 @@ const stripHtml = (html) => {
                                             <button type="button" @click="addAboutGoal" class="text-xs font-bold text-blue-500 hover:underline">+ Add Goal</button>
                                         </div>
                                         <div class="space-y-3">
-                                            <div v-for="(goal, idx) in pageContentForm.content.goals" :key="idx" class="flex gap-2 items-center">
+                                            <div v-for="(goal, idx) in pageContentForm.content.goals" :key="idx" class="flex gap-2 items-center p-2 rounded-xl border" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-slate-50 border-slate-200'">
+                                                <span class="text-xs font-bold text-slate-400 w-6 text-center shrink-0">#{{ idx + 1 }}</span>
                                                 <input 
                                                     type="text" 
                                                     v-model="goal.en" 
                                                     placeholder="Goal (EN)"
                                                     class="flex-1 rounded-xl text-sm border focus:outline-none px-3 py-1.5"
-                                                    :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
+                                                    :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" 
                                                 />
                                                 <input 
                                                     type="text" 
                                                     v-model="goal.km" 
                                                     placeholder="Goal (KM)"
                                                     class="flex-1 rounded-xl text-sm border focus:outline-none px-3 py-1.5"
-                                                    :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
+                                                    :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" 
                                                 />
-                                                <button type="button" @click="removeAboutGoal(idx)" class="text-red-500 hover:text-red-400 px-3">✕</button>
+                                                <div class="flex items-center gap-1 shrink-0 ml-1">
+                                                    <button v-if="idx > 0" type="button" @click="moveAboutGoalUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold px-1.5 py-1 rounded bg-blue-500/10" title="Move Up">↑ Up</button>
+                                                    <button v-if="idx < pageContentForm.content.goals.length - 1" type="button" @click="moveAboutGoalDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold px-1.5 py-1 rounded bg-blue-500/10" title="Move Down">↓ Down</button>
+                                                    <button type="button" @click="removeAboutGoal(idx)" class="text-red-500 hover:text-red-400 px-2 py-1 text-xs font-bold rounded bg-red-500/10" title="Remove Goal">✕</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

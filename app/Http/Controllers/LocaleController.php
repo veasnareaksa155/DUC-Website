@@ -14,8 +14,10 @@ class LocaleController extends Controller
     {
         if (in_array($locale, ['en', 'km'])) {
             Session::put('locale', $locale);
+            session()->save();
+            cookie()->queue(cookie()->forever('locale', $locale));
         }
 
-        return redirect()->back();
+        return redirect()->back()->withCookie(cookie()->forever('locale', $locale));
     }
 }

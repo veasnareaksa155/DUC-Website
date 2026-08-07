@@ -24,6 +24,10 @@ class NavigationItem extends Model
 
     public static function getTree()
     {
-        return self::whereNull('parent_id')->with('children.children')->orderBy('order')->get();
+        $items = self::whereNull('parent_id')->with('children.children')->orderBy('order')->get();
+        return $items->unique(function ($item) {
+            $label = is_array($item->label) ? json_encode($item->label) : (string)($item->label ?? '');
+            return strtolower(trim($label)) . '_' . strtolower(trim($item->href ?? ''));
+        })->values();
     }
 }

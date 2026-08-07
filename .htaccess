@@ -1,4 +1,19 @@
+# Hostinger / Apache Root Rewrite & Security Rules
+
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to hidden files and sensitive directories
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Block direct HTTP access to sensitive environment, config, and system files
+    RewriteRule ^(\.env|\.git|\.editorconfig|\.gitattributes|\.phpunit\.result\.cache|composer\.(json|lock|phar)|package(-lock)?\.json|artisan|postcss\.config\.js|tailwind\.config\.js|vite\.config\.js|jsconfig\.json|README\.md) - [F,L,NC]
+    
+    # Block direct HTTP access to system folders
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|tests|vendor)(/|$) - [F,L,NC]
+
+    # Rewrite all public traffic to the /public folder
+    RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

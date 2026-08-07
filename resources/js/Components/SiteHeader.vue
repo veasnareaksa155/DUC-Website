@@ -325,7 +325,7 @@ const rawNavigation = computed(() => {
 });
 
 const navItems = computed(() => {
-    return rawNavigation.value.map((item) => {
+    const items = rawNavigation.value.map((item) => {
         const hasMenu = item.children && item.children.length > 0;
         const megaMenu = hasMenu ? item.children.map(cat => {
             const hasLinks = cat.children && cat.children.length > 0;
@@ -342,12 +342,25 @@ const navItems = computed(() => {
         }) : null;
 
         return {
+            id: item.id,
             label: item.label,
             href: item.href || '#',
             icon: item.icon || '',
             hasMenu: hasMenu,
             megaMenu: megaMenu
         };
+    });
+
+    // Deduplicate top-level items strictly by label content and href
+    const seen = new Set();
+    return items.filter(item => {
+        const labelStr = typeof item.label === 'object' 
+            ? (item.label.en || item.label.km || JSON.stringify(item.label)) 
+            : String(item.label || '');
+        const key = `${labelStr.trim().toLowerCase()}_${(item.href || '#').trim().toLowerCase()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
     });
 });
 </script>
@@ -408,8 +421,8 @@ const navItems = computed(() => {
             <div class="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-10 px-6 h-[52px]">
                 
                 <div 
-                    v-for="item in navItems" 
-                    :key="item.label" 
+                    v-for="(item, index) in navItems" 
+                    :key="item.id || index" 
                     class="h-full relative"
                     @mouseenter="item.megaMenu && (openMegaMenu = item.label, resetActiveTab(item))"
                     @mouseleave="item.megaMenu && (openMegaMenu = null)"
@@ -554,7 +567,7 @@ const navItems = computed(() => {
                 <div class="flex-1 overflow-y-auto">
                     <div class="space-y-1 px-4 pb-6 pt-4">
                     
-                    <div v-for="item in navItems" :key="item.label" class="border-b border-white/10 last:border-0 pb-1 mb-1">
+                    <div v-for="(item, index) in navItems" :key="item.id || index" class="border-b border-white/10 last:border-0 pb-1 mb-1">
                         <div v-if="item.hasMenu" class="w-full flex items-center justify-between rounded-md transition-colors" :class="isItemActive(item) ? 'bg-white/20 text-white font-extrabold' : 'text-white/90 hover:bg-white/10'">
                                     <Link :href="item.href" @click="toggleMenu" class="flex-1 flex items-center gap-3 px-3 py-3 text-base font-medium">
                                         <span class="flex items-center justify-center opacity-80" v-html="item.icon"></span>

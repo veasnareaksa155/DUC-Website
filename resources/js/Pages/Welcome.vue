@@ -414,7 +414,7 @@ const stripHtml = (html) => {
 
             <hr class="border-gray-200" />
 
-            <section class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-slate-50/5">
+            <section class="scholarship-block scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-slate-50/5">
                 <div class="text-center">
                     <h2 class="text-2xl font-bold text-[#2f47aa]">{{ $t('Scholarship for Students') }}</h2>
                     <div class="mx-auto mt-2 h-1 w-36 bg-amber-400 rounded-full"></div>
@@ -427,12 +427,12 @@ const stripHtml = (html) => {
 
                     <div class="lg:col-span-7 space-y-4">
                         <div class="flex items-start gap-2 text-xl font-bold text-slate-800 lg:text-2xl">
-                            <span class="text-orange-500 mt-1">🔶</span>
-                            <h3 class="font-serif text-[#2f47aa]">{{ $t(scholarship.title) }}</h3>
+                            <span class="text-orange-500 mt-1">◆</span>
+                            <h3 class="font-extrabold text-[#2f47aa] text-xl lg:text-2xl scholarship-title">{{ $t(scholarship.title) }}</h3>
                         </div>
                         <div class="text-slate-600 space-y-4 leading-relaxed text-sm md:text-base">
-                            <div class="whitespace-pre-wrap ql-editor px-0" v-html="$t(scholarship.description)"></div>
-                            <p v-if="scholarship.footer_text" class="font-semibold text-[#2f47aa] italic">
+                            <div class="whitespace-pre-wrap ql-editor px-0 scholarship-text-content" v-html="$t(scholarship.description)"></div>
+                            <p v-if="scholarship.footer_text" class="font-semibold text-[#2f47aa] italic scholarship-footer-text">
                                 {{ $t(scholarship.footer_text) }}
                             </p>
                         </div>

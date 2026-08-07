@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "package:hostinger": "powershell -ExecutionPolicy Bypass -File ./package-hostinger.ps1"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",

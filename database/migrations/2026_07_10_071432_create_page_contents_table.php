@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('page_contents', function (Blueprint $table) {
             $table->id();
             $table->string('slug')->unique();
-            $table->string('title');
+            $table->text('title')->nullable();
             $table->longText('content')->nullable();
             $table->boolean('is_office')->default(false);
             $table->string('office_type')->nullable();

@@ -1,7 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Siemreap&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Siemreap&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Font Family Rule scoped strictly to Scholarship Block */
+.scholarship-block, .scholarship-block *, .scholarship-title, .scholarship-text-content, .scholarship-text-content * {
+    font-family: 'Siemreap', sans-serif !important;
+}
 
 /* Quill Editor Global Styles (for the editor only) */
 .ql-container .ql-editor {

@@ -57,12 +57,18 @@ const vision = computed(() => {
     return "Vision content coming soon...";
 });
 
-const hasMissionOrVision = computed(() => {
+const hasMission = computed(() => {
     const m = typeof mission.value === 'object' ? (mission.value?.en || mission.value?.km) : mission.value;
+    return m && m.trim() !== '' && m !== '<p></p>';
+});
+
+const hasVision = computed(() => {
     const v = typeof vision.value === 'object' ? (vision.value?.en || vision.value?.km) : vision.value;
-    const hasM = m && m.trim() !== '' && m !== '<p></p>';
-    const hasV = v && v.trim() !== '' && v !== '<p></p>' && v !== 'Vision content coming soon...';
-    return hasM || hasV;
+    return v && v.trim() !== '' && v !== '<p></p>' && v !== 'Vision content coming soon...';
+});
+
+const hasMissionOrVision = computed(() => {
+    return hasMission.value || hasVision.value;
 });
 
 // Clean up department list (formatting names, filtering duplicates, removing conjunctions)
@@ -253,29 +259,15 @@ onMounted(() => {
                 </div>
             </section>
 
-            <!-- Mission & Vision Shared Card -->
-            <section v-if="hasMissionOrVision" class="animate-fade-in-up" style="animation-delay: 0.3s">
-                <div class="text-justify rounded-3xl md:rounded-[2.5rem] border border-white/60 bg-white/80 p-5 sm:p-8 lg:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] grid md:grid-cols-2 gap-8 lg:gap-12">
-                    
-                    <!-- Mission -->
-                    <div>
+            <!-- Mission & Vision Section (Full Width Stacked Cards) -->
+            <section v-if="hasMissionOrVision" class="animate-fade-in-up space-y-8" style="animation-delay: 0.3s">
+                
+                <!-- If vision_first is true: Vision card first, then Mission card -->
+                <template v-if="props.pageData?.vision_first">
+                    <!-- Vision Card Block -->
+                    <div v-if="hasVision" class="text-justify rounded-3xl md:rounded-[2.5rem] border border-white/60 bg-white/80 p-6 sm:p-8 lg:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
-                                </svg>
-                            </div>
-                            <h2 class="text-3xl font-extrabold text-[#283593]">
-                                {{ $t('Mission') }}
-                            </h2>
-                        </div>
-                        <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(mission)"></div>
-                    </div>
-
-                    <!-- Vision -->
-                    <div>
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shrink-0 shadow-sm">
                                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -292,7 +284,61 @@ onMounted(() => {
                             <div v-else class="ql-editor px-0" v-html="$t(vision)"></div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Mission Card Block -->
+                    <div v-if="hasMission" class="text-justify rounded-3xl md:rounded-[2.5rem] border border-white/60 bg-white/80 p-6 sm:p-8 lg:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shrink-0 shadow-sm">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+                                </svg>
+                            </div>
+                            <h2 class="text-3xl font-extrabold text-[#283593]">
+                                {{ $t('Mission') }}
+                            </h2>
+                        </div>
+                        <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(mission)"></div>
+                    </div>
+                </template>
+
+                <!-- Otherwise (default): Mission card first, then Vision card -->
+                <template v-else>
+                    <!-- Mission Card Block -->
+                    <div v-if="hasMission" class="text-justify rounded-3xl md:rounded-[2.5rem] border border-white/60 bg-white/80 p-6 sm:p-8 lg:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shrink-0 shadow-sm">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+                                </svg>
+                            </div>
+                            <h2 class="text-3xl font-extrabold text-[#283593]">
+                                {{ $t('Mission') }}
+                            </h2>
+                        </div>
+                        <div class="text-lg font-medium leading-relaxed text-slate-700 ql-editor px-0" v-html="$t(mission)"></div>
+                    </div>
+
+                    <!-- Vision Card Block -->
+                    <div v-if="hasVision" class="text-justify rounded-3xl md:rounded-[2.5rem] border border-white/60 bg-white/80 p-6 sm:p-8 lg:p-12 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shrink-0 shadow-sm">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </div>
+                            <h2 class="text-3xl font-extrabold text-[#283593]">
+                                {{ $t('Vision') }}
+                            </h2>
+                        </div>
+                        <div class="text-lg font-medium leading-relaxed text-slate-700">
+                            <p class="text-slate-400 italic py-2" v-if="vision === 'Vision content coming soon...'">
+                                <em>{{ $t(vision) }}</em>
+                            </p>
+                            <div v-else class="ql-editor px-0" v-html="$t(vision)"></div>
+                        </div>
+                    </div>
+                </template>
             </section>
 
             <!-- Goals and Purposes (Departments) Card -->

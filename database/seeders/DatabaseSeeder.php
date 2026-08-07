@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,6 +20,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Truncate tables before seeding to prevent duplicates on re-seeding/re-uploading
+        Schema::disableForeignKeyConstraints();
+        NavigationItem::truncate();
+        Department::truncate();
+        Faculty::truncate();
+        PageContent::truncate();
+        Event::truncate();
+        Schema::enableForeignKeyConstraints();
+
         // 1. Admin User
         User::updateOrCreate(
             ['email' => 'admin@duc.edu.kh'],
