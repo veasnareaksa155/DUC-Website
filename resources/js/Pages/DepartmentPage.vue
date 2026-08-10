@@ -139,8 +139,13 @@ const currentDegreePrograms = computed(() => {
             label: sec.title,
             content: sec.content,
             courseStructure: sec.courseStructure || [],
-            courseNotes: sec.courseNotes || []
-        })).filter(s => (s.content && (s.content.en || s.content.km)) || (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length));
+            courseNotes: sec.courseNotes || [],
+            customTable: sec.customTable || null
+        })).filter(s => 
+            (s.content && (s.content.en || s.content.km)) || 
+            (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
+            (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows)
+        );
     }
     
     // Legacy format
@@ -224,6 +229,26 @@ const scrollToSection = (idx) => {
         const y = el.getBoundingClientRect().top + window.scrollY - 100;
         window.scrollTo({ top: y, behavior: 'smooth' });
     }
+};
+const formatCellHtml = (text) => {
+    if (!text) return '';
+    if (typeof text !== 'string') return text;
+
+    // If already contains Quill HTML elements
+    if (text.includes('<p>') || text.includes('<ul>') || text.includes('<ol>') || text.includes('<br>')) {
+        return text;
+    }
+
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return '';
+
+    const isBulletList = lines.some(l => /^[-•*]|\d+\.\s/.test(l));
+    if (isBulletList) {
+        const items = lines.map(l => l.replace(/^[-•*]|\d+\.\s*/, '').trim()).filter(Boolean);
+        return `<ul class="list-disc list-outside ml-4 space-y-1">${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+    }
+
+    return lines.join('<br>');
 };
 </script>
 
@@ -388,6 +413,61 @@ const scrollToSection = (idx) => {
                                 <!-- Render notes if any -->
                                 <div v-if="prog.courseNotes && prog.courseNotes.length" class="mt-4 space-y-4">
                                     <div v-for="(note, nIdx) in prog.courseNotes" :key="nIdx" class="ql-editor px-0 text-sm text-gray-600 leading-relaxed" v-html="$t(note)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Data Table Render -->
+                            <div v-else-if="prog.type === 'custom_table' && prog.customTable && prog.customTable.headers && prog.customTable.rows" class="mb-8">
+                                <!-- Blue Pill Badge -->
+                                <div v-if="prog.customTable.badge && (prog.customTable.badge.en || prog.customTable.badge.km)" class="mb-3">
+                                    <h3 class="inline-block rounded-md bg-[#3852a4] px-3 py-1 text-sm font-extrabold text-white">
+                                        {{ $t(prog.customTable.badge) }}
+                                    </h3>
+                                </div>
+
+                                <!-- Subtitle -->
+                                <p v-if="prog.customTable.subtitle && (prog.customTable.subtitle.en || prog.customTable.subtitle.km)" class="mb-2 text-sm font-bold text-[#1c244b]">
+                                    {{ $t(prog.customTable.subtitle) }}
+                                </p>
+
+                                <div class="overflow-x-auto my-2">
+                                    <table class="w-full min-w-[420px] border-collapse overflow-hidden rounded-md text-sm shadow-sm border border-gray-100">
+                                        <thead>
+                                            <tr class="bg-[#1c244b] text-left text-white">
+                                                <th v-if="prog.customTable.showRowNumbers !== false" class="w-14 px-3 py-2 font-bold text-center border-r border-slate-700/50">
+                                                    {{ (prog.customTable.indexHeader && typeof prog.customTable.indexHeader === 'string') ? prog.customTable.indexHeader : (prog.customTable.indexHeader ? $t(prog.customTable.indexHeader) : '#') }}
+                                                </th>
+                                                <th v-for="head in prog.customTable.headers" :key="head.key" 
+                                                    class="px-3.5 py-3 font-bold border-r border-slate-700/50 last:border-r-0"
+                                                    :class="[
+                                                        (head.headerAlign || head.align || 'center') === 'center' ? 'text-center' : (head.headerAlign || head.align) === 'right' ? 'text-right' : 'text-left',
+                                                        head.width === '12' ? 'w-12' : head.width === '20' ? 'w-20' : head.width === '32' ? 'w-32' : head.width === '48' ? 'w-48' : ''
+                                                    ]">
+                                                    {{ $t(head.label) }}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(row, rIdx) in prog.customTable.rows" :key="rIdx" class="border-b border-gray-100 odd:bg-white even:bg-gray-50 hover:bg-blue-50/30 transition-colors">
+                                                <td v-if="prog.customTable.showRowNumbers !== false" class="px-3 py-2 text-center text-gray-500 font-semibold text-xs border-r border-gray-100">{{ rIdx + 1 }}</td>
+                                                <td v-for="head in prog.customTable.headers" :key="head.key" 
+                                                    class="ql-editor px-3.5 py-3 text-gray-800 border-r border-gray-100 last:border-r-0 leading-relaxed"
+                                                    :class="[
+                                                        (head.bodyAlign || head.align || 'left') === 'center' ? 'text-center' : (head.bodyAlign || head.align) === 'right' ? 'text-right' : 'text-left',
+                                                        (head.verticalAlign || 'top') === 'middle' ? 'align-middle' : (head.verticalAlign || 'top') === 'bottom' ? 'align-bottom' : 'align-top'
+                                                    ]"
+                                                    v-html="formatCellHtml($t(row[head.key]))">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Footer Note / Summary Pill -->
+                                <div v-if="prog.customTable.footerNote && (prog.customTable.footerNote.en || prog.customTable.footerNote.km)" class="flex justify-end mt-3">
+                                    <div class="flex gap-6 rounded-md bg-[#f4f7fb] px-4 py-2 text-sm font-extrabold text-[#1c244b]">
+                                        <span>{{ $t(prog.customTable.footerNote) }}</span>
                                     </div>
                                 </div>
                             </div>

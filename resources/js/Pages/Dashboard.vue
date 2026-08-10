@@ -601,7 +601,16 @@ const addProgramSection = (majorIdx, programType) => {
         title: { en: '', km: '' },
         content: { en: '', km: '' },
         courseStructure: [],
-        courseNotes: []
+        courseNotes: [],
+        customTable: {
+            headers: [
+                { key: 'col_0', label: { en: 'Header 1', km: 'ចំណងជើង ១' } },
+                { key: 'col_1', label: { en: 'Header 2', km: 'ចំណងជើង ២' } }
+            ],
+            rows: [
+                { col_0: { en: '', km: '' }, col_1: { en: '', km: '' } }
+            ]
+        }
     });
 };
 
@@ -631,6 +640,408 @@ const addCourseYear = (section) => {
         year: { en: 'Year I', km: 'ឆ្នាំទី ១' },
         semesters: []
     });
+};
+
+const ensureCustomTable = (section) => {
+    if (!section.customTable) {
+        section.customTable = {
+            badge: { en: '', km: '' },
+            subtitle: { en: '', km: '' },
+            footerNote: { en: '', km: '' },
+            showRowNumbers: true,
+            headers: [
+                { key: 'col_0', label: { en: 'Header 1', km: 'ចំណងជើង ១' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' },
+                { key: 'col_1', label: { en: 'Header 2', km: 'ចំណងជើង ២' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' }
+            ],
+            rows: [
+                { col_0: { en: '', km: '' }, col_1: { en: '', km: '' } }
+            ]
+        };
+    } else {
+        if (!section.customTable.badge) section.customTable.badge = { en: '', km: '' };
+        if (!section.customTable.subtitle) section.customTable.subtitle = { en: '', km: '' };
+        if (!section.customTable.footerNote) section.customTable.footerNote = { en: '', km: '' };
+        if (typeof section.customTable.indexHeader === 'object' && section.customTable.indexHeader !== null) {
+            section.customTable.indexHeader = section.customTable.indexHeader.en || section.customTable.indexHeader.km || '#';
+        }
+        if (!section.customTable.indexHeader) section.customTable.indexHeader = '#';
+        if (section.customTable.showRowNumbers === undefined) section.customTable.showRowNumbers = true;
+        if (section.customTable.headers) {
+            section.customTable.headers.forEach(h => {
+                if (!h.headerAlign) h.headerAlign = h.align || 'center';
+                if (!h.bodyAlign) h.bodyAlign = h.align || 'left';
+                if (!h.verticalAlign) h.verticalAlign = 'top';
+                if (!h.width) h.width = 'auto';
+            });
+        }
+    }
+};
+
+const addCustomTableColumn = (section) => {
+    ensureCustomTable(section);
+    const nextIdx = section.customTable.headers.length;
+    const newKey = `col_${Date.now()}_${nextIdx}`;
+    section.customTable.headers.push({
+        key: newKey,
+        label: { en: `Header ${nextIdx + 1}`, km: `ចំណងជើង ${nextIdx + 1}` },
+        headerAlign: 'center',
+        bodyAlign: 'left',
+        verticalAlign: 'top',
+        width: 'auto'
+    });
+    section.customTable.rows.forEach(row => {
+        row[newKey] = { en: '', km: '' };
+    });
+};
+
+const removeCustomTableColumn = (section, colIdx) => {
+    ensureCustomTable(section);
+    if (section.customTable.headers.length <= 1) return;
+    const keyToRemove = section.customTable.headers[colIdx].key;
+    section.customTable.headers.splice(colIdx, 1);
+    section.customTable.rows.forEach(row => {
+        delete row[keyToRemove];
+    });
+};
+
+const setAllHeaderAlign = (section, align) => {
+    ensureCustomTable(section);
+    section.customTable.headers.forEach(h => {
+        h.headerAlign = align;
+    });
+};
+
+const setAllBodyAlign = (section, align) => {
+    ensureCustomTable(section);
+    section.customTable.headers.forEach(h => {
+        h.bodyAlign = align;
+    });
+};
+
+const setAllVerticalAlign = (section, valign) => {
+    ensureCustomTable(section);
+    section.customTable.headers.forEach(h => {
+        h.verticalAlign = valign;
+    });
+};
+
+const removeCustomTable = (section) => {
+    section.customTable = {
+        badge: { en: '', km: '' },
+        subtitle: { en: '', km: '' },
+        footerNote: { en: '', km: '' },
+        showRowNumbers: true,
+        headers: [
+            { key: 'col_0', label: { en: 'Header 1', km: 'ចំណងជើង ១' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' },
+            { key: 'col_1', label: { en: 'Header 2', km: 'ចំណងជើង ២' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' }
+        ],
+        rows: [
+            { col_0: { en: '', km: '' }, col_1: { en: '', km: '' } }
+        ]
+    };
+};
+
+const moveCustomTableColumn = (section, colIdx, dir) => {
+    ensureCustomTable(section);
+    const headers = section.customTable.headers;
+    const targetIdx = colIdx + dir;
+    if (targetIdx < 0 || targetIdx >= headers.length) return;
+    const temp = headers[colIdx];
+    headers[colIdx] = headers[targetIdx];
+    headers[targetIdx] = temp;
+};
+
+const addCustomTableRow = (section) => {
+    ensureCustomTable(section);
+    const newRow = {};
+    section.customTable.headers.forEach(h => {
+        newRow[h.key] = { en: '', km: '' };
+    });
+    section.customTable.rows.push(newRow);
+};
+
+const insertCustomTableRowAt = (section, targetIdx) => {
+    ensureCustomTable(section);
+    const newRow = {};
+    section.customTable.headers.forEach(h => {
+        newRow[h.key] = { en: '', km: '' };
+    });
+    section.customTable.rows.splice(targetIdx, 0, newRow);
+};
+
+const insertCustomTableColumnAt = (section, targetIdx) => {
+    ensureCustomTable(section);
+    const nextIdx = section.customTable.headers.length;
+    const newKey = `col_${Date.now()}_${nextIdx}`;
+    const newCol = {
+        key: newKey,
+        label: { en: `Header ${nextIdx + 1}`, km: `ចំណងជើង ${nextIdx + 1}` },
+        headerAlign: 'center',
+        bodyAlign: 'left',
+        verticalAlign: 'top',
+        width: 'auto'
+    };
+    section.customTable.headers.splice(targetIdx, 0, newCol);
+    section.customTable.rows.forEach(row => {
+        row[newKey] = { en: '', km: '' };
+    });
+};
+
+const removeCustomTableRow = (section, rowIdx) => {
+    ensureCustomTable(section);
+    if (section.customTable.rows.length <= 1) return;
+    section.customTable.rows.splice(rowIdx, 1);
+};
+
+const moveCustomTableRow = (section, rowIdx, dir) => {
+    ensureCustomTable(section);
+    const rows = section.customTable.rows;
+    const targetIdx = rowIdx + dir;
+    if (targetIdx < 0 || targetIdx >= rows.length) return;
+    const temp = rows[rowIdx];
+    rows[rowIdx] = rows[targetIdx];
+    rows[targetIdx] = temp;
+};
+
+const sanitizeExcelModeData = (section) => {
+    if (!section || !section.customTable || !section.customTable.rows) return;
+    section.customTable.rows.forEach(row => {
+        Object.keys(row).forEach(k => {
+            if (row[k]) {
+                if (typeof row[k].en === 'string' && row[k].en.includes('<')) {
+                    row[k].en = stripHtml(row[k].en);
+                }
+                if (typeof row[k].km === 'string' && row[k].km.includes('<')) {
+                    row[k].km = stripHtml(row[k].km);
+                }
+            }
+        });
+    });
+};
+
+const setExcelEditorMode = (section, mode) => {
+    ensureCustomTable(section);
+    section.customTable.editorMode = mode;
+    if (mode === 'excel') {
+        sanitizeExcelModeData(section);
+    }
+};
+
+const handleExcelCellPaste = (event, section, startRowIdx, startHeadKey) => {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+    let text = clipboardData.getData('text/plain') || clipboardData.getData('text');
+    if (!text) return;
+    
+    if (text.includes('\t') || text.includes('\n')) {
+        event.preventDefault();
+        const rows = text.trim().split(/\r?\n/).map(r => r.split('\t'));
+        ensureCustomTable(section);
+        
+        const headKeys = section.customTable.headers.map(h => h.key);
+        const startColIdx = headKeys.indexOf(startHeadKey);
+        if (startColIdx === -1) return;
+
+        rows.forEach((rowCells, rOffset) => {
+            const targetRowIdx = startRowIdx + rOffset;
+            while (section.customTable.rows.length <= targetRowIdx) {
+                const newRow = {};
+                headKeys.forEach(k => { newRow[k] = { en: '', km: '' }; });
+                section.customTable.rows.push(newRow);
+            }
+            const targetRow = section.customTable.rows[targetRowIdx];
+
+            rowCells.forEach((cellVal, cOffset) => {
+                const targetColIdx = startColIdx + cOffset;
+                if (targetColIdx < headKeys.length) {
+                    const key = headKeys[targetColIdx];
+                    if (!targetRow[key]) targetRow[key] = { en: '', km: '' };
+                    const formatted = stripHtml(cellVal.trim());
+                    targetRow[key].en = formatted;
+                    targetRow[key].km = formatted;
+                }
+            });
+        });
+    }
+};
+
+const activeCustomTableSmartPasteSection = ref(null);
+const customTableSmartPasteText = ref('');
+const customTableSmartPasteHasHeader = ref(true);
+
+const openCustomTableSmartPaste = (section) => {
+    activeCustomTableSmartPasteSection.value = section;
+    customTableSmartPasteText.value = '';
+    customTableSmartPasteHasHeader.value = true;
+};
+
+const parseWordExcelTSV = (text) => {
+    if (text.includes('\t')) {
+        const rows = [];
+        let currentRow = [];
+        let currentCell = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+            
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    currentCell += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === '\t' && !inQuotes) {
+                currentRow.push(currentCell.trim());
+                currentCell = '';
+            } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                if (char === '\r' && nextChar === '\n') i++;
+                currentRow.push(currentCell.trim());
+                if (currentRow.some(c => c.length > 0)) {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+                currentCell = '';
+            } else {
+                currentCell += char;
+            }
+        }
+        if (currentCell.trim().length > 0 || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            if (currentRow.some(c => c.length > 0)) {
+                rows.push(currentRow);
+            }
+        }
+        return rows;
+    }
+    
+    const lines = text.trim().split('\n').filter(l => l.trim().length > 0);
+    return lines.map(line => {
+        if (line.includes('|')) return line.split('|').map(c => c.trim()).filter(c => c.length > 0);
+        return [line.trim()];
+    });
+};
+
+const executeCustomTableSmartPaste = () => {
+    const section = activeCustomTableSmartPasteSection.value;
+    if (!section || !customTableSmartPasteText.value.trim()) return;
+    ensureCustomTable(section);
+    
+    const text = customTableSmartPasteText.value.trim();
+    
+    // 1. Column-based list paste detector (tab separated multiline columns)
+    if (text.includes('\t')) {
+        const rawBlocks = text.split('\t').map(b => b.trim()).filter(b => b.length > 0);
+        
+        // Check if blocks represent multiline subject columns
+        if (rawBlocks.length >= 2) {
+            const hasMultilineBlocks = rawBlocks.some(b => b.includes('\n'));
+            if (hasMultilineBlocks) {
+                const headers = [];
+                const rowValues = {};
+                
+                rawBlocks.forEach((block, idx) => {
+                    const key = `col_${Date.now()}_${idx}`;
+                    const lines = block.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                    
+                    let headerText = `Header ${idx + 1}`;
+                    let bodyLines = [];
+                    
+                    // Find where bullet list starts (- or • or digit)
+                    const bulletIdx = lines.findIndex(l => l.startsWith('-') || l.startsWith('•') || /^\d+[\.\)]/.test(l));
+                    if (bulletIdx > 0) {
+                        headerText = lines.slice(0, bulletIdx).join(' ');
+                        bodyLines = lines.slice(bulletIdx);
+                    } else if (bulletIdx === 0) {
+                        headerText = `Header ${idx + 1}`;
+                        bodyLines = lines;
+                    } else if (lines.length > 0) {
+                        headerText = lines[0];
+                        bodyLines = lines.slice(1);
+                    }
+                    
+                    headers.push({
+                        key,
+                        label: { en: headerText, km: headerText },
+                        align: 'left',
+                        width: 'auto'
+                    });
+                    
+                    let bodyText = '';
+                    if (bodyLines.length > 0) {
+                        const isBulletList = bodyLines.some(l => l.startsWith('-') || l.startsWith('•') || /^\d+[\.\)]/.test(l));
+                        if (isBulletList) {
+                            const lis = bodyLines.map(l => {
+                                const clean = l.replace(/^[-•\d+\.\)]\s*/, '').trim();
+                                return clean ? `<li>${clean}</li>` : '';
+                            }).filter(l => l.length > 0).join('');
+                            bodyText = `<ul>${lis}</ul>`;
+                        } else {
+                            bodyText = bodyLines.map(l => `<p>${l}</p>`).join('');
+                        }
+                    }
+                    rowValues[key] = { en: bodyText, km: bodyText };
+                });
+                
+                section.customTable.headers = headers;
+                section.customTable.rows = [rowValues];
+                
+                activeCustomTableSmartPasteSection.value = null;
+                customTableSmartPasteText.value = '';
+                return;
+            }
+        }
+    }
+    
+    // 2. Standard 2D Grid / CSV / TSV fallback
+    const parsedRows = parseWordExcelTSV(text);
+    if (parsedRows.length === 0) return;
+    
+    let startRowIdx = 0;
+    let headers = [];
+    
+    if (customTableSmartPasteHasHeader.value && parsedRows.length > 0) {
+        const headerCells = parsedRows[0];
+        headers = headerCells.map((label, idx) => {
+            const cleanLabel = label.replace(/\r?\n|\r/g, ' ').trim();
+            return {
+                key: `col_${Date.now()}_${idx}`,
+                label: { en: cleanLabel, km: cleanLabel },
+                align: 'left',
+                width: 'auto'
+            };
+        });
+        startRowIdx = 1;
+    } else {
+        const maxCols = Math.max(...parsedRows.map(r => r.length));
+        for (let i = 0; i < maxCols; i++) {
+            headers.push({
+                key: `col_${Date.now()}_${i}`,
+                label: { en: `Header ${i + 1}`, km: `ចំណងជើង ${i + 1}` },
+                align: 'left',
+                width: 'auto'
+            });
+        }
+    }
+    
+    const rows = [];
+    for (let r = startRowIdx; r < parsedRows.length; r++) {
+        const cells = parsedRows[r];
+        const rowObj = {};
+        headers.forEach((h, cIdx) => {
+            const val = cells[cIdx] !== undefined ? cells[cIdx] : '';
+            rowObj[h.key] = { en: val, km: val };
+        });
+        rows.push(rowObj);
+    }
+    
+    section.customTable.headers = headers;
+    section.customTable.rows = rows.length > 0 ? rows : [{ [headers[0].key]: { en: '', km: '' } }];
+    
+    activeCustomTableSmartPasteSection.value = null;
+    customTableSmartPasteText.value = '';
 };
 
 const removeCourseYear = (section, yearIdx) => {
@@ -1369,7 +1780,40 @@ const startEditDept = (dept = null) => {
                             title: parseTranslatable(s.title),
                             content: parseTranslatable(s.content),
                             courseStructure: s.courseStructure || [],
-                            courseNotes: s.courseNotes || []
+                            courseNotes: s.courseNotes || [],
+                            customTable: s.customTable ? {
+                                badge: parseTranslatable(s.customTable.badge),
+                                subtitle: parseTranslatable(s.customTable.subtitle),
+                                footerNote: parseTranslatable(s.customTable.footerNote),
+                                showRowNumbers: s.customTable.showRowNumbers !== undefined ? s.customTable.showRowNumbers : true,
+                                headers: (s.customTable.headers || []).map(h => ({
+                                    key: h.key,
+                                    label: parseTranslatable(h.label),
+                                    headerAlign: h.headerAlign || h.align || 'center',
+                                    bodyAlign: h.bodyAlign || h.align || 'left',
+                                    verticalAlign: h.verticalAlign || 'top',
+                                    width: h.width || 'auto'
+                                })),
+                                rows: (s.customTable.rows || []).map(r => {
+                                    const rowObj = {};
+                                    Object.keys(r).forEach(k => {
+                                        rowObj[k] = parseTranslatable(r[k]);
+                                    });
+                                    return rowObj;
+                                })
+                            } : {
+                                badge: { en: '', km: '' },
+                                subtitle: { en: '', km: '' },
+                                footerNote: { en: '', km: '' },
+                                showRowNumbers: true,
+                                headers: [
+                                    { key: 'col_0', label: { en: 'Header 1', km: 'ចំណងជើង ១' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' },
+                                    { key: 'col_1', label: { en: 'Header 2', km: 'ចំណងជើង ២' }, headerAlign: 'center', bodyAlign: 'left', verticalAlign: 'top', width: 'auto' }
+                                ],
+                                rows: [
+                                    { col_0: { en: '', km: '' }, col_1: { en: '', km: '' } }
+                                ]
+                            }
                         }))
                     };
                 }
@@ -1863,8 +2307,15 @@ const getAdminLabel = (val) => {
 };
 
 const stripHtml = (html) => {
-    if (!html) return '';
-    return html.replace(/<\/?[^>]+(>|$)/g, "");
+    if (!html || typeof html !== 'string') return '';
+    if (!html.includes('<')) return html;
+    let text = html;
+    text = text.replace(/<li[^>]*>/gi, '\n- ');
+    text = text.replace(/<\/p>|<br\s*\/?>|<\/div>/gi, '\n');
+    text = text.replace(/<[^>]+>/g, '');
+    text = text.replace(/&nbsp;/gi, ' ');
+    text = text.split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+    return text;
 };
 </script>
 
@@ -5205,7 +5656,7 @@ const stripHtml = (html) => {
                                             </div>
                                             <div class="col-span-1 md:col-span-2 space-y-1">
                                                 <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Content Type</label>
-                                                <div class="flex gap-4">
+                                                <div class="flex gap-4 flex-wrap">
                                                     <label class="flex items-center gap-2 text-sm cursor-pointer" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
                                                         <input type="radio" v-model="section.type" value="richtext" class="text-blue-500 focus:ring-blue-500" />
                                                         Rich Text Editor
@@ -5213,6 +5664,10 @@ const stripHtml = (html) => {
                                                     <label class="flex items-center gap-2 text-sm cursor-pointer" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
                                                         <input type="radio" v-model="section.type" value="course_structure" class="text-blue-500 focus:ring-blue-500" />
                                                         Course Structure Table
+                                                    </label>
+                                                    <label class="flex items-center gap-2 text-sm cursor-pointer" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                        <input type="radio" v-model="section.type" value="custom_table" class="text-blue-500 focus:ring-blue-500" />
+                                                        Custom Data Table
                                                     </label>
                                                 </div>
                                             </div>
@@ -5247,10 +5702,10 @@ const stripHtml = (html) => {
                                     </div>
                                     
                                     <!-- Course Structure Builder -->
-                                    <div v-else-if="section.type === 'course_structure'" class="mt-4 p-4 rounded-xl border border-[#3852a4]/20 bg-[#f4f7fb]/50" :class="isDarkMode ? 'bg-[#121928] border-slate-700' : ''">
+                                    <div v-else-if="section.type === 'course_structure'" class="mt-4 p-4 rounded-xl border" :class="isDarkMode ? 'bg-[#0c101b] border-slate-800' : 'bg-indigo-50/30 border-indigo-200'">
                                         <div class="flex justify-between items-center mb-4">
-                                            <h4 class="font-bold text-[#1c244b]" :class="isDarkMode ? 'text-slate-200' : ''">Course Structure Builder</h4>
-                                            <div class="flex gap-4 text-sm font-bold text-[#3852a4]">
+                                            <h4 class="font-bold text-base" :class="isDarkMode ? 'text-white' : 'text-[#1c244b]'">Course Structure Builder</h4>
+                                            <div class="flex gap-4 text-sm font-extrabold" :class="isDarkMode ? 'text-blue-400' : 'text-[#3852a4]'">
                                                 <span>Grand Total: {{ computeGrandTotals(section.courseStructure).credits }} Credits</span>
                                                 <span>{{ computeGrandTotals(section.courseStructure).hours }} Hours</span>
                                             </div>
@@ -5263,7 +5718,7 @@ const stripHtml = (html) => {
                                             </button>
                                             
                                             <!-- Global Smart Paste Area -->
-                                            <div v-if="activeGlobalSmartImportSection === section" class="mt-3 p-5 rounded-xl border-2 border-purple-300 bg-purple-50 dark:bg-purple-900/10 dark:border-purple-800/50">
+                                            <div v-if="activeGlobalSmartImportSection === section" class="mt-3 p-5 rounded-xl border-2 border-purple-300 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800/60">
                                                 <div class="flex items-start gap-3 mb-3">
                                                     <div class="p-2 bg-purple-200 dark:bg-purple-800/50 rounded-lg text-purple-700 dark:text-purple-300">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -5281,25 +5736,25 @@ const stripHtml = (html) => {
                                             </div>
                                         </div>
                                         
-                                        <div v-for="(yr, yIdx) in section.courseStructure" :key="yIdx" class="mb-6 p-4 rounded-lg bg-white border border-slate-200 shadow-sm" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700' : ''">
-                                            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100" :class="isDarkMode ? 'border-slate-700' : ''">
+                                        <div v-for="(yr, yIdx) in section.courseStructure" :key="yIdx" class="mb-6 p-4 rounded-lg bg-white border border-slate-200 shadow-sm" :class="isDarkMode ? 'bg-[#090d16] border-slate-800' : ''">
+                                            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100" :class="isDarkMode ? 'border-slate-800' : ''">
                                                 <div class="flex gap-3">
-                                                    <input type="text" v-model="yr.year.en" @input="() => { const kh = translateHeaderKhmer(yr.year.en); if (kh) yr.year.km = kh; }" placeholder="Year I (EN)" class="rounded-md text-sm border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
-                                                    <input type="text" v-model="yr.year.km" placeholder="Year I (KM)" class="rounded-md text-sm border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                    <input type="text" v-model="yr.year.en" @input="() => { const kh = translateHeaderKhmer(yr.year.en); if (kh) yr.year.km = kh; }" placeholder="Year I (EN)" class="rounded-md text-sm border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                    <input type="text" v-model="yr.year.km" placeholder="Year I (KM)" class="rounded-md text-sm border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
                                                 </div>
                                                 <div class="flex items-center gap-4">
-                                                    <span class="text-xs font-bold text-slate-500">Year Total: {{ computeYearTotals(yr).credits }} Cr / {{ computeYearTotals(yr).hours }} Hr</span>
-                                                    <button @click="removeCourseYear(section, yIdx)" type="button" class="text-red-500 hover:text-red-700 text-xs">Remove Year</button>
+                                                    <span class="text-xs font-bold" :class="isDarkMode ? 'text-slate-300' : 'text-slate-500'">Year Total: {{ computeYearTotals(yr).credits }} Cr / {{ computeYearTotals(yr).hours }} Hr</span>
+                                                    <button @click="removeCourseYear(section, yIdx)" type="button" class="text-red-500 hover:text-red-700 text-xs font-bold">Remove Year</button>
                                                 </div>
                                             </div>
                                             
                                             <div v-for="(sem, sIdx) in yr.semesters" :key="sIdx" class="mb-4 pl-4 border-l-2 border-[#3852a4]/30">
                                                 <div class="flex justify-between items-center mb-3">
                                                     <div class="flex gap-2">
-                                                        <input type="text" v-model="sem.semester.en" @input="() => { const kh = translateHeaderKhmer(sem.semester.en); if (kh) sem.semester.km = kh; }" placeholder="Semester I (EN)" class="w-32 rounded text-xs border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
-                                                        <input type="text" v-model="sem.semester.km" placeholder="Semester I (KM)" class="w-32 rounded text-xs border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                        <input type="text" v-model="sem.semester.en" @input="() => { const kh = translateHeaderKhmer(sem.semester.en); if (kh) sem.semester.km = kh; }" placeholder="Semester I (EN)" class="w-32 rounded text-xs border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                        <input type="text" v-model="sem.semester.km" placeholder="Semester I (KM)" class="w-32 rounded text-xs border focus:outline-none px-2 py-1" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'" />
                                                     </div>
-                                                    <button @click="removeCourseSemester(yr, sIdx)" type="button" class="text-red-500 hover:text-red-700 text-xs">Remove Sem</button>
+                                                    <button @click="removeCourseSemester(yr, sIdx)" type="button" class="text-red-500 hover:text-red-700 text-xs font-bold">Remove Sem</button>
                                                 </div>
                                                 
                                                 <table class="w-full text-left text-sm mb-2 rounded overflow-hidden">
@@ -5315,18 +5770,18 @@ const stripHtml = (html) => {
                                                     </thead>
                                                     <tbody class="divide-y divide-slate-100" :class="isDarkMode ? 'divide-slate-800' : ''">
                                                         <tr v-for="(sub, subIdx) in sem.subjects" :key="subIdx">
-                                                            <td class="px-2 py-1 text-center font-bold" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">{{ subIdx + 1 }}</td>
-                                                            <td class="px-2 py-1"><input type="text" v-model="sub.name.en" placeholder="e.g. Critical Thinking" class="w-full bg-transparent border-b focus:outline-none" :class="isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300'"/></td>
-                                                            <td class="px-2 py-1"><input type="text" v-model="sub.name.km" placeholder="e.g. ការគិតបែបស៊ីជម្រៅ" class="w-full bg-transparent border-b focus:outline-none" :class="isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300'"/></td>
-                                                            <td class="px-2 py-1"><input type="text" v-model="sub.credits" class="w-full bg-transparent border-b focus:outline-none text-center" :class="isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300'"/></td>
-                                                            <td class="px-2 py-1"><input type="text" v-model="sub.hours" class="w-full bg-transparent border-b focus:outline-none text-center" :class="isDarkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300'"/></td>
+                                                            <td class="px-2 py-1 text-center font-bold" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">{{ subIdx + 1 }}</td>
+                                                            <td class="px-2 py-1"><input type="text" v-model="sub.name.en" placeholder="e.g. Critical Thinking" class="w-full bg-transparent border-b focus:outline-none px-1" :class="isDarkMode ? 'border-slate-700 text-slate-200 focus:border-blue-400' : 'border-slate-300 text-slate-800'"/></td>
+                                                            <td class="px-2 py-1"><input type="text" v-model="sub.name.km" placeholder="e.g. ការគិតបែបស៊ីជម្រៅ" class="w-full bg-transparent border-b focus:outline-none px-1" :class="isDarkMode ? 'border-slate-700 text-slate-200 focus:border-blue-400' : 'border-slate-300 text-slate-800'"/></td>
+                                                            <td class="px-2 py-1"><input type="text" v-model="sub.credits" class="w-full bg-transparent border-b focus:outline-none text-center px-1" :class="isDarkMode ? 'border-slate-700 text-slate-200 focus:border-blue-400' : 'border-slate-300 text-slate-800'"/></td>
+                                                            <td class="px-2 py-1"><input type="text" v-model="sub.hours" class="w-full bg-transparent border-b focus:outline-none text-center px-1" :class="isDarkMode ? 'border-slate-700 text-slate-200 focus:border-blue-400' : 'border-slate-300 text-slate-800'"/></td>
                                                             <td class="px-2 py-1 text-center"><button @click="removeCourseSubject(sem, subIdx)" type="button" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
                                                 <div class="flex items-center gap-4 mt-2 mb-2">
-                                                    <button @click="addCourseSubject(sem)" type="button" class="text-xs text-[#3852a4] hover:underline font-bold">+ Add Subject</button>
-                                                    <button @click="openSmartImport(yr, sem)" type="button" class="text-xs text-indigo-600 hover:underline font-bold flex items-center gap-1 dark:text-indigo-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Smart Paste (Word/Excel)</button>
+                                                    <button @click="addCourseSubject(sem)" type="button" class="text-xs font-bold hover:underline" :class="isDarkMode ? 'text-indigo-400' : 'text-[#3852a4]'">+ Add Subject</button>
+                                                    <button @click="openSmartImport(yr, sem)" type="button" class="text-xs hover:underline font-bold flex items-center gap-1" :class="isDarkMode ? 'text-indigo-400' : 'text-indigo-600'"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Smart Paste (Word/Excel)</button>
                                                 </div>
                                                 
                                                 <!-- Smart Paste Area -->
@@ -5340,25 +5795,25 @@ const stripHtml = (html) => {
                                                 </div>
                                             </div>
                                             
-                                            <button @click="addCourseSemester(yr)" type="button" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded font-bold transition-colors" :class="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : ''">+ Add Semester</button>
+                                            <button @click="addCourseSemester(yr)" type="button" class="text-xs px-3 py-1.5 rounded font-bold transition-colors" :class="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'">+ Add Semester</button>
                                         </div>
                                         
-                                        <button @click="addCourseYear(section)" type="button" class="w-full py-2 border-2 border-dashed border-[#3852a4]/40 text-[#3852a4] rounded-lg hover:bg-[#3852a4]/5 font-bold text-sm transition-colors mb-6">+ Add Year</button>
+                                        <button @click="addCourseYear(section)" type="button" class="w-full py-2.5 border-2 border-dashed rounded-lg font-bold text-sm transition-colors mb-6" :class="isDarkMode ? 'border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/20 bg-indigo-950/30' : 'border-[#3852a4]/40 text-[#3852a4] hover:bg-[#3852a4]/5'">+ Add Year</button>
                                         
                                         <!-- Course Notes Array -->
-                                        <div class="border-t pt-4" :class="isDarkMode ? 'border-slate-700' : 'border-[#3852a4]/20'">
-                                            <h5 class="text-xs font-black uppercase tracking-widest mb-3" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Course Notes (Optional)</h5>
+                                        <div class="border-t pt-4" :class="isDarkMode ? 'border-slate-800' : 'border-[#3852a4]/20'">
+                                            <h5 class="text-xs font-black uppercase tracking-widest mb-3" :class="isDarkMode ? 'text-blue-400' : 'text-slate-500'">Course Notes (Optional)</h5>
                                             <div class="space-y-4">
-                                                <div v-for="(note, nIdx) in section.courseNotes" :key="nIdx" class="relative group p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
+                                                <div v-for="(note, nIdx) in section.courseNotes" :key="nIdx" class="relative group p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#090d16]' : 'border-slate-100 bg-white'">
                                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div class="space-y-1">
-                                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">Note (EN)</label>
+                                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-blue-400' : 'text-slate-400'">Note (EN)</label>
                                                             <div class="bg-white text-black rounded overflow-hidden">
                                                                 <QuillEditor :key="`notes-en-${activeDeptMajorIndex}-${activeDeptProgramTab}-${idx}-${nIdx}`" theme="snow" v-model:content="note.en" contentType="html"></QuillEditor>
                                                             </div>
                                                         </div>
                                                         <div class="space-y-1">
-                                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">Note (KM)</label>
+                                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-emerald-400' : 'text-slate-400'">Note (KM)</label>
                                                             <div class="bg-white text-black rounded overflow-hidden">
                                                                 <QuillEditor :key="`notes-km-${activeDeptMajorIndex}-${activeDeptProgramTab}-${idx}-${nIdx}`" theme="snow" v-model:content="note.km" contentType="html"></QuillEditor>
                                                             </div>
@@ -5369,7 +5824,258 @@ const stripHtml = (html) => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <button @click="addCourseNote(section)" type="button" class="mt-4 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded font-bold transition-colors w-full md:w-auto" :class="isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : ''">+ Add Note</button>
+                                            <button @click="addCourseNote(section)" type="button" class="mt-4 text-xs font-bold px-3.5 py-2 rounded-lg transition-colors w-full md:w-auto" :class="isDarkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'">+ Add Note</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Data Table Builder -->
+                                    <div v-else-if="section.type === 'custom_table'" class="mt-4 p-4 rounded-xl border" :class="isDarkMode ? 'bg-[#121928] border-slate-700' : 'bg-indigo-50/30 border-indigo-200'">
+                                        {{ ensureCustomTable(section) }}
+                                        
+                                        <!-- Header & Smart Paste Toolbar -->
+                                        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                                            <div>
+                                                <h4 class="font-bold text-base" :class="isDarkMode ? 'text-white' : 'text-[#1c244b]'">Custom Data Table Builder</h4>
+                                                <p class="text-xs" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Customize section badges, column headers, alignments, widths, and row values using Rich Text Editors.</p>
+                                            </div>
+                                            <div class="flex gap-2 flex-wrap">
+                                                <button @click="openCustomTableSmartPaste(section)" type="button" class="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg text-xs font-black shadow-md transition-all flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                                    ✨ Smart Paste (Word/Excel)
+                                                </button>
+                                                <button @click="addCustomTableColumn(section)" type="button" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors">
+                                                    + Add Column
+                                                </button>
+                                                <button @click="addCustomTableRow(section)" type="button" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors">
+                                                    + Add Row
+                                                </button>
+                                                <button @click="removeCustomTable(section)" type="button" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1" title="Reset/Clear Table">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    Clear Table
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Smart Paste Drawer -->
+                                        <div v-if="activeCustomTableSmartPasteSection === section" class="mb-4 p-4 rounded-xl border border-purple-300 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800/60">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <h5 class="text-xs font-bold text-purple-900 dark:text-purple-300">Paste Table Data from Word or Excel</h5>
+                                                <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer text-purple-800 dark:text-purple-300">
+                                                    <input type="checkbox" v-model="customTableSmartPasteHasHeader" class="rounded text-purple-600 focus:ring-purple-500" />
+                                                    First row is Header
+                                                </label>
+                                            </div>
+                                            <textarea v-model="customTableSmartPasteText" rows="5" class="w-full rounded-xl text-xs border border-purple-200 p-3 resize-y focus:outline-none focus:border-purple-500 dark:bg-[#0c101b] dark:border-purple-900/50 dark:text-slate-200" placeholder="Copy columns & rows from Excel or Word and paste here...&#10;Subject Name&#tHeader 2&#tHeader 3&#10;Mathematics for Economics&#t100&#tPass"></textarea>
+                                            <div class="flex justify-end gap-2 mt-2">
+                                                <button @click="activeCustomTableSmartPasteSection = null" type="button" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 font-bold">Cancel</button>
+                                                <button @click="executeCustomTableSmartPaste()" type="button" class="px-4 py-1.5 text-xs font-black bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow">🚀 Populate Table</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Badge Title & Subtitle Options -->
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 rounded-xl border" :class="isDarkMode ? 'bg-[#0c101b] border-slate-800' : 'bg-white border-slate-200'">
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1 flex items-center justify-between" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+                                                    <span>Blue Pill Badge (Optional)</span>
+                                                    <span class="inline-block rounded bg-[#3852a4] px-1.5 py-0.5 text-[9px] font-bold text-white">Preview</span>
+                                                </label>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <input type="text" v-model="section.customTable.badge.en" placeholder="e.g. Basic Major Subjects (EN)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                    <input type="text" v-model="section.customTable.badge.km" placeholder="e.g. មុខវិជ្ជាគ្រឹះនៃឯកទេស (KM)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Subtitle Header (Optional)</label>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <input type="text" v-model="section.customTable.subtitle.en" placeholder="e.g. Overview (EN)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                    <input type="text" v-model="section.customTable.subtitle.km" placeholder="e.g. ព័ត៌មានទូទៅ (KM)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-3 pt-4">
+                                                <label class="flex items-center gap-2 text-xs font-bold cursor-pointer" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">
+                                                    <input type="checkbox" v-model="section.customTable.showRowNumbers" class="rounded text-blue-600 focus:ring-blue-500" />
+                                                    Show Row Index Number (#)
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bulk Alignment Controls (Quill-style Icon Buttons with Hover Tooltips) -->
+                                        <div class="flex items-center gap-4 flex-wrap text-xs p-3 rounded-xl border mb-4" :class="isDarkMode ? 'bg-[#0c101b] border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-black text-[10px] uppercase tracking-wider" :class="isDarkMode ? 'text-indigo-400' : 'text-[#1c244b]'">Headers Align:</span>
+                                                <div class="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden bg-white dark:bg-[#090d16] p-0.5 shadow-sm">
+                                                    <button @click="setAllHeaderAlign(section, 'left')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.headerAlign === 'left') ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Headers Left">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllHeaderAlign(section, 'center')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.headerAlign === 'center') ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Headers Center">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllHeaderAlign(section, 'right')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.headerAlign === 'right') ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Headers Right">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14"></path></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-black text-[10px] uppercase tracking-wider text-emerald-500">Body H-Align:</span>
+                                                <div class="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden bg-white dark:bg-[#090d16] p-0.5 shadow-sm">
+                                                    <button @click="setAllBodyAlign(section, 'left')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.bodyAlign === 'left') ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Body Left">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllBodyAlign(section, 'center')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.bodyAlign === 'center') ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Body Center">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllBodyAlign(section, 'right')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.bodyAlign === 'right') ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Body Right">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14"></path></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2 ml-auto md:ml-2">
+                                                <span class="font-black text-[10px] uppercase tracking-wider text-purple-400">Body V-Align:</span>
+                                                <div class="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden bg-white dark:bg-[#090d16] p-0.5 shadow-sm">
+                                                    <button @click="setAllVerticalAlign(section, 'top')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.verticalAlign === 'top') ? 'bg-purple-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Vertical Top">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16M8 8v12M16 8v8"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllVerticalAlign(section, 'middle')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.verticalAlign === 'middle') ? 'bg-purple-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Vertical Middle">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M8 6v12M16 8v8"></path></svg>
+                                                    </button>
+                                                    <button @click="setAllVerticalAlign(section, 'bottom')" type="button" class="p-1 rounded transition-colors" :class="section.customTable.headers.every(h => h.verticalAlign === 'bottom') ? 'bg-purple-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'" title="Align All Vertical Bottom">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M8 4v12M16 8v8"></path></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Custom Table Preview / Input Container -->
+                                        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm mb-4 max-w-full" :class="isDarkMode ? 'bg-[#0c101b] border-slate-700' : ''">
+                                            <table class="w-full text-left text-sm border-collapse min-w-[600px]">
+                                                <thead class="bg-[#1c244b] text-white text-xs">
+                                                    <tr>
+                                                        <th v-if="section.customTable.showRowNumbers" class="px-2.5 py-2.5 min-w-[70px] w-20 text-center border-r border-slate-700">
+                                                            <div class="space-y-1.5">
+                                                                <span class="text-[10px] text-blue-300 font-black uppercase">Index Header</span>
+                                                                <input type="text" v-model="section.customTable.indexHeader" placeholder="#" class="w-full text-xs px-2 py-1 bg-[#090d16] text-white text-center rounded border border-slate-700 focus:outline-none focus:border-blue-400 font-bold" />
+                                                            </div>
+                                                        </th>
+                                                        <th v-for="(head, hIdx) in section.customTable.headers" :key="head.key" class="px-3 py-2.5 border-r border-slate-700 min-w-[200px] last:border-r-0">
+                                                            <div class="space-y-1.5">
+                                                                <div class="flex justify-between items-center">
+                                                                    <span class="text-[10px] text-blue-300 font-black uppercase">Col {{ hIdx + 1 }}</span>
+                                                                    <div class="flex items-center gap-1">
+                                                                        <button v-if="hIdx > 0" @click="moveCustomTableColumn(section, hIdx, -1)" type="button" class="text-slate-300 hover:text-white text-xs px-1" title="Move Left">←</button>
+                                                                        <button v-if="hIdx < section.customTable.headers.length - 1" @click="moveCustomTableColumn(section, hIdx, 1)" type="button" class="text-slate-300 hover:text-white text-xs px-1" title="Move Right">→</button>
+                                                                        <button v-if="section.customTable.headers.length > 1" @click="removeCustomTableColumn(section, hIdx)" type="button" class="text-red-400 hover:text-red-200 text-xs font-bold px-1" title="Delete Column">✕</button>
+                                                                    </div>
+                                                                </div>
+                                                                <input type="text" v-model="head.label.en" placeholder="Header (EN)" class="w-full text-xs px-2 py-1 bg-[#090d16] text-white rounded border border-slate-700 focus:outline-none focus:border-blue-400" />
+                                                                <input type="text" v-model="head.label.km" placeholder="Header (KM)" class="w-full text-xs px-2 py-1 bg-[#090d16] text-white rounded border border-slate-700 focus:outline-none focus:border-blue-400" />
+                                                                
+                                                                <!-- Single Column Settings (Head Align, Body Align, Vertical Align) -->
+                                                                <div class="space-y-1 pt-1 border-t border-slate-700/60 mt-1">
+                                                                    <div class="flex items-center justify-between gap-1">
+                                                                        <span class="text-[9px] text-blue-300 font-bold">Head:</span>
+                                                                        <div class="inline-flex rounded border border-slate-700 bg-[#090d16] p-0.5">
+                                                                            <button @click="head.headerAlign = 'left'" type="button" class="p-0.5 rounded transition-colors" :class="head.headerAlign === 'left' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Header Left">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.headerAlign = 'center'" type="button" class="p-0.5 rounded transition-colors" :class="head.headerAlign === 'center' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Header Center">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.headerAlign = 'right'" type="button" class="p-0.5 rounded transition-colors" :class="head.headerAlign === 'right' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Header Right">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14"></path></svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="flex items-center justify-between gap-1">
+                                                                        <span class="text-[9px] text-emerald-300 font-bold">Body H:</span>
+                                                                        <div class="inline-flex rounded border border-slate-700 bg-[#090d16] p-0.5">
+                                                                            <button @click="head.bodyAlign = 'left'" type="button" class="p-0.5 rounded transition-colors" :class="head.bodyAlign === 'left' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Body Left">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.bodyAlign = 'center'" type="button" class="p-0.5 rounded transition-colors" :class="head.bodyAlign === 'center' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Body Center">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.bodyAlign = 'right'" type="button" class="p-0.5 rounded transition-colors" :class="head.bodyAlign === 'right' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Body Right">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14"></path></svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="flex items-center justify-between gap-1">
+                                                                        <span class="text-[9px] text-purple-300 font-bold">Body V:</span>
+                                                                        <div class="inline-flex rounded border border-slate-700 bg-[#090d16] p-0.5">
+                                                                            <button @click="head.verticalAlign = 'top'" type="button" class="p-0.5 rounded transition-colors" :class="head.verticalAlign === 'top' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Vertical Top">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16M8 8v12M16 8v8"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.verticalAlign = 'middle'" type="button" class="p-0.5 rounded transition-colors" :class="head.verticalAlign === 'middle' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Vertical Middle">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M8 6v12M16 8v8"></path></svg>
+                                                                            </button>
+                                                                            <button @click="head.verticalAlign = 'bottom'" type="button" class="p-0.5 rounded transition-colors" :class="head.verticalAlign === 'bottom' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'" title="Align Vertical Bottom">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M8 4v12M16 8v8"></path></svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </th>
+                                                        <th class="px-2 py-2 w-14 text-center">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100" :class="isDarkMode ? 'divide-slate-800 bg-[#090d16]' : 'bg-white'">
+                                                    <tr v-for="(row, rIdx) in section.customTable.rows" :key="rIdx" class="transition-colors" :class="isDarkMode ? 'hover:bg-slate-800/40 bg-[#0c101b]' : 'hover:bg-slate-50/50 bg-white'">
+                                                        <td v-if="section.customTable.showRowNumbers" class="px-2 py-2 text-center text-xs font-black" :class="isDarkMode ? 'text-blue-400 border-r border-slate-800' : 'text-slate-600 border-r border-slate-100'">{{ rIdx + 1 }}</td>
+                                                        <td v-for="head in section.customTable.headers" :key="head.key" class="px-2.5 py-3 border-r border-slate-100 min-w-[200px]" :class="isDarkMode ? 'border-slate-800' : ''">
+                                                            <div class="space-y-3" v-if="row[head.key]">
+                                                                <div class="space-y-3">
+                                                                    <div>
+                                                                        <label class="block text-[10px] font-black uppercase tracking-wider mb-1" :class="isDarkMode ? 'text-blue-400' : 'text-blue-600'">Content (EN)</label>
+                                                                        <div class="bg-white text-black rounded-lg border overflow-hidden shadow-sm" :class="isDarkMode ? 'border-slate-700' : 'border-slate-300'">
+                                                                            <QuillEditor 
+                                                                                :key="`cell-en-${activeDeptMajorIndex}-${activeDeptProgramTab}-${idx}-${rIdx}-${head.key}`" 
+                                                                                theme="snow" 
+                                                                                v-model:content="row[head.key].en" 
+                                                                                contentType="html"
+                                                                                :toolbar="[['bold', 'italic', 'underline', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'align': [] }], ['clean']]"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="block text-[10px] font-black uppercase tracking-wider mb-1" :class="isDarkMode ? 'text-emerald-400' : 'text-emerald-600'">Content (KM)</label>
+                                                                        <div class="bg-white text-black rounded-lg border overflow-hidden shadow-sm" :class="isDarkMode ? 'border-slate-700' : 'border-slate-300'">
+                                                                            <QuillEditor 
+                                                                                :key="`cell-km-${activeDeptMajorIndex}-${activeDeptProgramTab}-${idx}-${rIdx}-${head.key}`" 
+                                                                                theme="snow" 
+                                                                                v-model:content="row[head.key].km" 
+                                                                                contentType="html"
+                                                                                :toolbar="[['bold', 'italic', 'underline', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'align': [] }], ['clean']]"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-2 py-2 text-center">
+                                                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                                                <button @click="insertCustomTableRowAt(section, rIdx)" type="button" class="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold" title="Insert Row Above">+ Row</button>
+                                                                <div class="flex items-center gap-1">
+                                                                    <button v-if="rIdx > 0" @click="moveCustomTableRow(section, rIdx, -1)" type="button" class="text-slate-400 hover:text-slate-600 text-xs font-bold px-1" title="Move Row Up">↑</button>
+                                                                    <button v-if="rIdx < section.customTable.rows.length - 1" @click="moveCustomTableRow(section, rIdx, 1)" type="button" class="text-slate-400 hover:text-slate-600 text-xs font-bold px-1" title="Move Row Down">↓</button>
+                                                                </div>
+                                                                <button v-if="section.customTable.rows.length > 1" @click="removeCustomTableRow(section, rIdx)" type="button" class="text-red-500 hover:text-red-700 text-xs font-bold px-1" title="Delete Row">✕</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Footer Note Option -->
+                                        <div class="p-3 rounded-xl border" :class="isDarkMode ? 'bg-[#0c101b] border-slate-800' : 'bg-white border-slate-200'">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Footer Note / Total Pill (Optional)</label>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <input type="text" v-model="section.customTable.footerNote.en" placeholder="e.g. Note: All courses are compulsory (EN)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                                <input type="text" v-model="section.customTable.footerNote.km" placeholder="e.g. ចំណាំ៖ គ្រប់មុខវិជ្ជាទាំងអស់គឺតម្រូវឱ្យសិក្សា (KM)" class="w-full text-xs rounded border px-2 py-1.5 focus:outline-none" :class="isDarkMode ? 'bg-[#090d16] border-slate-700 text-white focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-900'" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

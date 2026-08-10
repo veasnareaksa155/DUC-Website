@@ -2,6 +2,7 @@
     use App\Http\Controllers\ProfileController;
     use App\Http\Controllers\Auth\DepartmentController;
     use Illuminate\Support\Facades\Route;
+    use Illuminate\Support\Facades\Artisan;
     use App\Http\Controllers\MajorController;
     use App\Http\Controllers\Admin\AdminController;
     use App\Http\Controllers\LocaleController;
@@ -23,6 +24,14 @@
                 'home_stats' => json_decode(\App\Models\Setting::getValue('home_stats', '[]'), true),
             ]
         ]);
+    });
+
+    Route::get('/clear-cache', function() {
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('view:clear');
+        Artisan::call('route:clear');
+        return '<h1 style="color:green; text-align:center; margin-top:50px; font-family:sans-serif;">✅ All Laravel Caches Cleared Successfully!</h1>';
     });
 
     Route::get('/lang/{locale}', [LocaleController::class, 'switch'])->name('lang.switch');
@@ -143,3 +152,4 @@ require __DIR__.'/auth.php';
             'pageData' => json_decode($page->content, true) ?: ['custom_sections' => []]
         ]);
     })->name('dynamic.page');
+

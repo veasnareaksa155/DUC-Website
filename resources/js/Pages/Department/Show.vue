@@ -211,8 +211,13 @@ const sections = computed(() => {
             label: sec.title,
             content: sec.content,
             courseStructure: sec.courseStructure || [],
-            courseNotes: sec.courseNotes || []
-        })).filter(s => (s.content && (s.content.en || s.content.km)) || (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length));
+            courseNotes: sec.courseNotes || [],
+            customTable: sec.customTable || null
+        })).filter(s => 
+            (s.content && (s.content.en || s.content.km)) || 
+            (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
+            (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows)
+        );
     }
     
     // Legacy support
@@ -301,6 +306,26 @@ const pageTitle = computed(() => {
     const t = (val) => translations[val] || val;
     return `${t(props.program.majors)} — ${t(props.program.department)}`;
 });
+const formatCellHtml = (text) => {
+    if (!text) return '';
+    if (typeof text !== 'string') return text;
+
+    // If already contains Quill HTML elements
+    if (text.includes('<p>') || text.includes('<ul>') || text.includes('<ol>') || text.includes('<br>')) {
+        return text;
+    }
+
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return '';
+
+    const isBulletList = lines.some(l => /^[-•*]|\d+\.\s/.test(l));
+    if (isBulletList) {
+        const items = lines.map(l => l.replace(/^[-•*]|\d+\.\s*/, '').trim()).filter(Boolean);
+        return `<ul class="list-disc list-outside ml-4 space-y-1">${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+    }
+
+    return lines.join('<br>');
+};
 </script>
 
 <template>
@@ -484,8 +509,63 @@ const pageTitle = computed(() => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Custom Data Table Render -->
+                    <div v-else-if="s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows" class="mb-8">
+                        <!-- Blue Pill Badge -->
+                        <div v-if="s.customTable.badge && (s.customTable.badge.en || s.customTable.badge.km)" class="mb-3">
+                            <h3 class="inline-block rounded-md bg-[#3852a4] px-3 py-1 text-sm font-extrabold text-white">
+                                {{ $t(s.customTable.badge) }}
+                            </h3>
+                        </div>
+
+                        <!-- Subtitle -->
+                        <p v-if="s.customTable.subtitle && (s.customTable.subtitle.en || s.customTable.subtitle.km)" class="mb-2 text-sm font-bold text-[#1c244b]">
+                            {{ $t(s.customTable.subtitle) }}
+                        </p>
+
+                        <div class="overflow-x-auto my-2">
+                            <table class="w-full min-w-[420px] border-collapse overflow-hidden rounded-md text-sm shadow-sm border border-gray-100">
+                                <thead>
+                                    <tr class="bg-[#1c244b] text-left text-white">
+                                        <th v-if="s.customTable.showRowNumbers !== false" class="w-14 px-3 py-2 font-bold text-center border-r border-slate-700/50">
+                                            {{ (s.customTable.indexHeader && typeof s.customTable.indexHeader === 'string') ? s.customTable.indexHeader : (s.customTable.indexHeader ? $t(s.customTable.indexHeader) : '#') }}
+                                        </th>
+                                        <th v-for="head in s.customTable.headers" :key="head.key" 
+                                            class="px-3.5 py-3 font-bold border-r border-slate-700/50 last:border-r-0"
+                                            :class="[
+                                                (head.headerAlign || head.align || 'center') === 'center' ? 'text-center' : (head.headerAlign || head.align) === 'right' ? 'text-right' : 'text-left',
+                                                head.width === '12' ? 'w-12' : head.width === '20' ? 'w-20' : head.width === '32' ? 'w-32' : head.width === '48' ? 'w-48' : ''
+                                            ]">
+                                            {{ $t(head.label) }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, rIdx) in s.customTable.rows" :key="rIdx" class="border-b border-gray-100 odd:bg-white even:bg-gray-50 hover:bg-blue-50/30 transition-colors">
+                                        <td v-if="s.customTable.showRowNumbers !== false" class="px-3 py-2 text-center text-gray-500 font-semibold text-xs border-r border-gray-100">{{ rIdx + 1 }}</td>
+                                        <td v-for="head in s.customTable.headers" :key="head.key" 
+                                            class="ql-editor px-3.5 py-3 text-gray-800 border-r border-gray-100 last:border-r-0 leading-relaxed"
+                                            :class="[
+                                                (head.bodyAlign || head.align || 'left') === 'center' ? 'text-center' : (head.bodyAlign || head.align) === 'right' ? 'text-right' : 'text-left',
+                                                (head.verticalAlign || 'top') === 'middle' ? 'align-middle' : (head.verticalAlign || 'top') === 'bottom' ? 'align-bottom' : 'align-top'
+                                            ]"
+                                            v-html="formatCellHtml($t(row[head.key]))">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer Note / Summary Pill -->
+                        <div v-if="s.customTable.footerNote && (s.customTable.footerNote.en || s.customTable.footerNote.km)" class="flex justify-end mt-3">
+                            <div class="flex gap-6 rounded-md bg-[#f4f7fb] px-4 py-2 text-sm font-extrabold text-[#1c244b]">
+                                <span>{{ $t(s.customTable.footerNote) }}</span>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <p v-else class="text-sm italic text-gray-400">{{ $t('Program details will be published soon.') }}</p>
+                    <p v-else-if="!s.content && !s.courseStructure?.length && !s.customTable" class="text-sm italic text-gray-400">{{ $t('Program details will be published soon.') }}</p>
                 </section>
             </article>
         </div>
