@@ -2007,8 +2007,27 @@ const deleteTranslation = (id) => {
 const contactSettingsForm = useForm({
     contact_hero_title: props.contactSettings?.contact_hero_title || 'Contact Us',
     contact_hero_description: props.contactSettings?.contact_hero_description || 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.',
-    contact_image: props.contactSettings?.contact_image || ''
+    contact_image: props.contactSettings?.contact_image || '',
+    address: props.settings?.address ? (typeof props.settings.address === 'string' ? parseTranslatable(props.settings.address) : props.settings.address) : { en: 'Kompong Spue, Cambodia', km: 'Kompong Spue, Cambodia' },
+    email: props.settings?.email || '',
+    phone: props.settings?.phone || '',
+    direct_lines: props.settings?.direct_lines ? [...props.settings.direct_lines] : [],
+    social_links: props.settings?.social_links ? JSON.parse(JSON.stringify(props.settings.social_links)) : []
 });
+
+const addContactDirectLine = () => {
+    contactSettingsForm.direct_lines.push('');
+};
+const removeContactDirectLine = (idx) => {
+    contactSettingsForm.direct_lines.splice(idx, 1);
+};
+
+const addContactSocialLink = () => {
+    contactSettingsForm.social_links.push({ label: '', href: '' });
+};
+const removeContactSocialLink = (idx) => {
+    contactSettingsForm.social_links.splice(idx, 1);
+};
 
 const submitContactSettings = () => {
     contactSettingsForm.post(route('admin.contact.save'), {
@@ -2034,11 +2053,7 @@ const restoreDefaultContactSettings = () => {
 
 // --- SETTINGS STATE & ACTIONS ---
 const settingsForm = useForm({
-    address: props.settings.address || { en: 'Kompong Spue, Cambodia', km: 'Kompong Spue, Cambodia' },
-    phone: props.settings.phone || '',
-    email: props.settings.email || '',
-    copyright: props.settings.copyright || { en: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', km: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.' },
-    direct_lines: [...(props.settings.direct_lines || [])],
+    copyright: props.settings.copyright ? (typeof props.settings.copyright === 'string' ? parseTranslatable(props.settings.copyright) : props.settings.copyright) : { en: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', km: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.' },
     social_links: [...(props.settings.social_links || [])],
     header_bg_color: props.settings.header_bg_color || '#ffffff',
     header_text_color: props.settings.header_text_color || '#000000',
@@ -2055,28 +2070,21 @@ const settingsForm = useForm({
     privacy_policy_url: props.settings.privacy_policy_url || '#',
     footer_credits: props.settings.footer_credits || 'Made with ♥ by IT Department Students',
     footer_map_url: props.settings.footer_map_url || '',
-    footer_map_label: props.settings.footer_map_label || { en: 'Phnom Penh Campus', km: 'Phnom Penh Campus' },
-    footer_working_hours_weekday_label: props.settings.footer_working_hours_weekday_label || { en: 'Mon - Sat', km: 'Mon - Sat' },
-    footer_working_hours_weekday_time: props.settings.footer_working_hours_weekday_time || { en: '8:00 AM - 5:00 PM', km: '8:00 AM - 5:00 PM' },
-    footer_working_hours_weekend_label: props.settings.footer_working_hours_weekend_label || { en: 'Weekend', km: 'Weekend' },
-    footer_working_hours_weekend_time: props.settings.footer_working_hours_weekend_time || { en: '8:00 AM - 4:00 PM', km: '8:00 AM - 4:00 PM' },
+    footer_map_label: props.settings.footer_map_label ? parseTranslatable(props.settings.footer_map_label) : { en: 'Phnom Penh Campus', km: 'Phnom Penh Campus' },
+    footer_working_hours_weekday_label: props.settings.footer_working_hours_weekday_label ? parseTranslatable(props.settings.footer_working_hours_weekday_label) : { en: 'Mon - Sat', km: 'Mon - Sat' },
+    footer_working_hours_weekday_time: props.settings.footer_working_hours_weekday_time ? parseTranslatable(props.settings.footer_working_hours_weekday_time) : { en: '8:00 AM - 5:00 PM', km: '8:00 AM - 5:00 PM' },
+    footer_working_hours_weekend_label: props.settings.footer_working_hours_weekend_label ? parseTranslatable(props.settings.footer_working_hours_weekend_label) : { en: 'Weekend', km: 'Weekend' },
+    footer_working_hours_weekend_time: props.settings.footer_working_hours_weekend_time ? parseTranslatable(props.settings.footer_working_hours_weekend_time) : { en: '8:00 AM - 4:00 PM', km: '8:00 AM - 4:00 PM' },
     footer_quick_links: (props.settings.footer_quick_links || []).map(link => ({
         ...link,
-        label: typeof link.label === 'string' ? { en: link.label, km: link.label } : (link.label || { en: '', km: '' })
+        label: typeof link.label === 'string' ? parseTranslatable(link.label) : (link.label || { en: '', km: '' })
     })),
-    footer_label_quick_links: props.settings.footer_label_quick_links || { en: 'Our Details', km: 'Our Details' },
-    footer_label_working_hours: props.settings.footer_label_working_hours || { en: 'Working Hours', km: 'Working Hours' },
-    footer_label_social_media: props.settings.footer_label_social_media || { en: 'Social Media', km: 'Social Media' },
-    footer_label_contact_info: props.settings.footer_label_contact_info || { en: 'Contact Information', km: 'Contact Information' },
-    footer_label_direct_lines: props.settings.footer_label_direct_lines || { en: 'Direct Lines', km: 'Direct Lines' }
+    footer_label_quick_links: props.settings.footer_label_quick_links ? parseTranslatable(props.settings.footer_label_quick_links) : { en: 'Our Details', km: 'Our Details' },
+    footer_label_working_hours: props.settings.footer_label_working_hours ? parseTranslatable(props.settings.footer_label_working_hours) : { en: 'Working Hours', km: 'Working Hours' },
+    footer_label_social_media: props.settings.footer_label_social_media ? parseTranslatable(props.settings.footer_label_social_media) : { en: 'Social Media', km: 'Social Media' },
+    footer_label_contact_info: props.settings.footer_label_contact_info ? parseTranslatable(props.settings.footer_label_contact_info) : { en: 'Contact Information', km: 'Contact Information' },
+    footer_label_direct_lines: props.settings.footer_label_direct_lines ? parseTranslatable(props.settings.footer_label_direct_lines) : { en: 'Direct Lines', km: 'Direct Lines' }
 });
-
-const addDirectLine = () => {
-    settingsForm.direct_lines.push('');
-};
-const removeDirectLine = (idx) => {
-    settingsForm.direct_lines.splice(idx, 1);
-};
 
 const addSocialLink = () => {
     settingsForm.social_links.push({ label: '', href: '', svg: '', class: '', bg_color: '#ffffff', hover_color: '#1877f2', icon_color: '#000000', icon_hover_color: '#ffffff', disable_bg_hover: false, disable_icon_hover: false });
@@ -4520,51 +4528,8 @@ const stripHtml = (html) => {
                                 <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Campus Address</label>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input 
-                                            type="text" 
-                                            v-model="settingsForm.address.en" 
-                                            placeholder="EN Address"
-                                            required 
-                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-blue-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                        />
-                                        <input 
-                                            type="text" 
-                                            v-model="settingsForm.address.km" 
-                                            placeholder="KM Address"
-                                            required 
-                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-blue-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Official Phone Number</label>
-                                    <input 
-                                        type="text" 
-                                        v-model="settingsForm.phone" 
-                                        required 
-                                        class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                        :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-blue-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                    />
-                                </div>
-                            </div>
-
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 relative z-10">
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Email Address</label>
-                                    <input 
-                                        type="email" 
-                                        v-model="settingsForm.email" 
-                                        required 
-                                        class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                        :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-blue-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                    />
-                                </div>
+
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Footer Copyright Signature</label>
                                     <div class="grid grid-cols-2 gap-2">
@@ -4964,35 +4929,7 @@ const stripHtml = (html) => {
                                 </div>
                             </div>
 
-                            <!-- Direct lines -->
-                            <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
-                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center dark:bg-emerald-500/20 dark:text-emerald-400">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                        </div>
-                                        <label class="block text-[11px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Footer Direct Telephone Lines</label>
-                                    </div>
-                                    <button type="button" @click="addDirectLine" class="text-[11px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white px-4 py-2 rounded-xl transition-colors dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg> Add Phone Line
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div v-for="(line, idx) in settingsForm.direct_lines" :key="idx" class="flex items-center relative group">
-                                        <input 
-                                            type="text" 
-                                            v-model="settingsForm.direct_lines[idx]" 
-                                            required 
-                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-emerald-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                            placeholder="e.g. 099 111 222" 
-                                        />
-                                        <button type="button" @click="removeDirectLine(idx)" class="absolute right-3 p-1.5 rounded-full bg-red-100 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white" title="Remove line">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <!-- Quick Links -->
                             <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
@@ -5286,6 +5223,78 @@ const stripHtml = (html) => {
                                             </div>
                                         </div>
                                         <div v-else class="text-xs text-slate-400 italic">No image selected</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center dark:bg-indigo-500/20 dark:text-indigo-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black uppercase tracking-wider" :class="isDarkMode ? 'text-white' : 'text-slate-900'">Contact Information</h4>
+                                        <p class="text-xs" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Manage address, email, phone numbers, and social media links displayed on the contact page.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Address (English)</label>
+                                        <textarea v-model="contactSettingsForm.address.en" rows="3" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Address (Khmer)</label>
+                                        <textarea v-model="contactSettingsForm.address.km" rows="3" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'"></textarea>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mt-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Email Address</label>
+                                        <input type="email" v-model="contactSettingsForm.email" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Main Phone Number</label>
+                                        <input type="text" v-model="contactSettingsForm.phone" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Direct Telephone Lines</label>
+                                        <button type="button" @click="addContactDirectLine" class="text-[11px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-xl transition-colors dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white flex items-center gap-1.5">
+                                            + Add Line
+                                        </button>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div v-for="(line, idx) in contactSettingsForm.direct_lines" :key="'cdl'+idx" class="flex items-center gap-3">
+                                            <input type="text" v-model="contactSettingsForm.direct_lines[idx]" placeholder="e.g. 099 111 111" class="flex-1 rounded-xl text-sm border-2 focus:outline-none px-4 py-2 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                            <button type="button" @click="removeContactDirectLine(idx)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white flex-shrink-0">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                        <div v-if="contactSettingsForm.direct_lines.length === 0" class="text-xs text-center italic py-2" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">No direct lines added.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Social Media Links</label>
+                                        <button type="button" @click="addContactSocialLink" class="text-[11px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-xl transition-colors dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white flex items-center gap-1.5">
+                                            + Add Link
+                                        </button>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div v-for="(link, idx) in contactSettingsForm.social_links" :key="'csl'+idx" class="flex flex-col sm:flex-row items-center gap-3">
+                                            <input type="text" v-model="contactSettingsForm.social_links[idx].label" placeholder="Platform (e.g. Facebook)" class="w-full sm:w-1/3 rounded-xl text-sm border-2 focus:outline-none px-4 py-2 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                            <div class="flex items-center gap-3 w-full sm:w-2/3">
+                                                <input type="text" v-model="contactSettingsForm.social_links[idx].href" placeholder="URL Link" class="flex-1 rounded-xl text-sm border-2 focus:outline-none px-4 py-2 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                                <button type="button" @click="removeContactSocialLink(idx)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white flex-shrink-0">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div v-if="contactSettingsForm.social_links.length === 0" class="text-xs text-center italic py-2" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">No social links added.</div>
                                     </div>
                                 </div>
                             </div>

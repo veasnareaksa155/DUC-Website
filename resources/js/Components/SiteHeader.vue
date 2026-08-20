@@ -231,8 +231,8 @@ const getActiveLinks = (menuLabel) => {
 
 const page = usePage();
 
-const headerBgColor = computed(() => '#115D6D');
-const headerTextColor = computed(() => '#ffffff');
+const headerBgColor = computed(() => '#ebf4f6');
+const headerTextColor = computed(() => '#115D6D');
 const navBgColor = computed(() => '#0d4a57');
 const navTextColor = computed(() => '#ffffff');
 const navActiveColor = computed(() => '#ffb800');
@@ -435,7 +435,7 @@ const navItems = computed(() => {
         <!-- Spacer to prevent content jump on scroll -->
         <div class="w-full h-[75px] sm:h-[90px] md:h-[95px] lg:h-[166px]"></div>
 
-        <header class="shadow-lg font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500 pt-3.5 pb-0 bg-[#115D6D] text-white" :style="{ backgroundColor: headerBgColor || '#115D6D', color: headerTextColor || '#ffffff' }">
+        <header class="font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500 pt-3.5 pb-0" :style="{ backgroundColor: headerBgColor || '#115D6D', color: headerTextColor || '#ffffff' }">
         
         <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 pb-3 transition-all duration-300">
             
@@ -444,14 +444,14 @@ const navItems = computed(() => {
                      class="w-auto object-contain drop-shadow-md transition-all duration-300"
                      :class="isScrolled ? 'h-[48px] sm:h-[62px] md:h-[72px]' : 'h-[48px] sm:h-[68px] md:h-[76px] lg:h-[92px]'" />
                 
-                <div class="flex flex-col justify-center drop-shadow-md">
+                <div class="flex flex-col justify-center drop-shadow-md transition-all duration-300">
                     <h1 class="leading-none tracking-wide transition-all duration-300" 
-                        :style="{ color: headerTextColor, fontFamily: '\'Moul\', \'Khmer OS Moul\', serif' }"
+                        :style="{ color: '#115D6D', fontFamily: '\'Moul\', \'Khmer OS Moul\', serif' }"
                         :class="isScrolled ? 'text-[13px] sm:text-[18px] md:text-[20px] lg:text-[22px]' : 'text-[13px] sm:text-[20px] md:text-[20px] lg:text-[26px]'">
                         សាកលវិទ្យាល័យឌីជីថលកម្ពុជា
                     </h1>
                     <h2 class="mt-1 font-[900] leading-none tracking-[0.03em] transition-all duration-300" 
-                        :style="{ color: headerTextColor, fontFamily: '\'Old English Text MT\', \'UnifrakturMaguntia\', serif' }"
+                        :style="{ color: '#AF8319', fontFamily: '\'Old English Text MT\', \'UnifrakturMaguntia\', serif' }"
                         :class="isScrolled ? 'text-[14px] sm:text-[20px] md:text-[22px] lg:text-[25px]' : 'text-[14px] sm:text-[22px] md:text-[22px] lg:text-[29px]'">
                         Digital University of Cambodia
                     </h2>
@@ -476,7 +476,7 @@ const navItems = computed(() => {
                 </div>
             </div>
 
-            <button @click="toggleMenu" class="lg:hidden flex items-center justify-center rounded-md p-2 text-white hover:bg-white/10 transition-colors z-50">
+            <button @click="toggleMenu" class="lg:hidden flex items-center justify-center rounded-md p-2 hover:bg-black/10 transition-colors z-50" :style="{ color: headerTextColor }">
                 <span class="sr-only">Toggle main menu</span>
                 <svg class="block h-7 w-7" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
@@ -492,11 +492,11 @@ const navItems = computed(() => {
                     @mouseenter="item.megaMenu && (openMegaMenu = item.label, resetActiveTab(item))"
                     @mouseleave="item.megaMenu && (openMegaMenu = null)"
                 >
-                    <Link :href="item.href" class="group relative flex h-full items-center gap-2 text-[14.5px] font-medium transition-all cursor-pointer"
+                    <Link :href="item.href" class="group relative flex h-full items-center gap-2 text-[13px] uppercase tracking-wide font-semibold transition-all cursor-pointer antialiased"
                           :style="{ color: navTextColor }"
                           :class="isItemActive(item) ? 'opacity-100' : 'opacity-90 hover:opacity-100'">
-                        <span class="flex items-center justify-center transition-transform group-hover:-translate-y-0.5" v-html="item.icon"></span>
-                        <span class="transition-transform group-hover:-translate-y-0.5">{{ $t(item.label) }}</span>
+                        <span class="flex items-center justify-center transition-transform group-hover:-translate-y-0.5 [&>svg]:w-4 [&>svg]:h-4 [&>svg]:stroke-[1.5px]" v-html="item.icon"></span>
+                        <span class="transition-transform group-hover:-translate-y-0.5 mt-0.5">{{ $t(item.label) }}</span>
                         <svg v-if="item.hasMenu" class="w-3.5 h-3.5 ml-0.5 mt-0.5 transition-transform group-hover:-translate-y-0.5" :class="{ 'translate-y-0.5': openMegaMenu === item.label }" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                         </svg>
