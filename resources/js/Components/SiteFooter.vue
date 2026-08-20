@@ -2,13 +2,27 @@
 import { onMounted, ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
-const details = [
-    { label: 'About', href: '/about' },
-    { label: 'Office', href: '/personnel_and_human_resources' },
-    { label: 'Faculties', href: '/faculties' }
-];
-
 const page = usePage();
+
+const getLocLabel = (obj, defaultStr) => {
+    if (!obj) return defaultStr;
+    if (typeof obj === 'object') return obj[page.props.locale] || obj.en || defaultStr;
+    return obj;
+};
+
+const footerMapUrl = computed(() => page.props.settings?.footer_map_url || 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1518.5686343584584!2d104.76673604474675!3d11.416249673060195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2skh!4v1783649287380!5m2!1sen!2skh');
+const footerMapLabel = computed(() => getLocLabel(page.props.settings?.footer_map_label, 'Phnom Penh Campus'));
+const footerQuickLinks = computed(() => page.props.settings?.footer_quick_links || []);
+const footerWorkingHoursWeekdayLabel = computed(() => getLocLabel(page.props.settings?.footer_working_hours_weekday_label, 'Mon - Sat'));
+const footerWorkingHoursWeekdayTime = computed(() => getLocLabel(page.props.settings?.footer_working_hours_weekday_time, '8:00 AM - 5:00 PM'));
+const footerWorkingHoursWeekendLabel = computed(() => getLocLabel(page.props.settings?.footer_working_hours_weekend_label, 'Weekend'));
+const footerWorkingHoursWeekendTime = computed(() => getLocLabel(page.props.settings?.footer_working_hours_weekend_time, '8:00 AM - 4:00 PM'));
+const footerLabelQuickLinks = computed(() => getLocLabel(page.props.settings?.footer_label_quick_links, 'Our Details'));
+const footerLabelWorkingHours = computed(() => getLocLabel(page.props.settings?.footer_label_working_hours, 'Working Hours'));
+const footerLabelSocialMedia = computed(() => getLocLabel(page.props.settings?.footer_label_social_media, 'Social Media'));
+const footerLabelContactInfo = computed(() => getLocLabel(page.props.settings?.footer_label_contact_info, 'Contact Information'));
+const footerLabelDirectLines = computed(() => getLocLabel(page.props.settings?.footer_label_direct_lines, 'Direct Lines'));
+
 
 const footerBgColor = computed(() => '#115D6D');
 const footerBorderColor = computed(() => '#00a0e9');
@@ -82,10 +96,10 @@ const socialLinks = computed(() => {
     });
 });
 
-const address = computed(() => page.props.settings?.address || 'Kompong Spue, Cambodia');
+const address = computed(() => getLocLabel(page.props.settings?.address, 'Kompong Spue, Cambodia'));
 const phone = computed(() => page.props.settings?.phone || '012 4444 12');
 const email = computed(() => page.props.settings?.email || 'duc2024@gmail.com');
-const copyright = computed(() => page.props.settings?.copyright || 'Copyright © 2024 Digital University of Cambodia. All rights reserved.');
+const copyright = computed(() => getLocLabel(page.props.settings?.copyright, 'Copyright © 2024 Digital University of Cambodia. All rights reserved.'));
 const directLines = computed(() => page.props.settings?.direct_lines || []);
 
 // Simple intersection observer to trigger animations when scrolling down
@@ -121,11 +135,11 @@ onMounted(() => {
                 >
                     <div class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm text-[#115D6D] px-3 py-1.5 rounded-full shadow-md text-xs font-bold flex items-center gap-2">
                         <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
-                        {{ $t('Phnom Penh Campus') }}
+                        {{ $t(footerMapLabel) }}
                     </div>
 
-                    <!-- Map iframe with updated '1d' parameter to zoom out -->
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1518.5686343584584!2d104.76673604474675!3d11.416249673060195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2skh!4v1783649287380!5m2!1sen!2skh" class="w-full flex-1 border-0" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    <!-- Map iframe with dynamic URL -->
+                    <iframe :src="footerMapUrl" class="w-full flex-1 border-0" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
                 
                 </div>
 
@@ -133,33 +147,35 @@ onMounted(() => {
                     class="text-[14px] leading-relaxed text-white/80 transition-all duration-1000 delay-200 transform"
                     :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'"
                 >
-                    <h2 class="mb-3 text-base font-bold text-white tracking-wide flex items-center gap-2">
-                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t('Our Details') }}
-                    </h2>
-                    
-                    <ul class="space-y-2 mb-6">
-                        <li v-for="item in details" :key="item.label" class="group flex items-center gap-3">
-                            <span class="text-[#f5d98f] transition-transform group-hover:translate-x-1">▸</span>
-                            <a :href="item.href" class="transition-colors hover:text-white hover:underline underline-offset-4 decoration-white/30">{{ $t(item.label) }}</a>
-                        </li>
-                    </ul>
+                    <template v-if="footerQuickLinks && footerQuickLinks.length > 0">
+                        <h2 class="mb-3 text-base font-bold text-white tracking-wide flex items-center gap-2">
+                            <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t(footerLabelQuickLinks) }}
+                        </h2>
+                        
+                        <ul class="space-y-2 mb-6">
+                            <li v-for="item in footerQuickLinks" :key="item.label" class="group flex items-center gap-3">
+                                <span class="text-[#f5d98f] transition-transform group-hover:translate-x-1">▸</span>
+                                <a :href="item.href" class="transition-colors hover:text-white hover:underline underline-offset-4 decoration-white/30">{{ $t(getLocLabel(item.label, 'Link')) }}</a>
+                            </li>
+                        </ul>
+                    </template>
 
                     <h2 class="mb-3 text-base font-bold text-white tracking-wide flex items-center gap-2">
-                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t('Working Hours') }}
+                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t(footerLabelWorkingHours) }}
                     </h2>
                     <div class="bg-white/5 rounded-xl p-3 border border-white/10 mb-6">
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-white font-medium">{{ $t('Mon - Sat') }}</span>
-                            <span class="text-[#f5d98f] font-mono text-xs">8:00 AM - 5:00 PM</span>
+                            <span class="text-white font-medium">{{ $t(footerWorkingHoursWeekdayLabel) }}</span>
+                            <span class="text-[#f5d98f] font-mono text-xs">{{ $t(footerWorkingHoursWeekdayTime) }}</span>
                         </div>
                         <div class="flex justify-between items-center border-t border-white/10 pt-1.5">
-                            <span class="text-white font-medium">{{ $t('Weekend') }}</span>
-                            <span class="text-[#f5d98f] font-mono text-xs">8:00 AM - 4:00 PM</span>
+                            <span class="text-white font-medium">{{ $t(footerWorkingHoursWeekendLabel) }}</span>
+                            <span class="text-[#f5d98f] font-mono text-xs">{{ $t(footerWorkingHoursWeekendTime) }}</span>
                         </div>
                     </div>
 
                     <h2 class="mb-3 text-base font-bold text-white tracking-wide flex items-center gap-2">
-                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t('Social Media') }}
+                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t(footerLabelSocialMedia) }}
                     </h2>
                     
                     <div class="flex gap-4">
@@ -184,7 +200,7 @@ onMounted(() => {
                     :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'"
                 >
                     <h2 class="mb-4 text-base font-bold text-white tracking-wide flex items-center gap-2">
-                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t('Contact Information') }}
+                        <span class="w-6 h-[2px] bg-[#f5d98f]"></span> {{ $t(footerLabelContactInfo) }}
                     </h2>
                     
                     <ul class="space-y-4 mb-6">
@@ -222,7 +238,7 @@ onMounted(() => {
                     <div class="bg-[#0d4a57] rounded-2xl p-4 border border-white/10 relative overflow-hidden group mt-auto shadow-inner">
                         <div class="absolute -right-6 -top-6 w-20 h-20 bg-white/5 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
                         
-                        <h2 class="mb-2 text-xs font-bold text-gray-300 uppercase tracking-widest relative z-10">{{ $t('Direct Lines') }}</h2>
+                        <h2 class="mb-2 text-xs font-bold text-gray-300 uppercase tracking-widest relative z-10">{{ $t(footerLabelDirectLines) }}</h2>
                         <div class="space-y-1.5 relative z-10 font-mono text-white text-[13px]">
                             <p v-for="line in directLines" :key="line" class="flex items-center gap-2 hover:text-[#f5d98f] cursor-default transition-colors">
                                 <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>

@@ -24,6 +24,28 @@ class HandleInertiaRequests extends Middleware
         return parent::version($request);
     }
 
+    private function parseBilingual($key, $default)
+    {
+        $value = Setting::getValue($key);
+        if (empty($value)) {
+            return ['en' => $default, 'km' => $default];
+        }
+        
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return [
+                'en' => $decoded['en'] ?? $default,
+                'km' => $decoded['km'] ?? $default,
+            ];
+        }
+        
+        // Fallback for legacy plain strings
+        return [
+            'en' => $value,
+            'km' => $value,
+        ];
+    }
+
     /**
      * Define the props that are shared by default.
      *
@@ -40,10 +62,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'navigation' => NavigationItem::getTree(),
             'settings' => [
-                'address' => Setting::getValue('address', 'Kompong Spue, Cambodia'),
+                'address' => $this->parseBilingual('address', 'Kompong Spue, Cambodia'),
                 'phone' => Setting::getValue('phone', '012 4444 12'),
                 'email' => Setting::getValue('email', 'duc2024@gmail.com'),
-                'copyright' => Setting::getValue('copyright', 'Copyright © 2024 Digital University of Cambodia. All rights reserved.'),
+                'copyright' => $this->parseBilingual('copyright', 'Copyright © 2024 Digital University of Cambodia. All rights reserved.'),
                 'direct_lines' => json_decode(Setting::getValue('direct_lines', '[]'), true),
                 'social_links' => json_decode(Setting::getValue('social_links', '[]'), true),
                 'header_bg_color' => Setting::getValue('header_bg_color', '#ffffff'),
@@ -61,6 +83,21 @@ class HandleInertiaRequests extends Middleware
                 'privacy_policy_label' => Setting::getValue('privacy_policy_label', 'Privacy Policy'),
                 'privacy_policy_url' => Setting::getValue('privacy_policy_url', '#'),
                 'footer_credits' => Setting::getValue('footer_credits', 'Made with ♥ by IT Department Students'),
+                'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
+                'contact_hero_description' => Setting::getValue('contact_hero_description', 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.'),
+                'footer_label_quick_links' => $this->parseBilingual('footer_label_quick_links', 'Our Details'),
+                'footer_label_working_hours' => $this->parseBilingual('footer_label_working_hours', 'Working Hours'),
+                'footer_label_social_media' => $this->parseBilingual('footer_label_social_media', 'Social Media'),
+                'footer_label_contact_info' => $this->parseBilingual('footer_label_contact_info', 'Contact Information'),
+                'footer_label_direct_lines' => $this->parseBilingual('footer_label_direct_lines', 'Direct Lines'),
+                
+                'footer_map_url' => Setting::getValue('footer_map_url', 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1518.5686343584584!2d104.76673604474675!3d11.416249673060195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2skh!4v1783649287380!5m2!1sen!2skh'),
+                'footer_map_label' => $this->parseBilingual('footer_map_label', 'Phnom Penh Campus'),
+                'footer_working_hours_weekday_label' => $this->parseBilingual('footer_working_hours_weekday_label', 'Mon - Sat'),
+                'footer_working_hours_weekday_time' => $this->parseBilingual('footer_working_hours_weekday_time', '8:00 AM - 5:00 PM'),
+                'footer_working_hours_weekend_label' => $this->parseBilingual('footer_working_hours_weekend_label', 'Weekend'),
+                'footer_working_hours_weekend_time' => $this->parseBilingual('footer_working_hours_weekend_time', '8:00 AM - 4:00 PM'),
+                'footer_quick_links' => json_decode(Setting::getValue('footer_quick_links', '[{"label":"About","href":"/about"},{"label":"Office","href":"/personnel_and_human_resources"},{"label":"Faculties","href":"/faculties"}]'), true),
             ]
         ];
     }

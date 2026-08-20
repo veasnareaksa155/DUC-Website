@@ -56,6 +56,13 @@ class AdminController extends Controller
                 'privacy_policy_label' => Setting::getValue('privacy_policy_label', 'Privacy Policy'),
                 'privacy_policy_url' => Setting::getValue('privacy_policy_url', '#'),
                 'footer_credits' => Setting::getValue('footer_credits', 'Made with ♥ by IT Department Students'),
+                'footer_map_url' => Setting::getValue('footer_map_url', 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1518.5686343584584!2d104.76673604474675!3d11.416249673060195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2skh!4v1783649287380!5m2!1sen!2skh'),
+                'footer_map_label' => Setting::getValue('footer_map_label', 'Phnom Penh Campus'),
+                'footer_working_hours_weekday_label' => Setting::getValue('footer_working_hours_weekday_label', 'Mon - Sat'),
+                'footer_working_hours_weekday_time' => Setting::getValue('footer_working_hours_weekday_time', '8:00 AM - 5:00 PM'),
+                'footer_working_hours_weekend_label' => Setting::getValue('footer_working_hours_weekend_label', 'Weekend'),
+                'footer_working_hours_weekend_time' => Setting::getValue('footer_working_hours_weekend_time', '8:00 AM - 4:00 PM'),
+                'footer_quick_links' => json_decode(Setting::getValue('footer_quick_links', '[{"label":"About","href":"/about"},{"label":"Office","href":"/personnel_and_human_resources"},{"label":"Faculties","href":"/faculties"}]'), true),
             ],
             'homeSettings' => [
                 'home_hero_slides' => json_decode(Setting::getValue('home_hero_slides', '[]'), true),
@@ -67,6 +74,11 @@ class AdminController extends Controller
                 'home_activities_slides' => json_decode(Setting::getValue('home_activities_slides', '[]'), true),
                 'home_graduate_attributes' => json_decode(Setting::getValue('home_graduate_attributes', '{}'), true),
                 'home_stats' => json_decode(Setting::getValue('home_stats', '[]'), true),
+            ],
+            'contactSettings' => [
+                'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
+                'contact_hero_description' => Setting::getValue('contact_hero_description', 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.'),
+                'contact_image' => Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80'),
             ]
         ]);
     }
@@ -1067,10 +1079,10 @@ class AdminController extends Controller
     public function saveSettings(Request $request)
     {
         $validated = $request->validate([
-            'address' => 'required|string|max:255',
+            'address' => 'required|array',
             'phone' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'copyright' => 'required|string|max:255',
+            'copyright' => 'required|array',
             'direct_lines' => 'required|array',
             'social_links' => 'required|array',
             'header_bg_color' => 'nullable|string|max:50',
@@ -1088,12 +1100,24 @@ class AdminController extends Controller
             'privacy_policy_label' => 'nullable|string|max:255',
             'privacy_policy_url' => 'nullable|string|max:255',
             'footer_credits' => 'nullable|string|max:255',
+            'footer_label_quick_links' => 'nullable|array',
+            'footer_label_working_hours' => 'nullable|array',
+            'footer_label_social_media' => 'nullable|array',
+            'footer_label_contact_info' => 'nullable|array',
+            'footer_label_direct_lines' => 'nullable|array',
+            'footer_map_url' => 'nullable|string',
+            'footer_map_label' => 'nullable|array',
+            'footer_working_hours_weekday_label' => 'nullable|array',
+            'footer_working_hours_weekday_time' => 'nullable|array',
+            'footer_working_hours_weekend_label' => 'nullable|array',
+            'footer_working_hours_weekend_time' => 'nullable|array',
+            'footer_quick_links' => 'nullable|array',
         ]);
 
-        Setting::setValue('address', $validated['address']);
+        Setting::setValue('address', json_encode($validated['address'] ?? ['en' => 'Kompong Spue, Cambodia', 'km' => 'Kompong Spue, Cambodia']));
         Setting::setValue('phone', $validated['phone']);
         Setting::setValue('email', $validated['email']);
-        Setting::setValue('copyright', $validated['copyright']);
+        Setting::setValue('copyright', json_encode($validated['copyright'] ?? ['en' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', 'km' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.']));
         Setting::setValue('direct_lines', json_encode($validated['direct_lines']));
         Setting::setValue('social_links', json_encode($validated['social_links']));
         Setting::setValue('header_bg_color', $validated['header_bg_color'] ?? '#ffffff');
@@ -1120,9 +1144,49 @@ class AdminController extends Controller
         Setting::setValue('privacy_policy_url', $request->has('privacy_policy_url') ? ($request->input('privacy_policy_url') ?? '') : '#');
         Setting::setValue('footer_credits', $request->has('footer_credits') ? ($request->input('footer_credits') ?? '') : 'Made with ♥ by IT Department Students');
 
+        Setting::setValue('footer_label_quick_links', json_encode($validated['footer_label_quick_links'] ?? ['en' => 'Our Details', 'km' => 'Our Details']));
+        Setting::setValue('footer_label_working_hours', json_encode($validated['footer_label_working_hours'] ?? ['en' => 'Working Hours', 'km' => 'Working Hours']));
+        Setting::setValue('footer_label_social_media', json_encode($validated['footer_label_social_media'] ?? ['en' => 'Social Media', 'km' => 'Social Media']));
+        Setting::setValue('footer_label_contact_info', json_encode($validated['footer_label_contact_info'] ?? ['en' => 'Contact Information', 'km' => 'Contact Information']));
+        Setting::setValue('footer_label_direct_lines', json_encode($validated['footer_label_direct_lines'] ?? ['en' => 'Direct Lines', 'km' => 'Direct Lines']));
+        
+        Setting::setValue('footer_map_url', $validated['footer_map_url'] ?? 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1518.5686343584584!2d104.76673604474675!3d11.416249673060195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2skh!4v1783649287380!5m2!1sen!2skh');
+        Setting::setValue('footer_map_label', json_encode($validated['footer_map_label'] ?? ['en' => 'Phnom Penh Campus', 'km' => 'Phnom Penh Campus']));
+        Setting::setValue('footer_working_hours_weekday_label', json_encode($validated['footer_working_hours_weekday_label'] ?? ['en' => 'Mon - Sat', 'km' => 'Mon - Sat']));
+        Setting::setValue('footer_working_hours_weekday_time', json_encode($validated['footer_working_hours_weekday_time'] ?? ['en' => '8:00 AM - 5:00 PM', 'km' => '8:00 AM - 5:00 PM']));
+        Setting::setValue('footer_working_hours_weekend_label', json_encode($validated['footer_working_hours_weekend_label'] ?? ['en' => 'Weekend', 'km' => 'Weekend']));
+        Setting::setValue('footer_working_hours_weekend_time', json_encode($validated['footer_working_hours_weekend_time'] ?? ['en' => '8:00 AM - 4:00 PM', 'km' => '8:00 AM - 4:00 PM']));
+        Setting::setValue('footer_quick_links', json_encode($validated['footer_quick_links'] ?? []));
+
         ActivityLog::log("Updated campus contact & social accounts settings", 'settings');
 
         return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    // --- CONTACT PAGE SETTINGS CRUD ---
+    public function saveContactSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'contact_hero_title' => 'nullable|string|max:255',
+            'contact_hero_description' => 'nullable|string',
+            'contact_image' => 'nullable',
+        ]);
+
+        Setting::setValue('contact_hero_title', $validated['contact_hero_title'] ?? 'Contact Us');
+        Setting::setValue('contact_hero_description', $validated['contact_hero_description'] ?? 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.');
+
+        $contact_image = Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80');
+        if ($request->hasFile('contact_image')) {
+            $path = $request->file('contact_image')->store('settings', 'public');
+            $contact_image = '/storage/' . $path;
+        } else if ($request->filled('contact_image') && is_string($request->input('contact_image'))) {
+            $contact_image = $request->input('contact_image');
+        }
+        Setting::setValue('contact_image', $contact_image);
+
+        ActivityLog::log("Updated contact page settings", 'settings');
+
+        return redirect()->back()->with('success', 'Contact settings updated successfully.');
     }
 
     // --- HOME PAGE SETTINGS CRUD ---

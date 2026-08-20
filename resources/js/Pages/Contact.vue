@@ -79,11 +79,11 @@ onUnmounted(() => {
                 
                 <div class="relative max-w-[1400px] md:px-6 mx-auto text-center animate-fade-in-down">
                     <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight transition-all duration-700">
-                        {{ $t('Contact Us') }}
+                        {{ settings.contact_hero_title ? $t(settings.contact_hero_title) : $t('Contact Us') }}
                     </h1>
                     <div class="mx-auto mt-4 h-1.5 w-24 bg-amber-400 rounded-full shadow-sm"></div>
                     <p class="mt-6 text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
-                        {{ $t('Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.') }}
+                        {{ settings.contact_hero_description ? $t(settings.contact_hero_description) : $t('Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.') }}
                     </p>
                 </div>
             </section>
@@ -102,7 +102,7 @@ onUnmounted(() => {
                             </div>
                             <div>
                                 <h3 class="font-bold text-slate-800 text-base sm:text-lg">{{ $t('Address') }}</h3>
-                                <p class="mt-1 text-sm sm:text-base text-slate-600 font-medium">{{ $t(settings.address) }}</p>
+                                <p class="mt-1 text-sm sm:text-base text-slate-600 font-medium">{{ $t(typeof settings.address === 'object' ? (settings.address[$page.props.locale] || settings.address.en) : settings.address) }}</p>
                             </div>
                         </div>
 

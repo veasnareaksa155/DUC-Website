@@ -81,6 +81,8 @@
         Route::post('/admin/settings', [AdminController::class, 'saveSettings'])->name('admin.settings.save');
         Route::post('/admin/settings/restore-defaults', [AdminController::class, 'restoreDefaultSettings'])->name('admin.settings.restoreDefaults');
 
+        Route::post('/admin/contact-settings', [AdminController::class, 'saveContactSettings'])->name('admin.contact.save');
+
         Route::post('/admin/translations', [AdminController::class, 'saveTranslation'])->name('admin.translations.save');
         Route::post('/admin/translations/restore-defaults', [AdminController::class, 'restoreDefaultTranslations'])->name('admin.translations.restoreDefaults');
         Route::delete('/admin/translations/{translation}', [AdminController::class, 'deleteTranslation'])->name('admin.translations.delete');
