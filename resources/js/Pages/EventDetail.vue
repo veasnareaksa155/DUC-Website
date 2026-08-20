@@ -56,14 +56,14 @@ const paragraphs = computed(() => {
 <template>
     <Head :title="$t(event.title)" />
 
-    <div class="min-h-screen bg-white font-sans text-black">
+    <div class="min-h-screen bg-[#c9e0e4] font-sans text-slate-900">
         <SiteHeader />
 
         <main class="mx-auto w-full max-w-[1400px] px-4 py-12 md:px-6">
             <div class="mb-9 flex items-center justify-between gap-4">
-                <h1 class="text-[26px] font-bold leading-tight text-black">{{ $t('Event Detail') }}</h1>
+                <h1 class="text-[26px] font-bold leading-tight text-[#115D6D]">{{ $t('Event Detail') }}</h1>
 
-                <Link href="/events" class="text-sm font-semibold text-[#3852a4] transition hover:text-[#00a6ff]">
+                <Link href="/events" class="text-sm font-semibold text-[#115D6D] transition hover:text-[#00a6ff]">
                     {{ $t('Back to Events') }}
                 </Link>
             </div>

@@ -213,11 +213,15 @@ const sections = computed(() => {
             courseStructure: sec.courseStructure || [],
             courseNotes: sec.courseNotes || [],
             customTable: sec.customTable || null
-        })).filter(s => 
-            (s.content && (s.content.en || s.content.km)) || 
-            (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
-            (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows)
-        );
+        })).filter(s => {
+            const hasContent = (s.content && (s.content.en || s.content.km)) || 
+                (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
+                (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows);
+            if (!hasContent) return false;
+
+            const labelStr = (typeof s.label === 'object' ? (s.label.en || s.label.km || '') : String(s.label || '')).toLowerCase();
+            return labelStr.includes('career');
+        });
     }
     
     // Legacy support
@@ -232,7 +236,13 @@ const sections = computed(() => {
             courseStructure: isCourseStruct ? props.program[sec.key] : [],
             courseNotes: isCourseStruct && props.program.courseNotes ? props.program.courseNotes.map(n => typeof n === 'string' ? { en: n, km: n } : n) : []
         };
-    }).filter(s => (s.content && (s.content.en || s.content.km)) || (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length));
+    }).filter(s => {
+        const hasContent = (s.content && (s.content.en || s.content.km)) || (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length);
+        if (!hasContent) return false;
+
+        const labelStr = (typeof s.label === 'object' ? (s.label.en || s.label.km || '') : String(s.label || '')).toLowerCase();
+        return labelStr.includes('career');
+    });
 });
 
 const activeSection = ref(sections.value.length > 0 ? sections.value[0].id : 'program-aim');
@@ -332,13 +342,13 @@ const formatCellHtml = (text) => {
     <Head :title="pageTitle" />
 
     <SiteHeader/>
-    <div class="bg-white font-sans">
+    <div class="bg-[#c9e0e4] font-sans min-h-screen">
         <!-- Page header / breadcrumb block -->
-        <div class="bg-[#f4f7fb] border-b border-gray-200">
+        <div class="bg-[#c9e0e4] border-b border-slate-300/80">
             <div class="mx-auto max-w-[1400px] px-4 py-8 md:px-6 md:py-10">
                 <Link
                     :href="facultyHref"
-                    class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3852a4] hover:underline"
+                    class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#115D6D] hover:underline"
                 >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -366,7 +376,7 @@ const formatCellHtml = (text) => {
         </div>
 
         <!-- Mobile TOC: horizontal chip scroller -->
-        <div ref="mobileTocRef" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-30 overflow-x-auto border-b border-gray-200 bg-white/95 backdrop-blur px-4 py-3 lg:hidden no-scrollbar">
+        <div ref="mobileTocRef" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-30 overflow-x-auto border-b border-gray-300/70 bg-[#c9e0e4]/95 backdrop-blur px-4 py-3 lg:hidden no-scrollbar">
             <div class="flex w-max gap-2">
                 <button
                     v-for="s in sections"

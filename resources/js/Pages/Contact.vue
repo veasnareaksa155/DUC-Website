@@ -71,10 +71,10 @@ onUnmounted(() => {
     <Head :title="$t('Contact Us')" />
 
     <SiteHeader />
-    <div class="min-h-screen bg-white text-slate-900 overflow-x-hidden">
+    <div class="min-h-screen bg-[#c9e0e4] text-slate-900 overflow-x-hidden">
 
         <main class="bg-gray-50/50">
-            <section class="bg-[#0f2154] text-white py-20 sm:py-28 px-4 relative overflow-hidden">
+            <section class="relative w-full bg-[#115D6D] text-white py-16 sm:py-24 px-4 overflow-hidden shadow-sm">
                 <div class="absolute inset-0 opacity-15 bg-[linear-gradient(to_right,#4f4f4f_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
                 
                 <div class="relative max-w-[1400px] md:px-6 mx-auto text-center animate-fade-in-down">

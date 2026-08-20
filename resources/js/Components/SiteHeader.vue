@@ -231,11 +231,11 @@ const getActiveLinks = (menuLabel) => {
 
 const page = usePage();
 
-const headerBgColor = computed(() => page.props.settings?.header_bg_color || '#ffffff');
-const headerTextColor = computed(() => page.props.settings?.header_text_color || '#000000');
-const navBgColor = computed(() => page.props.settings?.nav_bg_color || '#3852a4');
-const navTextColor = computed(() => page.props.settings?.nav_text_color || '#ffffff');
-const navActiveColor = computed(() => page.props.settings?.nav_active_color || '#ffb800');
+const headerBgColor = computed(() => '#115D6D');
+const headerTextColor = computed(() => '#ffffff');
+const navBgColor = computed(() => '#0d4a57');
+const navTextColor = computed(() => '#ffffff');
+const navActiveColor = computed(() => '#ffb800');
 
 const isActive = (href) => {
     if (!href || href === '#') return false;
@@ -324,32 +324,97 @@ const rawNavigation = computed(() => {
     return page.props.navigation || [];
 });
 
-const navItems = computed(() => {
-    const items = rawNavigation.value.map((item) => {
-        const hasMenu = item.children && item.children.length > 0;
-        const megaMenu = hasMenu ? item.children.map(cat => {
-            const hasLinks = cat.children && cat.children.length > 0;
-            return {
-                id: cat.id,
-                title: cat.label,
-                href: cat.href || '#',
-                links: hasLinks ? cat.children.map(lnk => ({
-                    id: lnk.id,
-                    label: lnk.label,
-                    href: lnk.href || '#'
-                })) : []
-            };
-        }) : null;
+const isOffice = (label, href) => {
+    const l = (typeof label === 'object' ? (label.en || label.km || '') : String(label || '')).toLowerCase();
+    const h = String(href || '').toLowerCase();
+    return l.includes('office') || h.includes('/office');
+};
 
-        return {
-            id: item.id,
-            label: item.label,
-            href: item.href || '#',
-            icon: item.icon || '',
-            hasMenu: hasMenu,
-            megaMenu: megaMenu
-        };
+const navItems = computed(() => {
+    const items = rawNavigation.value
+        .filter(item => !isOffice(item.label, item.href))
+        .map((item) => {
+            const hasMenu = item.children && item.children.length > 0;
+            const megaMenu = hasMenu ? item.children
+                .filter(cat => !isOffice(cat.label, cat.href))
+                .map(cat => {
+                    const hasLinks = cat.children && cat.children.length > 0;
+                    const links = hasLinks ? cat.children
+                        .filter(lnk => !isOffice(lnk.label, lnk.href))
+                        .map(lnk => ({
+                            id: lnk.id,
+                            label: lnk.label,
+                            href: lnk.href || '#'
+                        })) : [];
+                    return {
+                        id: cat.id,
+                        title: cat.label,
+                        href: cat.href || '#',
+                        links: links
+                    };
+                }).filter(cat => cat.links.length > 0 || cat.href !== '#') : null;
+
+            return {
+                id: item.id,
+                label: item.label,
+                href: item.href || '#',
+                icon: item.icon || '',
+                hasMenu: megaMenu && megaMenu.length > 0,
+                megaMenu: megaMenu
+            };
+        });
+
+    const scholarshipItem = {
+        id: 'scholarship-nav-item',
+        label: { en: 'Scholarship', km: 'អាហារូបករណ៍' },
+        href: '/#scholarship',
+        icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>',
+        hasMenu: false,
+        megaMenu: null
+    };
+
+    const videoItem = {
+        id: 'video-nav-item',
+        label: { en: 'Video', km: 'វីដេអូ' },
+        href: '/#video',
+        icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+        hasMenu: false,
+        megaMenu: null
+    };
+
+    const hasScholarship = items.some(it => {
+        const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
+        return l.includes('scholarship');
     });
+
+    const hasVideo = items.some(it => {
+        const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
+        return l.includes('video');
+    });
+
+    if (!hasScholarship) {
+        const facIndex = items.findIndex(it => {
+            const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
+            return l.includes('faculty') || l.includes('faculties');
+        });
+        if (facIndex !== -1) {
+            items.splice(facIndex + 1, 0, scholarshipItem);
+        } else {
+            items.push(scholarshipItem);
+        }
+    }
+
+    if (!hasVideo) {
+        const contactIndex = items.findIndex(it => {
+            const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
+            return l.includes('contact');
+        });
+        if (contactIndex !== -1) {
+            items.splice(contactIndex, 0, videoItem);
+        } else {
+            items.push(videoItem);
+        }
+    }
 
     // Deduplicate top-level items strictly by label content and href
     const seen = new Set();
@@ -368,16 +433,16 @@ const navItems = computed(() => {
 <template>
     <div class="relative w-full">
         <!-- Spacer to prevent content jump on scroll -->
-        <div class="w-full h-[45px] sm:h-[65px] md:h-[70px] lg:h-[142px]"></div>
+        <div class="w-full h-[75px] sm:h-[90px] md:h-[95px] lg:h-[166px]"></div>
 
-        <header class="drop-shadow-sm font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500" :style="{ backgroundColor: headerBgColor, color: headerTextColor }">
+        <header class="shadow-lg font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500 pt-3.5 pb-0 bg-[#115D6D] text-white" :style="{ backgroundColor: headerBgColor || '#115D6D', color: headerTextColor || '#ffffff' }">
         
-        <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 transition-all duration-300">
+        <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 pb-3 transition-all duration-300">
             
             <Link href="/" class="flex items-center z-50">
                 <img src="./path/to/duc-logo.png" alt="DUC Logo" 
                      class="w-auto object-contain drop-shadow-md transition-all duration-300"
-                     :class="isScrolled ? 'h-[45px] sm:h-[60px] md:h-[70px]' : 'h-[45px] sm:h-[65px] md:h-[70px] lg:h-[90px]'" />
+                     :class="isScrolled ? 'h-[48px] sm:h-[62px] md:h-[72px]' : 'h-[48px] sm:h-[68px] md:h-[76px] lg:h-[92px]'" />
                 
                 <div class="flex flex-col justify-center drop-shadow-md">
                     <h1 class="leading-none tracking-wide transition-all duration-300" 
@@ -411,14 +476,14 @@ const navItems = computed(() => {
                 </div>
             </div>
 
-            <button @click="toggleMenu" class="lg:hidden flex items-center justify-center rounded-md p-2 text-gray-800 hover:bg-gray-100 transition-colors z-50">
+            <button @click="toggleMenu" class="lg:hidden flex items-center justify-center rounded-md p-2 text-white hover:bg-white/10 transition-colors z-50">
                 <span class="sr-only">Toggle main menu</span>
                 <svg class="block h-7 w-7" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
         </div>
 
-        <nav class="hidden lg:block transition-colors duration-500" :style="{ backgroundColor: navBgColor }">
-            <div class="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-10 px-6 h-[52px]">
+        <nav class="hidden lg:block transition-colors duration-500 bg-[#0d4a57] border-t border-white/15 relative" :style="{ backgroundColor: navBgColor || '#0d4a57' }">
+            <div class="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-10 px-6 h-[60px]">
                 
                 <div 
                     v-for="(item, index) in navItems" 
@@ -436,8 +501,8 @@ const navItems = computed(() => {
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                         </svg>
                         
-                        <!-- Animated Underline (Shows on Hover & Active) -->
-                        <span class="absolute bottom-0 left-1/2 h-[4px] -translate-x-1/2 rounded-t-lg transition-all duration-300"
+                        <!-- Animated Underline (Contained cleanly inside nav bar) -->
+                        <span class="absolute bottom-[3px] left-0 h-[3px] rounded-full transition-all duration-300"
                               :style="{ backgroundColor: navActiveColor }"
                               :class="isItemActive(item) ? 'w-full opacity-100' : 'w-0 opacity-0 group-hover:w-full group-hover:opacity-100'">
                         </span>

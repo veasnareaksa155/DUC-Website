@@ -159,13 +159,12 @@ const normalizedSections = computed(() => {
     <Head :title="officeTitle" />
     
     <SiteHeader />
-    <div class="min-h-screen flex flex-col bg-slate-50 text-gray-900 font-sans selection:bg-blue-300 overflow-hidden relative">
+    <div class="min-h-screen flex flex-col bg-[#c9e0e4] text-slate-900 font-sans selection:bg-amber-400 overflow-hidden relative">
         
         <!-- VIBRANT Abstract Background Mesh -->
         <div class="absolute top-0 left-0 right-0 h-[700px] overflow-hidden -z-10 pointer-events-none">
-            <div class="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-cyan-400/20 blur-[120px] mix-blend-multiply opacity-80 animate-blob"></div>
-            <div class="absolute top-10 -left-20 w-[500px] h-[500px] rounded-full bg-blue-400/20 blur-[120px] mix-blend-multiply opacity-80 animate-blob animation-delay-2000"></div>
-            <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px]"></div>
+            <div class="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-teal-400/10 blur-[120px] mix-blend-multiply opacity-60 animate-blob"></div>
+            <div class="absolute top-10 -left-20 w-[500px] h-[500px] rounded-full bg-cyan-400/10 blur-[120px] mix-blend-multiply opacity-60 animate-blob animation-delay-2000"></div>
         </div>
 
 

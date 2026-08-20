@@ -141,11 +141,15 @@ const currentDegreePrograms = computed(() => {
             courseStructure: sec.courseStructure || [],
             courseNotes: sec.courseNotes || [],
             customTable: sec.customTable || null
-        })).filter(s => 
-            (s.content && (s.content.en || s.content.km)) || 
-            (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
-            (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows)
-        );
+        })).filter(s => {
+            const hasContent = (s.content && (s.content.en || s.content.km)) || 
+                (s.type === 'course_structure' && s.courseStructure && s.courseStructure.length) ||
+                (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows);
+            if (!hasContent) return false;
+
+            const labelStr = (typeof s.label === 'object' ? (s.label.en || s.label.km || '') : String(s.label || '')).toLowerCase();
+            return labelStr.includes('career');
+        });
     }
     
     // Legacy format
@@ -155,6 +159,10 @@ const currentDegreePrograms = computed(() => {
         if (progObj[sec.key]) {
             const isCourseStruct = sec.key === 'courseStructure' && Array.isArray(progObj[sec.key]);
             if (isCourseStruct || progObj[sec.key].en || progObj[sec.key].km) {
+                const labelStr = (typeof sec.label === 'object' ? (sec.label.en || sec.label.km || '') : String(sec.label || '')).toLowerCase();
+                if (!labelStr.includes('career')) {
+                    continue;
+                }
                 filledSections.push({
                     idx: i,
                     type: isCourseStruct ? 'course_structure' : 'richtext',
@@ -179,12 +187,8 @@ watch(activeProgramIndex, async (newVal) => {
             const container = mobileTocRef.value;
             const tabRect = activeTab.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
-            
-            // If the tab is out of the visible area of the container, scroll to it
-            if (tabRect.left < containerRect.left || tabRect.right > containerRect.right) {
-                const scrollLeft = activeTab.offsetLeft - (container.offsetWidth / 2) + (activeTab.offsetWidth / 2);
-                container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-            }
+            const scrollLeft = activeTab.offsetLeft - (containerRect.width / 2) + (tabRect.width / 2);
+            container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
         }
     }
 });
@@ -226,25 +230,19 @@ const scrollToSection = (idx) => {
     activeProgramIndex.value = idx;
     const el = document.getElementById('program-section-' + idx);
     if (el) {
-        const y = el.getBoundingClientRect().top + window.scrollY - 100;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 };
-const formatCellHtml = (text) => {
+
+const formatTextToList = (text) => {
     if (!text) return '';
-    if (typeof text !== 'string') return text;
-
-    // If already contains Quill HTML elements
-    if (text.includes('<p>') || text.includes('<ul>') || text.includes('<ol>') || text.includes('<br>')) {
-        return text;
+    const textStr = typeof text === 'object' ? (text.en || text.km || '') : String(text);
+    if (textStr.includes('<') && textStr.includes('>')) {
+        return textStr;
     }
-
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (lines.length === 0) return '';
-
-    const isBulletList = lines.some(l => /^[-•*]|\d+\.\s/.test(l));
-    if (isBulletList) {
-        const items = lines.map(l => l.replace(/^[-•*]|\d+\.\s*/, '').trim()).filter(Boolean);
+    const lines = textStr.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length > 1) {
+        const items = lines.map(l => l.startsWith('-') || l.startsWith('•') ? l.substring(1).trim() : l);
         return `<ul class="list-disc list-outside ml-4 space-y-1">${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
     }
 
@@ -255,15 +253,15 @@ const formatCellHtml = (text) => {
 <template>
     <Head :title="$t(department.title)" />
 
-    <div class="min-h-screen bg-slate-50 font-sans flex flex-col">
+    <div class="min-h-screen bg-[#c9e0e4] font-sans flex flex-col">
         <SiteHeader />
 
         <!-- Page Header Block -->
-        <div class="bg-[#f4f7fb] border-b border-gray-200">
+        <div class="bg-[#c9e0e4] border-b border-slate-300/60">
             <div class="mx-auto max-w-[1400px] px-4 py-8 md:px-6 md:py-10">
                 <Link
                     :href="`/department/${facultyId}`"
-                    class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3852a4] hover:underline"
+                    class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#115D6D] hover:underline"
                 >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -275,13 +273,13 @@ const formatCellHtml = (text) => {
                     {{ $t(department.title) }}
                 </h1>
                 <div v-if="majorsData.length > 0" class="mt-4 mb-6 flex flex-wrap items-center gap-2">
-                    <span class="text-gray-500 mr-1">{{ $t('Majors') }}:</span>
+                    <span class="text-gray-600 mr-1 font-medium">{{ $t('Majors') }}:</span>
                     <button
                         v-for="(major, idx) in majorsData"
                         :key="idx"
                         @click="activeMajorIndex = idx; activeProgramIndex = 0;"
-                        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors border"
-                        :class="activeMajorIndex === idx ? 'bg-[#1c244b] text-white border-[#1c244b]' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors border shadow-sm"
+                        :class="activeMajorIndex === idx ? 'bg-[#1c244b] text-white border-[#1c244b]' : 'bg-white/80 text-gray-700 border-gray-300 hover:bg-white'"
                     >
                         {{ $t(major.name) }}
                     </button>
@@ -292,15 +290,15 @@ const formatCellHtml = (text) => {
                 <div class="flex flex-wrap gap-3">
                     <button 
                         @click="activeDegree = 'bachelor'; activeProgramIndex = 0;"
-                        class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
-                        :class="activeDegree === 'bachelor' ? 'bg-[#3852a4] text-white border-2 border-[#3852a4]' : 'bg-transparent text-[#3852a4] border-2 border-[#3852a4] hover:bg-blue-50'"
+                        class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+                        :class="activeDegree === 'bachelor' ? 'bg-[#115D6D] text-white border-2 border-[#115D6D]' : 'bg-white/70 text-[#115D6D] border-2 border-[#115D6D] hover:bg-white'"
                     >
                         {{ $t("Bachelor's Degree") }}
                     </button>
                     <button 
                         @click="activeDegree = 'associate'; activeProgramIndex = 0;"
-                        class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
-                        :class="activeDegree === 'associate' ? 'bg-[#3852a4] text-white border-2 border-[#3852a4]' : 'bg-transparent text-[#3852a4] border-2 border-[#3852a4] hover:bg-blue-50'"
+                        class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+                        :class="activeDegree === 'associate' ? 'bg-[#115D6D] text-white border-2 border-[#115D6D]' : 'bg-white/70 text-[#115D6D] border-2 border-[#115D6D] hover:bg-white'"
                     >
                         {{ $t("Associate's Degree") }}
                     </button>
@@ -310,7 +308,7 @@ const formatCellHtml = (text) => {
 
 
         <!-- Mobile TOC: horizontal chip scroller -->
-        <div ref="mobileTocRef" v-if="currentDegreePrograms.length > 0" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-40 overflow-x-auto border-b border-gray-200 bg-white/95 backdrop-blur px-4 py-3 lg:hidden shadow-sm no-scrollbar">
+        <div ref="mobileTocRef" v-if="currentDegreePrograms.length > 0" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-40 overflow-x-auto border-b border-gray-300/70 bg-[#c9e0e4]/95 backdrop-blur px-4 py-3 lg:hidden shadow-sm no-scrollbar">
             <div class="flex w-max gap-2">
                 <button
                     v-for="(prog, idx) in currentDegreePrograms"

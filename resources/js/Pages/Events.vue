@@ -160,12 +160,9 @@ const stripHtml = (html) => {
 <template>
     <Head :title="$t('News/Events')" />
 
-    <div class="min-h-screen bg-white font-sans text-gray-900">
+    <div class="min-h-screen bg-[#c9e0e4] font-sans text-slate-900">
         <SiteHeader />
         <div class="relative overflow-x-hidden pb-16">
-            <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 h-[260px] bg-gradient-to-t from-[#dfe5f3] to-transparent"
-            ></div>
 
             <!-- UPDATED WRAPPER: Changed max-width to 1400px and matched padding to header (px-4 md:px-6) -->
             <main

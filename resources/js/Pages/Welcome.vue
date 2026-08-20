@@ -295,15 +295,23 @@ const stripHtml = (html) => {
     if (!html) return '';
     return html.replace(/<\/?[^>]+(>|$)/g, "");
 };
+
+const videoBgColor = computed(() => {
+    const color = props.homeSettings?.home_video_bg_color;
+    if (color && color !== '#0f2154' && color !== '#0d184a' && color !== '#3852a4') {
+        return color;
+    }
+    return '#115D6D';
+});
 </script>
 
 <template>
     <Head title="Digital University of Cambodia" />
 
-    <div class="min-h-screen bg-white text-slate-900">
+    <div class="min-h-screen bg-[#c9e0e4] text-slate-900">
         <SiteHeader />
 
-        <main class="bg-gray-50/50 overflow-hidden">
+        <main class="bg-[#c9e0e4] overflow-hidden">
             <section class="relative w-full overflow-hidden bg-slate-950">
                 <div class="relative w-full group hero-swiper">
                     <Swiper
@@ -338,13 +346,10 @@ const stripHtml = (html) => {
                 </div>
             </section>
 
-<!-- THE REST OF YOUR TEMPLATE REMAINS EXACTLY THE SAME... -->
-<!-- Just keep all your other sections intact below here -->
-
-            <section class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
+            <section class="scroll-reveal transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                    <h2 class="text-2xl font-bold text-[#2f47aa]">{{ $t('News/Event') }}</h2>
-                    <Link href="/events" class="text-sm font-semibold text-[#00a0e9] hover:underline flex items-center gap-1">
+                    <h2 class="text-2xl font-bold text-[#115D6D]">{{ $t('News/Event') }}</h2>
+                    <Link href="/events" class="text-sm font-semibold text-[#115D6D] hover:underline flex items-center gap-1">
                         {{ $t('See All Events') }} <span class="text-lg">→</span>
                     </Link>
                 </div>
@@ -414,9 +419,9 @@ const stripHtml = (html) => {
 
             <hr class="border-gray-200" />
 
-            <section class="scholarship-block scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-slate-50/5">
+            <section class="scholarship-block scroll-reveal transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-slate-50/50">
                 <div class="text-center">
-                    <h2 class="text-2xl font-bold text-[#2f47aa]">{{ $t('Scholarship for Students') }}</h2>
+                    <h2 class="text-2xl font-bold text-[#115D6D]">{{ $t('Scholarship for Students') }}</h2>
                     <div class="mx-auto mt-2 h-1 w-36 bg-amber-400 rounded-full"></div>
                 </div>
 
@@ -427,12 +432,12 @@ const stripHtml = (html) => {
 
                     <div class="lg:col-span-7 space-y-4">
                         <div class="flex items-start gap-2 text-xl font-bold text-slate-800 lg:text-2xl">
-                            <span class="text-orange-500 mt-1">◆</span>
-                            <h3 class="font-extrabold text-[#2f47aa] text-xl lg:text-2xl scholarship-title">{{ $t(scholarship.title) }}</h3>
+                            <span class="text-amber-500 mt-1">◆</span>
+                            <h3 class="font-extrabold text-[#115D6D] text-xl lg:text-2xl scholarship-title">{{ $t(scholarship.title) }}</h3>
                         </div>
                         <div class="text-slate-600 space-y-4 leading-relaxed text-sm md:text-base">
                             <div class="whitespace-pre-wrap ql-editor px-0 scholarship-text-content" v-html="$t(scholarship.description)"></div>
-                            <p v-if="scholarship.footer_text" class="font-semibold text-[#2f47aa] italic scholarship-footer-text">
+                            <p v-if="scholarship.footer_text" class="font-semibold text-[#115D6D] italic scholarship-footer-text">
                                 {{ $t(scholarship.footer_text) }}
                             </p>
                         </div>
@@ -442,18 +447,18 @@ const stripHtml = (html) => {
 
             <hr class="border-gray-200" />
 
-            <section class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
+            <section class="scroll-reveal transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
                 <div class="text-center">
-                    <h2 class="text-2xl font-bold text-[#2f47aa]">{{ $t('Four Years at Digital University of Cambodia') }}</h2>
+                    <h2 class="text-2xl font-bold text-[#115D6D]">{{ $t('Four Years at Digital University of Cambodia') }}</h2>
                     <div class="mx-auto mt-2 h-1 w-56 bg-amber-400 rounded-full"></div>
                 </div>
 
                 <div class="mt-12 grid gap-8 sm:grid-cols-2 w-full">
                     <div v-for="(year, index) in fourYears" :key="index"
                          class="rounded-xl p-8 shadow-sm flex flex-col justify-center min-h-[220px] hover:shadow-lg transition duration-300"
-                         :class="(index === 0 || index === 3) ? 'bg-[#0f2154] text-white' : 'bg-white text-slate-800 border border-gray-200'">
+                         :class="(index === 0 || index === 3) ? 'bg-[#115D6D] text-white' : 'bg-white text-slate-800 border border-gray-200'">
                         <h3 class="text-xl font-bold text-center" :class="(index === 0 || index === 3) ? 'text-white' : 'text-slate-900'">{{ $t(year.title) }}</h3>
-                        <div class="mt-4 text-sm text-center leading-relaxed ql-editor px-0" :class="(index === 0 || index === 3) ? 'text-slate-300' : 'text-slate-500'" v-html="$t(year.description)">
+                        <div class="mt-4 text-sm text-center leading-relaxed ql-editor px-0" :class="(index === 0 || index === 3) ? 'text-slate-200' : 'text-slate-500'" v-html="$t(year.description)">
                         </div>
                     </div>
                 </div>
@@ -461,14 +466,14 @@ const stripHtml = (html) => {
 
             <section
                 ref="videoSection"
-                class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out w-full overflow-hidden bg-cover bg-center bg-no-repeat bg-blend-multiply py-16"
+                class="scroll-reveal transition-all duration-1000 ease-out w-full overflow-hidden bg-cover bg-center bg-no-repeat bg-blend-multiply py-16"
                 :style="{
                     backgroundImage: props.homeSettings?.home_video_bg_image ? `url(${props.homeSettings.home_video_bg_image})` : 'none',
-                    backgroundColor: props.homeSettings?.home_video_bg_color || '#0f2154'
+                    backgroundColor: videoBgColor
                 }"
             >
                 <div class="relative max-w-[1400px] px-4 md:px-6 mx-auto w-full">
-                    <div class="relative aspect-video w-full rounded-2xl overflow-hidden border-4 border-blue-500 shadow-2xl bg-black">
+                    <div class="relative aspect-video w-full rounded-2xl overflow-hidden border-4 border-teal-400 shadow-2xl bg-black">
                         <iframe
                             ref="videoIframe"
                             class="absolute inset-0 w-full h-full"
@@ -485,9 +490,9 @@ const stripHtml = (html) => {
 
             <hr class="border-gray-200" />
 
-            <section v-if="activitiesSlides && activitiesSlides.length > 0" class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
+            <section v-if="activitiesSlides && activitiesSlides.length > 0" class="scroll-reveal transition-all duration-1000 ease-out mx-auto max-w-[1400px] px-4 md:px-6 py-16 bg-white">
                 <div class="text-center">
-                    <h2 class="text-2xl font-bold text-[#2f47aa]">{{ $t('Students Activities') }}</h2>
+                    <h2 class="text-2xl font-bold text-[#115D6D]">{{ $t('Students Activities') }}</h2>
                     <div class="mx-auto mt-2 h-1 w-28 bg-amber-400 rounded-full"></div>
                 </div>
 
@@ -518,7 +523,7 @@ const stripHtml = (html) => {
                         </SwiperSlide>
                     </Swiper>
 
-                    <!-- Custom Navigation Buttons (Match styling of previous arrows) -->
+                    <!-- Custom Navigation Buttons -->
                     <button class="activities-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white p-3 shadow-lg border border-gray-100 hover:bg-gray-50 text-slate-800 transition focus:outline-none hidden sm:flex disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -532,13 +537,13 @@ const stripHtml = (html) => {
                 </div>
             </section>
 
-            <section class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out w-full py-16 sm:py-20 bg-gradient-to-b from-slate-50 via-white to-blue-50/30 border-t border-b border-gray-100 relative overflow-hidden">
+            <section class="scroll-reveal transition-all duration-1000 ease-out w-full py-16 sm:py-20 bg-gradient-to-b from-slate-50 via-white to-teal-50/40 border-t border-b border-gray-100 relative overflow-hidden">
                 <!-- Subtle Background Glows -->
-                <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
                 
                 <div class="mx-auto max-w-[1400px] px-4 md:px-6 relative z-10 text-center">
                     <!-- Section Header -->
-                    <h2 class="text-2xl sm:text-3xl font-black text-[#0f2154] tracking-tight">{{ $t('Digital University of Cambodia') }}</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black text-[#115D6D] tracking-tight">{{ $t('Digital University of Cambodia') }}</h2>
                     <div class="mx-auto mt-3 h-1.5 w-24 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full shadow-sm"></div>
 
                     <!-- Dynamic Counter Cards Grid -->
@@ -546,10 +551,10 @@ const stripHtml = (html) => {
                         <div 
                             v-for="(item, index) in statsItems" 
                             :key="'stat-card-'+index"
-                            class="group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-[0_10px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(15,33,84,0.08)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center"
+                            class="group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-[0_10px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(17,93,109,0.12)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center"
                         >
                             <!-- Icon Badge -->
-                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#0f2154] border border-blue-100/60 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300">
+                            <div class="w-16 h-16 rounded-2xl bg-teal-50 text-[#115D6D] border border-teal-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 group-hover:bg-[#115D6D] group-hover:text-white transition-all duration-300">
                                 <!-- Dynamic Icon Render -->
                                 <svg v-if="item.icon === 'building'" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
                                 <svg v-else-if="item.icon === 'student'" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
@@ -574,18 +579,18 @@ const stripHtml = (html) => {
                 </div>
             </section>
 
-            <section class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out w-full py-16 bg-[#b2c0df]/40 border-t border-slate-300">
+            <section class="scroll-reveal transition-all duration-1000 ease-out w-full py-16 bg-[#115D6D]/10 border-t border-slate-200">
                 <div class="mx-auto max-w-[1400px] px-4 md:px-6">
                     <div class="text-center">
-                        <h2 class="text-2xl font-bold text-[#0f2154]">{{ $t(graduateAttributes.title) }}</h2>
+                        <h2 class="text-2xl font-bold text-[#115D6D]">{{ $t(graduateAttributes.title) }}</h2>
                         <div class="mx-auto mt-2 h-1 w-32 bg-amber-400 rounded-full"></div>
                     </div>
 
                     <div class="mt-12 flex flex-col md:flex-row gap-8 w-full items-stretch">
                         <!-- Text-only cards column -->
                         <div v-if="graduateAttributes.cards.some(c => !c.image)" class="flex-1 flex flex-col gap-8">
-                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => !c.image)" :key="'text-'+index" class="rounded-[32px] bg-[#dce6f7] p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
-                                <h3 class="text-xl font-bold text-slate-900 tracking-tight">{{ $t(card.title) }}</h3>
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => !c.image)" :key="'text-'+index" class="rounded-[32px] bg-white border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                                <h3 class="text-xl font-bold text-[#115D6D] tracking-tight">{{ $t(card.title) }}</h3>
                                 <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
                                     {{ $t(card.description) }}
                                 </p>
@@ -594,9 +599,9 @@ const stripHtml = (html) => {
                         
                         <!-- Image cards column -->
                         <div v-if="graduateAttributes.cards.some(c => c.image)" class="flex-1 flex flex-col gap-8">
-                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => c.image)" :key="'img-'+index" class="rounded-[32px] bg-[#dce6f7] p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => c.image)" :key="'img-'+index" class="rounded-[32px] bg-white border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
                                 <div class="flex flex-col">
-                                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">{{ $t(card.title) }}</h3>
+                                    <h3 class="text-xl font-bold text-[#115D6D] tracking-tight">{{ $t(card.title) }}</h3>
                                     <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
                                         {{ $t(card.description) }}
                                     </p>

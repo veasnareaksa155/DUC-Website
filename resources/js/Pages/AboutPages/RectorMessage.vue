@@ -60,7 +60,7 @@ const paragraphs = computed(() => {
 <template>
     <Head :title="$t('Rector\'s Message')" />
 
-    <div class="min-h-screen bg-white font-sans text-black flex flex-col">
+    <div class="min-h-screen bg-[#c9e0e4] font-sans text-slate-900 flex flex-col">
         <SiteHeader />
 
         <main

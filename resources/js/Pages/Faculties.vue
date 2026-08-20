@@ -36,13 +36,13 @@ const getFacultyImage = (faculty) => {
 <template>
     <Head :title="$t('Faculties')" />
     
-    <div class="min-h-screen flex flex-col bg-white text-gray-900 font-sans">
+    <div class="min-h-screen flex flex-col bg-[#c9e0e4] text-slate-900 font-sans">
         <SiteHeader />
 
         <!-- UPDATED WRAPPER: Changed to max-w-[1400px] and matched padding to header -->
         <main class="flex-grow mx-auto w-full max-w-[1400px] px-4 md:px-6 py-12">
-            <div class="mb-10 border-b pb-4">
-                <h1 class="text-3xl md:text-4xl font-bold text-[#0f2154] mb-2 mt-[-20px] text-left">{{ $t('Faculties') }}</h1>
+            <div class="mb-10 border-b border-slate-300/60 pb-4">
+                <h1 class="text-3xl md:text-4xl font-bold text-[#115D6D] mb-2 text-left">{{ $t('Faculties') }}</h1>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

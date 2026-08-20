@@ -10,13 +10,13 @@ const details = [
 
 const page = usePage();
 
-const footerBgColor = computed(() => page.props.settings?.footer_bg_color || '#0d184a');
-const footerBorderColor = computed(() => page.props.settings?.footer_border_color || '#04a8f5');
-const footerTextColor = computed(() => page.props.settings?.footer_text_color || '#ffffff');
+const footerBgColor = computed(() => '#115D6D');
+const footerBorderColor = computed(() => '#00a0e9');
+const footerTextColor = computed(() => '#ffffff');
 
-const subFooterBgColor = computed(() => page.props.settings?.sub_footer_bg_color || '#081033');
-const subFooterTextColor = computed(() => page.props.settings?.sub_footer_text_color || '#94a3b8');
-const subFooterBorderColor = computed(() => page.props.settings?.sub_footer_border_color || '#1e293b');
+const subFooterBgColor = computed(() => '#0d4a57');
+const subFooterTextColor = computed(() => '#cbd5e1');
+const subFooterBorderColor = computed(() => '#0f4e5c');
 
 const privacyPolicyLabel = computed(() => page.props.settings?.privacy_policy_label ?? 'Privacy Policy');
 const privacyPolicyUrl = computed(() => page.props.settings?.privacy_policy_url ?? '#');
@@ -119,7 +119,7 @@ onMounted(() => {
                     class="relative overflow-hidden rounded-3xl bg-white/5 shadow-2xl ring-1 ring-white/10 transition-all duration-1000 transform flex flex-col min-h-[200px] h-full"
                     :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'"
                 >
-                    <div class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm text-[#0d184a] px-3 py-1.5 rounded-full shadow-md text-xs font-bold flex items-center gap-2">
+                    <div class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm text-[#115D6D] px-3 py-1.5 rounded-full shadow-md text-xs font-bold flex items-center gap-2">
                         <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
                         {{ $t('Phnom Penh Campus') }}
                     </div>
@@ -189,7 +189,7 @@ onMounted(() => {
                     
                     <ul class="space-y-4 mb-6">
                         <li class="flex items-start gap-3 group">
-                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#0d184a]">
+                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#115D6D]">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             </div>
                             <div>
@@ -199,7 +199,7 @@ onMounted(() => {
                         </li>
                         
                         <li class="flex items-start gap-3 group">
-                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#0d184a]">
+                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#115D6D]">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                             </div>
                             <div>
@@ -209,7 +209,7 @@ onMounted(() => {
                         </li>
 
                         <li class="flex items-start gap-3 group">
-                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#0d184a]">
+                            <div class="p-1.5 bg-white/10 rounded-lg text-[#f5d98f] transition-colors group-hover:bg-[#f5d98f] group-hover:text-[#115D6D]">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                             </div>
                             <div>
@@ -219,7 +219,7 @@ onMounted(() => {
                         </li>
                     </ul>
 
-                    <div class="bg-[#152366] rounded-2xl p-4 border border-white/5 relative overflow-hidden group mt-auto">
+                    <div class="bg-[#0d4a57] rounded-2xl p-4 border border-white/10 relative overflow-hidden group mt-auto shadow-inner">
                         <div class="absolute -right-6 -top-6 w-20 h-20 bg-white/5 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
                         
                         <h2 class="mb-2 text-xs font-bold text-gray-300 uppercase tracking-widest relative z-10">{{ $t('Direct Lines') }}</h2>
