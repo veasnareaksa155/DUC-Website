@@ -74,6 +74,7 @@ class AdminController extends Controller
                 'home_activities_slides' => json_decode(Setting::getValue('home_activities_slides', '[]'), true),
                 'home_graduate_attributes' => json_decode(Setting::getValue('home_graduate_attributes', '{}'), true),
                 'home_stats' => json_decode(Setting::getValue('home_stats', '[]'), true),
+                'videos_list' => json_decode(Setting::getValue('videos_list', '[]'), true),
             ],
             'contactSettings' => [
                 'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
@@ -1213,6 +1214,7 @@ class AdminController extends Controller
             'home_activities_slides' => 'nullable|array',
             'home_graduate_attributes' => 'nullable|array',
             'home_stats' => 'nullable|array',
+            'videos_list' => 'nullable|array',
         ]);
 
         $home_hero_slides = $validated['home_hero_slides'] ?? [];
@@ -1271,8 +1273,20 @@ class AdminController extends Controller
         Setting::setValue('home_activities_slides', json_encode($home_activities_slides));
         Setting::setValue('home_graduate_attributes', json_encode($home_graduate_attributes));
         Setting::setValue('home_stats', json_encode($validated['home_stats'] ?? []));
+        $videos_list = $validated['videos_list'] ?? [];
+        foreach ($videos_list as $index => &$video) {
+            if ($request->hasFile("videos_list.{$index}.file")) {
+                $path = $request->file("videos_list.{$index}.file")->store('videos', 'public');
+                $video['url'] = '/storage/' . $path;
+            }
+            if (isset($video['file'])) {
+                unset($video['file']);
+            }
+        }
 
-        ActivityLog::log("Updated landing page builder settings", 'home');
+        Setting::setValue('videos_list', json_encode($videos_list));
+
+        ActivityLog::log("Updated home page settings", 'home');
 
         return redirect()->back()->with('success', 'Home page settings updated successfully.');
     }

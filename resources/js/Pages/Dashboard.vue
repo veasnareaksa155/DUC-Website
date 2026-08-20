@@ -2185,6 +2185,13 @@ const homeSettingsForm = useForm({
         value: item.value || '',
         label: parseTranslatable(item.label),
         icon: item.icon || 'building'
+    })),
+    videos_list: (props.homeSettings?.videos_list || []).map(video => ({
+        type: video.type || 'youtube',
+        url: video.url || '',
+        file: null,
+        title: parseTranslatable(video.title),
+        description: parseTranslatable(video.description)
     }))
 });
 
@@ -2282,6 +2289,34 @@ const moveStatDown = (idx) => {
     const temp = homeSettingsForm.home_stats[idx];
     homeSettingsForm.home_stats[idx] = homeSettingsForm.home_stats[idx + 1];
     homeSettingsForm.home_stats[idx + 1] = temp;
+};
+
+const addVideoItem = () => {
+    homeSettingsForm.videos_list.push({
+        type: 'youtube',
+        url: '',
+        file: null,
+        title: { en: 'New Video Title', km: 'ចំណងជើងវីដេអូថ្មី' },
+        description: { en: '', km: '' }
+    });
+};
+
+const removeVideoItem = (idx) => {
+    homeSettingsForm.videos_list.splice(idx, 1);
+};
+
+const moveVideoUp = (idx) => {
+    if (idx <= 0) return;
+    const temp = homeSettingsForm.videos_list[idx];
+    homeSettingsForm.videos_list[idx] = homeSettingsForm.videos_list[idx - 1];
+    homeSettingsForm.videos_list[idx - 1] = temp;
+};
+
+const moveVideoDown = (idx) => {
+    if (idx >= homeSettingsForm.videos_list.length - 1) return;
+    const temp = homeSettingsForm.videos_list[idx];
+    homeSettingsForm.videos_list[idx] = homeSettingsForm.videos_list[idx + 1];
+    homeSettingsForm.videos_list[idx + 1] = temp;
 };
 
 const addHeroSlide = () => {
@@ -5295,6 +5330,106 @@ const stripHtml = (html) => {
                                             </div>
                                         </div>
                                         <div v-if="contactSettingsForm.social_links.length === 0" class="text-xs text-center italic py-2" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">No social links added.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TAB: VIDEOS PAGE -->
+                <div v-if="activeTab === 'videos'" class="animate-fadeIn space-y-8">
+                    <!-- Sticky Header -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-50 p-4 sm:px-6 bg-white/70 dark:bg-[#0c101b]/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-blue-900/5 dark:shadow-black/20 transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black leading-tight mb-1" :class="isDarkMode ? 'text-white' : 'text-slate-900'">Videos Page Builder</h3>
+                                <p class="text-sm" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Manage school action videos and their descriptions.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" @click="addVideoItem" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold shadow-lg shadow-emerald-500/30 transition-all active:scale-95">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add New Video
+                            </button>
+                            <button @click="submitHomeSettings" :disabled="homeSettingsForm.processing" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+                                <svg v-if="homeSettingsForm.processing" class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                {{ homeSettingsForm.processing ? 'Saving...' : 'Save Videos Settings' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="submitHomeSettings">
+                        <div class="bg-white dark:bg-[#0c101b] border border-slate-200 dark:border-[#1a2333] shadow-sm rounded-3xl overflow-hidden mb-6 transition-all">
+                            <div class="p-6 sm:p-8">
+                                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 class="text-lg font-bold" :class="isDarkMode ? 'text-white' : 'text-slate-800'">Manage Videos List</h3>
+                                </div>
+                                <div v-if="homeSettingsForm.videos_list.length === 0" class="py-8 text-center border-2 border-dashed rounded-xl" :class="isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-400'">
+                                    <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                    <p class="text-sm font-semibold">No videos added yet.</p>
+                                    <p class="text-xs mt-1">Click "Add New Video" to start showcasing your school activities.</p>
+                                </div>
+                                <div v-else class="space-y-6">
+                                    <div v-for="(item, idx) in homeSettingsForm.videos_list" :key="'video-'+idx" class="p-5 rounded-2xl border transition-all duration-200" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]/50' : 'border-slate-200 bg-slate-50'">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <h4 class="font-bold text-sm" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Video #{{ idx + 1 }}</h4>
+                                            <div class="flex gap-1.5">
+                                                <button type="button" @click="moveVideoUp(idx)" :disabled="idx === 0" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                                </button>
+                                                <button type="button" @click="moveVideoDown(idx)" :disabled="idx === homeSettingsForm.videos_list.length - 1" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                </button>
+                                                <button type="button" @click="removeVideoItem(idx)" class="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 ml-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="md:col-span-2">
+                                                <label class="block text-xs font-bold mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Video Source Type <span class="text-red-500">*</span></label>
+                                                <select v-model="item.type" class="w-full rounded-xl text-sm border focus:outline-none px-4 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-blue-500'">
+                                                    <option value="youtube">YouTube / Vimeo (URL)</option>
+                                                    <option value="facebook">Facebook (URL)</option>
+                                                    <option value="tiktok">TikTok (URL)</option>
+                                                    <option value="file">Local File Upload (.mp4)</option>
+                                                </select>
+                                            </div>
+                                            <div class="md:col-span-2" v-if="item.type !== 'file'">
+                                                <label class="block text-xs font-bold mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Video URL <span class="text-red-500">*</span></label>
+                                                <input type="text" v-model="item.url" placeholder="https://..." class="w-full rounded-xl text-sm border focus:outline-none px-4 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-blue-500'">
+                                            </div>
+                                            <div class="md:col-span-2" v-else>
+                                                <label class="block text-xs font-bold mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Upload Video File (.mp4) <span class="text-red-500">*</span></label>
+                                                <div v-if="item.url && typeof item.url === 'string' && item.url !== '' && !item.file" class="mb-2 text-xs text-blue-500 truncate">Current File: {{ item.url }}</div>
+                                                <input type="file" accept="video/mp4,video/webm" @change="(e) => item.file = e.target.files[0]" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Title (EN)</label>
+                                                <input type="text" v-model="item.title.en" class="w-full rounded-xl text-sm border focus:outline-none px-4 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-blue-500'">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold mb-1.5 text-emerald-600 dark:text-emerald-500">Title (KM)</label>
+                                                <input type="text" v-model="item.title.km" class="w-full rounded-xl text-sm border focus:outline-none px-4 py-2 font-khmer" :class="isDarkMode ? 'bg-[#090d16] border-emerald-900/50 text-white focus:border-emerald-500' : 'bg-emerald-50/30 border-emerald-200 focus:bg-white focus:border-emerald-500'">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-600'">Description (EN)</label>
+                                                <div class="bg-white text-black rounded-xl min-h-[150px] overflow-hidden border border-slate-200">
+                                                    <QuillEditor theme="snow" contentType="html" v-model:content="item.description.en"></QuillEditor>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold mb-1.5 text-emerald-600 dark:text-emerald-500">Description (KM)</label>
+                                                <div class="bg-white text-black rounded-xl min-h-[150px] overflow-hidden border border-slate-200">
+                                                    <QuillEditor theme="snow" contentType="html" v-model:content="item.description.km"></QuillEditor>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

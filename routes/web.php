@@ -94,6 +94,12 @@
         ]);
     })->name('faculties');
 
+    Route::get('/videos', function () {
+        return Inertia::render('Videos', [
+            'videosList' => json_decode(\App\Models\Setting::getValue('videos_list', '[]'), true)
+        ]);
+    })->name('videos');
+
 // Dynamic pages are handled by the catch-all route at the bottom of the file
 
 Route::get('/department/{department}/{major}', [MajorController::class, 'show'])->name('major.show');
