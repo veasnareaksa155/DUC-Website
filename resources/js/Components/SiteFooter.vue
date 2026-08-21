@@ -6,6 +6,14 @@ const page = usePage();
 
 const getLocLabel = (obj, defaultStr) => {
     if (!obj) return defaultStr;
+    if (typeof obj === 'string') {
+        try {
+            const parsed = JSON.parse(obj);
+            if (parsed && typeof parsed === 'object') {
+                return parsed[page.props.locale] || parsed.en || defaultStr;
+            }
+        } catch (e) {}
+    }
     if (typeof obj === 'object') return obj[page.props.locale] || obj.en || defaultStr;
     return obj;
 };

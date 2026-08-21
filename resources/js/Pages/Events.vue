@@ -169,9 +169,9 @@ const stripHtml = (html) => {
                 class="relative z-10 mx-auto w-full max-w-[1400px] px-4 pt-7 md:px-6"
             >
                 <div
-                    class="mb-14 border-b pb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                    class="mb-14 border-b mt-7 pb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                    <h1 class="text-3xl md:text-4xl font-bold text-[#0f2154]">
+                    <h1 class="text-3xl md:text-4xl font-bold text-[#115D6D]">
                         {{ $t('News/Events') }}
                     </h1>
 

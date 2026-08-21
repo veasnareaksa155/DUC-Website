@@ -464,29 +464,7 @@ const videoBgColor = computed(() => {
                 </div>
             </section>
 
-            <section
-                ref="videoSection"
-                class="scroll-reveal transition-all duration-1000 ease-out w-full overflow-hidden bg-cover bg-center bg-no-repeat bg-blend-multiply py-16"
-                :style="{
-                    backgroundImage: props.homeSettings?.home_video_bg_image ? `url(${props.homeSettings.home_video_bg_image})` : 'none',
-                    backgroundColor: videoBgColor
-                }"
-            >
-                <div class="relative max-w-[1400px] px-4 md:px-6 mx-auto w-full">
-                    <div class="relative aspect-video w-full rounded-2xl overflow-hidden border-4 border-teal-400 shadow-2xl bg-black">
-                        <iframe
-                            ref="videoIframe"
-                            class="absolute inset-0 w-full h-full"
-                            :src="videoUrl"
-                            title="YouTube video player"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;"
-                            referrerpolicy="strict-origin-when-cross-origin"
-                            allowfullscreen
-                        ></iframe>
-                    </div>
-                </div>
-            </section>
+
 
             <hr class="border-gray-200" />
 

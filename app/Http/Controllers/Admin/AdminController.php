@@ -74,6 +74,7 @@ class AdminController extends Controller
                 'home_activities_slides' => json_decode(Setting::getValue('home_activities_slides', '[]'), true),
                 'home_graduate_attributes' => json_decode(Setting::getValue('home_graduate_attributes', '{}'), true),
                 'home_stats' => json_decode(Setting::getValue('home_stats', '[]'), true),
+                'videos_list' => json_decode(Setting::getValue('videos_list', '[]'), true),
             ],
             'contactSettings' => [
                 'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
@@ -1084,11 +1085,11 @@ class AdminController extends Controller
     public function saveSettings(Request $request)
     {
         $validated = $request->validate([
-            'address' => 'required|array',
-            'phone' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            'address' => 'nullable|array',
+            'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
             'copyright' => 'required|array',
-            'direct_lines' => 'required|array',
+            'direct_lines' => 'nullable|array',
             'social_links' => 'required|array',
             'header_bg_color' => 'nullable|string|max:50',
             'header_text_color' => 'nullable|string|max:50',
@@ -1119,11 +1120,11 @@ class AdminController extends Controller
             'footer_quick_links' => 'nullable|array',
         ]);
 
-        Setting::setValue('address', json_encode($validated['address'] ?? ['en' => 'Kompong Spue, Cambodia', 'km' => 'Kompong Spue, Cambodia']));
-        Setting::setValue('phone', $validated['phone']);
-        Setting::setValue('email', $validated['email']);
-        Setting::setValue('copyright', json_encode($validated['copyright'] ?? ['en' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', 'km' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.']));
-        Setting::setValue('direct_lines', json_encode($validated['direct_lines']));
+    if (array_key_exists('address', $validated)) Setting::setValue('address', json_encode($validated['address']));
+    if (array_key_exists('phone', $validated)) Setting::setValue('phone', $validated['phone']);
+    if (array_key_exists('email', $validated)) Setting::setValue('email', $validated['email']);
+    Setting::setValue('copyright', json_encode($validated['copyright'] ?? ['en' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', 'km' => 'Copyright © 2024 Digital University of Cambodia. All rights reserved.']));
+    if (array_key_exists('direct_lines', $validated)) Setting::setValue('direct_lines', json_encode($validated['direct_lines']));
         Setting::setValue('social_links', json_encode($validated['social_links']));
         Setting::setValue('header_bg_color', $validated['header_bg_color'] ?? '#ffffff');
         Setting::setValue('header_text_color', $validated['header_text_color'] ?? '#000000');
@@ -1175,10 +1176,21 @@ class AdminController extends Controller
             'contact_hero_title' => 'nullable|string|max:255',
             'contact_hero_description' => 'nullable|string',
             'contact_image' => 'nullable',
+            'address' => 'nullable|array',
+            'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
+            'direct_lines' => 'nullable|array',
+            'social_links' => 'nullable|array',
         ]);
 
         Setting::setValue('contact_hero_title', $validated['contact_hero_title'] ?? 'Contact Us');
         Setting::setValue('contact_hero_description', $validated['contact_hero_description'] ?? 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.');
+
+        if (array_key_exists('address', $validated)) Setting::setValue('address', json_encode($validated['address']));
+        if (array_key_exists('phone', $validated)) Setting::setValue('phone', $validated['phone']);
+        if (array_key_exists('email', $validated)) Setting::setValue('email', $validated['email']);
+        if (array_key_exists('direct_lines', $validated)) Setting::setValue('direct_lines', json_encode($validated['direct_lines']));
+        if (array_key_exists('social_links', $validated)) Setting::setValue('social_links', json_encode($validated['social_links']));
 
         $contact_image = Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80');
         if ($request->hasFile('contact_image')) {
@@ -1207,6 +1219,7 @@ class AdminController extends Controller
             'home_activities_slides' => 'nullable|array',
             'home_graduate_attributes' => 'nullable|array',
             'home_stats' => 'nullable|array',
+            'videos_list' => 'nullable|array',
         ]);
 
         $home_hero_slides = $validated['home_hero_slides'] ?? [];
@@ -1265,8 +1278,20 @@ class AdminController extends Controller
         Setting::setValue('home_activities_slides', json_encode($home_activities_slides));
         Setting::setValue('home_graduate_attributes', json_encode($home_graduate_attributes));
         Setting::setValue('home_stats', json_encode($validated['home_stats'] ?? []));
+        $videos_list = $validated['videos_list'] ?? [];
+        foreach ($videos_list as $index => &$video) {
+            if ($request->hasFile("videos_list.{$index}.file")) {
+                $path = $request->file("videos_list.{$index}.file")->store('videos', 'public');
+                $video['url'] = '/storage/' . $path;
+            }
+            if (isset($video['file'])) {
+                unset($video['file']);
+            }
+        }
 
-        ActivityLog::log("Updated landing page builder settings", 'home');
+        Setting::setValue('videos_list', json_encode($videos_list));
+
+        ActivityLog::log("Updated home page settings", 'home');
 
         return redirect()->back()->with('success', 'Home page settings updated successfully.');
     }
