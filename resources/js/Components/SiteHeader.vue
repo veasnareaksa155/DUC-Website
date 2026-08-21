@@ -366,8 +366,8 @@ const navItems = computed(() => {
 
     const scholarshipItem = {
         id: 'scholarship-nav-item',
-        label: { en: 'Scholarship', km: 'អាហារូបករណ៍' },
-        href: '/#scholarship',
+        label: { en: 'SCHOLARSHIP', km: 'អាហារូបករណ៍' },
+        href: '/scholarship',
         icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>',
         hasMenu: false,
         megaMenu: null
@@ -375,7 +375,7 @@ const navItems = computed(() => {
 
     const videoItem = {
         id: 'video-nav-item',
-        label: { en: 'Video', km: 'វីដេអូ' },
+        label: { en: 'VIDEO', km: 'វីដេអូ' },
         href: '/#video',
         icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
         hasMenu: false,
@@ -414,6 +414,39 @@ const navItems = computed(() => {
         } else {
             items.push(videoItem);
         }
+    }
+
+    // Inject the 5 requested ABOUT items if not present
+    const aboutItem = items.find(it => {
+        const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
+        return l === 'about' || l.includes('about');
+    });
+
+    if (aboutItem) {
+        const additionalAboutLinks = [
+            { id: 'about-building', title: { en: 'Building', km: 'អគារ' }, href: '/about?tab=building', links: [] },
+            { id: 'about-sub-decree', title: { en: 'Sub-Decree on University Establishment', km: 'អនុក្រឹត្យស្តីពីការបង្កើតសាកលវិទ្យាល័យ' }, href: '/about?tab=sub-decree', links: [] },
+            { id: 'about-degree-certificate', title: { en: 'Sample Degree Certificate', km: 'គំរូសញ្ញាបត្រ' }, href: '/about?tab=degree-certificate', links: [] },
+            { id: 'about-graduation-gown', title: { en: 'Sample Graduation Gown', km: 'គំរូអាវពាក់បញ្ចប់ការសិក្សា' }, href: '/about?tab=graduation-gown', links: [] },
+            { id: 'about-student-uniform', title: { en: 'Sample Student Uniform', km: 'គំរូឯកសណ្ឋាននិស្សិត' }, href: '/about?tab=student-uniform', links: [] },
+        ];
+
+        if (!aboutItem.megaMenu) {
+            aboutItem.megaMenu = [];
+        }
+
+        additionalAboutLinks.forEach(newLnk => {
+            const exists = aboutItem.megaMenu.some(m => {
+                const t = (typeof m.title === 'object' ? (m.title.en || m.title.km || '') : String(m.title)).toLowerCase();
+                const targetT = newLnk.title.en.toLowerCase();
+                return t === targetT || m.href === newLnk.href;
+            });
+            if (!exists) {
+                aboutItem.megaMenu.push(newLnk);
+            }
+        });
+
+        aboutItem.hasMenu = aboutItem.megaMenu.length > 0;
     }
 
     // Deduplicate top-level items strictly by label content and href

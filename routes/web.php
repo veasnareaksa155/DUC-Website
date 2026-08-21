@@ -40,6 +40,10 @@
         return Inertia::render('Contact');
     })->name('/contact');
 
+    Route::get('/scholarship', function () {
+        return Inertia::render('Scholarship');
+    })->name('scholarship');
+
     Route::get('/events', function () {
         return Inertia::render('Events', [
             'events' => \App\Models\Event::where('is_published', true)->latest()->get()

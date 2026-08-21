@@ -776,6 +776,11 @@ class AdminController extends Controller
         NavigationItem::create(['label' => ['en' => 'Planning and Research Office', 'km' => 'ការិយាល័យផែនការ និងស្រាវជ្រាវ'], 'href' => '/planning_and_research_office', 'parent_id' => $officesMenu->id, 'order' => 7]);
         
         NavigationItem::create(['label' => ['en' => 'Exam and Evaluation', 'km' => 'ការវាយតម្លៃ និងការប្រឡង'], 'href' => '/exam-evaluation', 'parent_id' => $about->id, 'order' => 3]);
+        NavigationItem::create(['label' => ['en' => 'Building', 'km' => 'អគារ'], 'href' => '/about?tab=building', 'parent_id' => $about->id, 'order' => 4]);
+        NavigationItem::create(['label' => ['en' => 'Sub-Decree on University Establishment', 'km' => 'អនុក្រឹត្យស្តីពីការបង្កើតសាកលវិទ្យាល័យ'], 'href' => '/about?tab=sub-decree', 'parent_id' => $about->id, 'order' => 5]);
+        NavigationItem::create(['label' => ['en' => 'Sample Degree Certificate', 'km' => 'គំរូសញ្ញាបត្រ'], 'href' => '/about?tab=degree-certificate', 'parent_id' => $about->id, 'order' => 6]);
+        NavigationItem::create(['label' => ['en' => 'Sample Graduation Gown', 'km' => 'គំរូអាវពាក់បញ្ចប់ការសិក្សា'], 'href' => '/about?tab=graduation-gown', 'parent_id' => $about->id, 'order' => 7]);
+        NavigationItem::create(['label' => ['en' => 'Sample Student Uniform', 'km' => 'គំរូឯកសណ្ឋាននិស្សិត'], 'href' => '/about?tab=student-uniform', 'parent_id' => $about->id, 'order' => 8]);
 
         $facultiesMenu = NavigationItem::create([
             'label' => ['en' => 'FACULTIES', 'km' => 'មហាវិទ្យាល័យ'],
