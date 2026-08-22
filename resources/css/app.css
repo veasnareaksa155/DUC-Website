@@ -97,60 +97,7 @@
 
 /* ==========================================================================
    Header & Navbar (#115D6D) & Body Theme System
-   ========================================================================== */
-
-:root {
-    --brand-teal: #115D6D;
-    --brand-teal-dark: #0d4a57;
-    --bg-body-light: #c9e0e4;
-}
-
-/* Clean Light Teal Body Layout */
-html,
-body,
-#app,
-.min-h-screen,
-main,
-main.bg-gray-50\/50,
-div.min-h-screen.bg-slate-50 {
-    background-color: #c9e0e4 !important;
-    color: #0f172a;
-    min-height: 100vh;
-}
-
-/* Thick #115D6D Header & Navigation Styling */
-.bg-brand-teal {
-    background-color: #115D6D !important;
-}
-
-.bg-brand-teal-dark {
-    background-color: #0d4a57 !important;
-}
-
-/* Ensure all page content sections are 100% visible */
-.scroll-reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    visibility: visible !important;
-}
-
-/* Section background tints derived from #115D6D */
-.bg-slate-50\/50,
-.bg-slate-50,
-.bg-gray-50 {
-    background-color: #c9e0e4 !important;
-}
-
-.bg-white {
-    background-color: #c9e0e4;
-}
-
-/* Keep card elements white on light teal background */
-div.bg-white:not(main):not(header):not(nav),
-article.bg-white,
-.card-white {
-    background-color: #ffffff !important;
-}
+    ========================================================================== */
 
 /* High contrast selection highlight */
 ::selection {

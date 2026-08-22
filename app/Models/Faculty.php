@@ -13,7 +13,8 @@ class Faculty extends Model
         'mission',
         'vision',
         'goals',
-        'custom_sections'
+        'custom_sections',
+        'sort_order'
     ];
 
     protected $casts = [

@@ -36,7 +36,7 @@ const getFacultyImage = (faculty) => {
 <template>
     <Head :title="$t('Faculties')" />
     
-    <div class="min-h-screen flex flex-col bg-[#c9e0e4] text-slate-900 font-sans">
+    <div class="min-h-screen flex flex-col bg-global-bg text-slate-900 font-sans">
         <SiteHeader />
 
         <!-- UPDATED WRAPPER: Changed to max-w-[1400px] and matched padding to header -->
@@ -50,7 +50,7 @@ const getFacultyImage = (faculty) => {
                     v-for="faculty in faculties"
                     :key="faculty.id"
                     :href="'/department/' + faculty.id"
-                    class="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col overflow-hidden"
+                    class="group bg-card-bg rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col overflow-hidden"
                 >
                     <div class="h-56 bg-gray-200 relative overflow-hidden">
                         <img 
@@ -60,8 +60,8 @@ const getFacultyImage = (faculty) => {
                         />
                     </div>
 
-                    <div class="bg-[#1a2b5e] text-white p-5 text-center flex-grow flex items-center justify-center">
-                        <h3 class="font-semibold text-lg leading-snug">{{ $t(faculty.name) }}</h3>
+                    <div class="bg-card-bg text-[#115D6D] group-hover:text-blue-600 transition-colors p-5 text-center flex-grow flex items-center justify-center">
+                        <h3 class="font-bold text-lg leading-snug">{{ $t(faculty.name) }}</h3>
                     </div>
                 </Link>
             </div>

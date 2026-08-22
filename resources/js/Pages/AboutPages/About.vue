@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, usePage } from "@inertiajs/vue3";
 import SiteHeader from "@/Components/SiteHeader.vue";
 import SiteFooter from "@/Components/SiteFooter.vue";
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
@@ -17,6 +17,7 @@ const props = defineProps({
 });
 
 const isVisible = ref(false);
+
 
 const history = computed(() => {
     return props.pageData?.history || `The Digital University of Cambodia (DUC) is the first digital university in the Kingdom of Cambodia to focus on technology in line with the Royal Government of Cambodia's strategy of one corner: technology.
@@ -186,7 +187,7 @@ onMounted(() => {
     <Head :title="$t('About Us')" />
     
     <SiteHeader />
-    <div class="min-h-screen flex flex-col bg-[#c9e0e4] text-slate-900 font-sans selection:bg-amber-400 overflow-hidden relative">
+    <div class="min-h-screen flex flex-col bg-global-bg text-slate-900 font-sans selection:bg-amber-400 overflow-hidden relative">
         
         <!-- VIBRANT Abstract Background Mesh -->
         <div class="absolute top-0 left-0 right-0 h-[700px] overflow-hidden -z-10 pointer-events-none">

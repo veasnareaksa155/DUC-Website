@@ -21,7 +21,7 @@ class AdminController extends Controller
             'navigationItems' => NavigationItem::orderBy('order')->get(),
             'pageContents' => PageContent::all(),
             'events' => Event::orderBy('id', 'desc')->get(),
-            'faculties' => Faculty::with('departments')->get(),
+            'faculties' => Faculty::with('departments')->orderBy('sort_order')->get(),
             'translationsData' => \App\Models\Translation::orderBy('key')->get(),
             'activityLogs' => ActivityLog::latest()->take(30)->get()->map(function($log) {
                 return [
@@ -80,6 +80,13 @@ class AdminController extends Controller
                 'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
                 'contact_hero_description' => Setting::getValue('contact_hero_description', 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.'),
                 'contact_image' => Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80'),
+            ],
+            'scholarshipSettings' => [
+                'hero' => json_decode(Setting::getValue('scholarship_hero', '[]'), true),
+                'documents' => json_decode(Setting::getValue('scholarship_documents', '[]'), true),
+                'requirements' => json_decode(Setting::getValue('scholarship_requirements', '[]'), true),
+                'portals' => json_decode(Setting::getValue('scholarship_portals', '[]'), true),
+                'benefits' => json_decode(Setting::getValue('scholarship_benefits', '[]'), true),
             ]
         ]);
     }
@@ -146,16 +153,47 @@ class AdminController extends Controller
             }
         }
 
-        PageContent::updateOrCreate(
+        $oldPage = null;
+        if (!empty($validated['id'])) {
+            $oldPage = PageContent::find($validated['id']);
+        }
+
+        $newSlug = ltrim(trim($validated['slug']), '/');
+
+        $page = PageContent::updateOrCreate(
             ['id' => $validated['id'] ?? null],
             [
-                'slug' => ltrim(trim($validated['slug']), '/'),
+                'slug' => $newSlug,
                 'title' => $validated['title'],
                 'content' => json_encode($content),
                 'is_office' => $validated['is_office'] ?? false,
                 'office_type' => $validated['office_type'] ?? null,
             ]
         );
+
+        // Auto-update any NavigationItem that points to this page
+        if ($oldPage) {
+            $navItems = \App\Models\NavigationItem::where('href', '/' . $oldPage->slug)
+                ->orWhere('href', '/about?tab=' . $oldPage->slug)
+                ->get();
+        } else {
+            $navItems = \App\Models\NavigationItem::where('href', '/' . $page->slug)
+                ->orWhere('href', '/about?tab=' . $page->slug)
+                ->get();
+        }
+            
+        foreach ($navItems as $navItem) {
+            $navItem->label = $validated['title'];
+            // If the slug changed, update the href too
+            if ($oldPage && $oldPage->slug !== $newSlug) {
+                if ($navItem->href === '/' . $oldPage->slug) {
+                    $navItem->href = '/' . $newSlug;
+                } elseif ($navItem->href === '/about?tab=' . $oldPage->slug) {
+                    $navItem->href = '/about?tab=' . $newSlug;
+                }
+            }
+            $navItem->save();
+        }
 
         // Bulk apply title_font_size to ALL offices if requested
         if (!empty($validated['apply_to_all_offices']) && isset($content['title_font_size'])) {
@@ -968,6 +1006,20 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Default footer settings restored successfully.');
     }
 
+    public function reorderFaculties(Request $request)
+    {
+        $orderedIds = $request->input('ordered_ids', []);
+        \Illuminate\Support\Facades\Log::info('Reordering faculties', ['ids' => $orderedIds]);
+        
+        foreach ($orderedIds as $index => $id) {
+            Faculty::where('id', $id)->update(['sort_order' => $index]);
+        }
+        
+        ActivityLog::log("Reordered faculties list", 'faculties', 'bg-blue-500/10 text-blue-500');
+        
+        return redirect()->back()->with('success', 'Faculties reordered successfully.');
+    }
+
     public function deleteFaculty(Faculty $faculty)
     {
         $facName = is_array($faculty->name) ? ($faculty->name['en'] ?? '') : $faculty->name;
@@ -1093,6 +1145,7 @@ class AdminController extends Controller
             'social_links' => 'required|array',
             'header_bg_color' => 'nullable|string|max:50',
             'header_text_color' => 'nullable|string|max:50',
+            'header_subtitle_color' => 'nullable|string|max:50',
             'footer_bg_color' => 'nullable|string|max:50',
             'footer_border_color' => 'nullable|string|max:50',
             'footer_text_color' => 'nullable|string|max:50',
@@ -1102,7 +1155,12 @@ class AdminController extends Controller
             'nav_bg_color' => 'nullable|string|max:50',
             'nav_text_color' => 'nullable|string|max:50',
             'nav_active_color' => 'nullable|string|max:50',
+            'global_bg_color' => 'nullable|string|max:50',
+            'card_bg_color' => 'nullable|string|max:50',
+            'primary_button_color' => 'nullable|string|max:50',
+            'primary_button_hover' => 'nullable|string|max:50',
             'contact_image' => 'nullable',
+            'about_tabs_content' => 'nullable|array',
             'privacy_policy_label' => 'nullable|string|max:255',
             'privacy_policy_url' => 'nullable|string|max:255',
             'footer_credits' => 'nullable|string|max:255',
@@ -1127,7 +1185,8 @@ class AdminController extends Controller
     if (array_key_exists('direct_lines', $validated)) Setting::setValue('direct_lines', json_encode($validated['direct_lines']));
         Setting::setValue('social_links', json_encode($validated['social_links']));
         Setting::setValue('header_bg_color', $validated['header_bg_color'] ?? '#ffffff');
-        Setting::setValue('header_text_color', $validated['header_text_color'] ?? '#000000');
+        Setting::setValue('header_text_color', $validated['header_text_color'] ?? '#104652');
+        Setting::setValue('header_subtitle_color', $validated['header_subtitle_color'] ?? '#AF8319');
         Setting::setValue('footer_bg_color', $validated['footer_bg_color'] ?? '#0d184a');
         Setting::setValue('footer_border_color', $validated['footer_border_color'] ?? '#04a8f5');
         Setting::setValue('footer_text_color', $validated['footer_text_color'] ?? '#ffffff');
@@ -1137,6 +1196,10 @@ class AdminController extends Controller
         Setting::setValue('nav_bg_color', $validated['nav_bg_color'] ?? '#3852a4');
         Setting::setValue('nav_text_color', $validated['nav_text_color'] ?? '#ffffff');
         Setting::setValue('nav_active_color', $validated['nav_active_color'] ?? '#ffb800');
+        Setting::setValue('global_bg_color', $validated['global_bg_color'] ?? '#c9e0e4');
+        Setting::setValue('card_bg_color', $validated['card_bg_color'] ?? '#ffffff');
+        Setting::setValue('primary_button_color', $validated['primary_button_color'] ?? '#104652');
+        Setting::setValue('primary_button_hover', $validated['primary_button_hover'] ?? '#316d7a');
 
         $contact_image = Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80');
         if ($request->hasFile('contact_image')) {
@@ -1149,6 +1212,10 @@ class AdminController extends Controller
         Setting::setValue('privacy_policy_label', $request->has('privacy_policy_label') ? ($request->input('privacy_policy_label') ?? '') : 'Privacy Policy');
         Setting::setValue('privacy_policy_url', $request->has('privacy_policy_url') ? ($request->input('privacy_policy_url') ?? '') : '#');
         Setting::setValue('footer_credits', $request->has('footer_credits') ? ($request->input('footer_credits') ?? '') : 'Made with ♥ by IT Department Students');
+
+        if ($request->has('about_tabs_content')) {
+            Setting::setValue('about_tabs_content', $validated['about_tabs_content']);
+        }
 
         Setting::setValue('footer_label_quick_links', json_encode($validated['footer_label_quick_links'] ?? ['en' => 'Our Details', 'km' => 'Our Details']));
         Setting::setValue('footer_label_working_hours', json_encode($validated['footer_label_working_hours'] ?? ['en' => 'Working Hours', 'km' => 'Working Hours']));
@@ -1176,15 +1243,30 @@ class AdminController extends Controller
             'contact_hero_title' => 'nullable|string|max:255',
             'contact_hero_description' => 'nullable|string',
             'contact_image' => 'nullable',
+            'contact_map_link' => 'nullable|string',
             'address' => 'nullable|array',
             'phone' => 'nullable|string|max:255',
             'email' => 'nullable|string|max:255',
             'direct_lines' => 'nullable|array',
             'social_links' => 'nullable|array',
+            'contact_form_title' => 'nullable|array',
+            'contact_form_name_label' => 'nullable|array',
+            'contact_form_email_label' => 'nullable|array',
+            'contact_form_subject_label' => 'nullable|array',
+            'contact_form_message_label' => 'nullable|array',
+            'contact_form_submit_label' => 'nullable|array',
         ]);
 
         Setting::setValue('contact_hero_title', $validated['contact_hero_title'] ?? 'Contact Us');
         Setting::setValue('contact_hero_description', $validated['contact_hero_description'] ?? 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.');
+        Setting::setValue('contact_map_link', $validated['contact_map_link'] ?? '');
+        
+        if (array_key_exists('contact_form_title', $validated)) Setting::setValue('contact_form_title', json_encode($validated['contact_form_title']));
+        if (array_key_exists('contact_form_name_label', $validated)) Setting::setValue('contact_form_name_label', json_encode($validated['contact_form_name_label']));
+        if (array_key_exists('contact_form_email_label', $validated)) Setting::setValue('contact_form_email_label', json_encode($validated['contact_form_email_label']));
+        if (array_key_exists('contact_form_subject_label', $validated)) Setting::setValue('contact_form_subject_label', json_encode($validated['contact_form_subject_label']));
+        if (array_key_exists('contact_form_message_label', $validated)) Setting::setValue('contact_form_message_label', json_encode($validated['contact_form_message_label']));
+        if (array_key_exists('contact_form_submit_label', $validated)) Setting::setValue('contact_form_submit_label', json_encode($validated['contact_form_submit_label']));
 
         if (array_key_exists('address', $validated)) Setting::setValue('address', json_encode($validated['address']));
         if (array_key_exists('phone', $validated)) Setting::setValue('phone', $validated['phone']);
@@ -1332,5 +1414,36 @@ class AdminController extends Controller
         $translation->delete();
         ActivityLog::log("Deleted translation key '" . $tKey . "'", 'translations', 'bg-red-500/10 text-red-500');
         return redirect()->back()->with('success', 'Translation key deleted.');
+    }
+
+    public function saveScholarshipSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'hero' => 'nullable|array',
+            'documents' => 'nullable|array',
+            'requirements' => 'nullable|array',
+            'portals' => 'nullable|array',
+            'benefits' => 'nullable|array',
+        ]);
+
+        $docs = $validated['documents'] ?? [];
+        foreach ($docs as $key => $doc) {
+            if ($request->hasFile("documents.{$key}.image_file")) {
+                $path = $request->file("documents.{$key}.image_file")->store('scholarship', 'public');
+                $docs[$key]['src'] = '/storage/' . $path;
+            }
+            // Remove the temporary file object before saving to DB
+            unset($docs[$key]['image_file']);
+        }
+
+        Setting::updateOrCreate(['key' => 'scholarship_hero'], ['value' => json_encode($validated['hero'] ?? [], JSON_UNESCAPED_UNICODE)]);
+        Setting::updateOrCreate(['key' => 'scholarship_documents'], ['value' => json_encode($docs, JSON_UNESCAPED_UNICODE)]);
+        Setting::updateOrCreate(['key' => 'scholarship_requirements'], ['value' => json_encode($validated['requirements'] ?? [], JSON_UNESCAPED_UNICODE)]);
+        Setting::updateOrCreate(['key' => 'scholarship_portals'], ['value' => json_encode($validated['portals'] ?? [], JSON_UNESCAPED_UNICODE)]);
+        Setting::updateOrCreate(['key' => 'scholarship_benefits'], ['value' => json_encode($validated['benefits'] ?? [], JSON_UNESCAPED_UNICODE)]);
+
+        ActivityLog::log('Updated Scholarship settings', 'settings');
+
+        return redirect()->back()->with('success', 'Scholarship settings saved successfully.');
     }
 }

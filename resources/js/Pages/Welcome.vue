@@ -308,10 +308,10 @@ const videoBgColor = computed(() => {
 <template>
     <Head title="Digital University of Cambodia" />
 
-    <div class="min-h-screen bg-[#c9e0e4] text-slate-900">
+    <div class="min-h-screen bg-global-bg text-slate-900">
         <SiteHeader />
 
-        <main class="bg-[#c9e0e4] overflow-hidden">
+        <main class="bg-global-bg overflow-hidden">
             <section class="relative w-full overflow-hidden bg-slate-950">
                 <div class="relative w-full group hero-swiper">
                     <Swiper

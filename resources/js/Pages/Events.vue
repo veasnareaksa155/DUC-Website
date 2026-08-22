@@ -160,7 +160,7 @@ const stripHtml = (html) => {
 <template>
     <Head :title="$t('News/Events')" />
 
-    <div class="min-h-screen bg-[#c9e0e4] font-sans text-slate-900">
+    <div class="min-h-screen bg-global-bg font-sans text-slate-900">
         <SiteHeader />
         <div class="relative overflow-x-hidden pb-16">
 

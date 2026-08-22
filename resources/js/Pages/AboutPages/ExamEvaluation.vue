@@ -104,7 +104,7 @@ const grades = computed(() => {
         :title="$t('Exam and Evaluation')"
     />
 
-    <div class="min-h-screen flex flex-col bg-[#c9e0e4] text-slate-900 font-sans">
+    <div class="min-h-screen flex flex-col bg-global-bg text-slate-900 font-sans">
         <SiteHeader />
 
         <!-- Main Wrapper aligned with Header -->

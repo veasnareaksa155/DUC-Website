@@ -18,10 +18,26 @@
     <!-- Scripts -->
     @routes
     @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
+    @php
+        $pageData = json_decode(request()->route()->action['middleware'][0] ?? '{}', true); // Fallback
+        $settings = $page['props']['settings'] ?? [];
+        $globalBg = $settings['global_bg_color'] ?? '#c9e0e4';
+        $cardBg = $settings['card_bg_color'] ?? '#ffffff';
+        $btnPrimary = $settings['primary_button_color'] ?? '#104652';
+        $btnPrimaryHover = $settings['primary_button_hover'] ?? '#316d7a';
+    @endphp
+    <style>
+        :root {
+            --global-bg: {{ $globalBg }};
+            --card-bg: {{ $cardBg }};
+            --btn-primary: {{ $btnPrimary }};
+            --btn-primary-hover: {{ $btnPrimaryHover }};
+        }
+    </style>
     @inertiaHead
 </head>
 
-<body class="font-sans antialiased bg-[#c9e0e4] text-slate-900 selection:bg-amber-400 selection:text-slate-900 transition-colors duration-300">
+<body class="font-sans antialiased bg-global-bg text-slate-900 selection:bg-amber-400 selection:text-slate-900 transition-colors duration-300">
     @inertia
 </body>
 

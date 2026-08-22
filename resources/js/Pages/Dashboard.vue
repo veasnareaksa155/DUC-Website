@@ -14,6 +14,7 @@ const props = defineProps({
     settings: Object,
     homeSettings: Object,
     contactSettings: Object,
+    scholarshipSettings: Object,
     translationsData: Array,
     activityLogs: Array
 });
@@ -1540,6 +1541,36 @@ const submitFaculty = () => {
     });
 };
 
+const moveFacultyUp = (index) => {
+    if (index === 0) return;
+    
+    let currentFaculties = [...props.faculties];
+    const temp = currentFaculties[index - 1];
+    currentFaculties[index - 1] = currentFaculties[index];
+    currentFaculties[index] = temp;
+    
+    const orderedIds = currentFaculties.map(f => f.id);
+    router.post(route('admin.faculties.reorder'), { ordered_ids: orderedIds }, {
+        preserveScroll: true,
+        onSuccess: () => showToast('Faculty moved up!')
+    });
+};
+
+const moveFacultyDown = (index) => {
+    if (index === props.faculties.length - 1) return;
+    
+    let currentFaculties = [...props.faculties];
+    const temp = currentFaculties[index + 1];
+    currentFaculties[index + 1] = currentFaculties[index];
+    currentFaculties[index] = temp;
+    
+    const orderedIds = currentFaculties.map(f => f.id);
+    router.post(route('admin.faculties.reorder'), { ordered_ids: orderedIds }, {
+        preserveScroll: true,
+        onSuccess: () => showToast('Faculty moved down!')
+    });
+};
+
 const deleteFaculty = (id) => {
     showConfirm(
         'Are you sure you want to delete this faculty? All associated departments will be deleted.',
@@ -2008,11 +2039,18 @@ const contactSettingsForm = useForm({
     contact_hero_title: props.contactSettings?.contact_hero_title || 'Contact Us',
     contact_hero_description: props.contactSettings?.contact_hero_description || 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.',
     contact_image: props.contactSettings?.contact_image || '',
+    contact_map_link: props.contactSettings?.contact_map_link || '',
     address: props.settings?.address ? (typeof props.settings.address === 'string' ? parseTranslatable(props.settings.address) : props.settings.address) : { en: 'Kompong Spue, Cambodia', km: 'Kompong Spue, Cambodia' },
     email: props.settings?.email || '',
     phone: props.settings?.phone || '',
     direct_lines: props.settings?.direct_lines ? [...props.settings.direct_lines] : [],
-    social_links: props.settings?.social_links ? JSON.parse(JSON.stringify(props.settings.social_links)) : []
+    social_links: props.settings?.social_links ? JSON.parse(JSON.stringify(props.settings.social_links)) : [],
+    contact_form_title: props.settings?.contact_form_title ? parseTranslatable(props.settings.contact_form_title) : { en: 'Send Us a Message', km: 'ផ្ញើសារមកកាន់យើង' },
+    contact_form_name_label: props.settings?.contact_form_name_label ? parseTranslatable(props.settings.contact_form_name_label) : { en: 'Full Name *', km: 'ឈ្មោះពេញ *' },
+    contact_form_email_label: props.settings?.contact_form_email_label ? parseTranslatable(props.settings.contact_form_email_label) : { en: 'Email Address *', km: 'អាសយដ្ឋានអ៊ីមែល *' },
+    contact_form_subject_label: props.settings?.contact_form_subject_label ? parseTranslatable(props.settings.contact_form_subject_label) : { en: 'Subject *', km: 'ប្រធានបទ *' },
+    contact_form_message_label: props.settings?.contact_form_message_label ? parseTranslatable(props.settings.contact_form_message_label) : { en: 'Message *', km: 'សារ *' },
+    contact_form_submit_label: props.settings?.contact_form_submit_label ? parseTranslatable(props.settings.contact_form_submit_label) : { en: 'Send Message', km: 'ផ្ញើសារ' }
 });
 
 const addContactDirectLine = () => {
@@ -2052,11 +2090,112 @@ const restoreDefaultContactSettings = () => {
 };
 
 // --- SETTINGS STATE & ACTIONS ---
+const defaultScholarshipDocs = [
+    { title: { km: 'ទំព័រទី ១៖ សេចក្តីជូនដំណឹង និងមហាវិទ្យាល័យ', en: 'Page 1: Scholarship Announcement & Eligible Faculties' }, src: '/images/scholarship/scholarship-doc-1.png' },
+    { title: { km: 'ទំព័រទី ២៖ លក្ខខណ្ឌ និងឯកសារភ្ជាប់', en: 'Page 2: Application Conditions & Required Documents' }, src: '/images/scholarship/scholarship-doc-2.png' },
+    { title: { km: 'ទំព័រទី ៣៖ ការទំនាក់ទំនង និង QR Codes', en: 'Page 3: Contact Details & QR Code Portals' }, src: '/images/scholarship/scholarship-doc-3.png' }
+];
+
+const defaultScholarshipBenefits = {
+    title: { km: 'អត្ថប្រយោជន៍ទទួលបានពីអាហារូបករណ៍', en: 'Privilege & Benefits' },
+    items: [
+        { text: { km: 'ទទួលបានអាហារូបករណ៍ ១០០% ពេញលេញ សម្រាប់ការសិក្សាថ្នាក់បរិញ្ញាបត្រ។', en: 'Get a 100% full scholarship for bachelor degree.' } },
+        { text: { km: 'បានសិក្សាក្នុងបន្ទប់ម៉ាស៊ីនត្រជាក់ ជាមួយឧបករណ៍បច្ចេកវិទ្យាទំនើបៗ និងប្រព័ន្ធ E-Learning។', en: 'Study in A/C rooms with modern tech devices and E-Learning system.' } },
+        { text: { km: 'ទទួលបានការបណ្តុះបណ្តាលជំនាញឌីជីថលបន្ថែម និងភាសាអង់គ្លេសកម្រិតខ្ពស់។', en: 'Receive additional digital skills training and advanced English language.' } },
+        { text: { km: 'មានឱកាសទទួលបានការចុះកម្មសិក្សា ការចុះអនុវត្តការងារផ្ទាល់ និងឱកាសការងារក្រោយបញ្ចប់ការសិក្សា។', en: 'Have the opportunity to get internships, hands-on practice, and jobs.' } }
+    ]
+};
+
+const defaultScholarshipReqs = [
+    { no: '១', name: { km: 'ពាក្យសុំអាហារូបករណ៍', en: 'Scholarship Form' }, qty: { km: '១ច្បាប់', en: '1 Copy' } },
+    { no: '២', name: { km: 'រូបថតបច្ចុប្បន្ន ៤x៦', en: '4x6 Photos' }, qty: { km: '៦ច្បាប់', en: '6 Copies' } },
+    { no: '៣', name: { km: 'សញ្ញាបត្រមធ្យមសិក្សាទុតិយភូមិ ឬលិខិតបញ្ជាក់', en: 'High School Diploma' }, qty: { km: '១ច្បាប់', en: '1 Copy' } },
+    { no: '៤', name: { km: 'សំបុត្រកំណើត', en: 'Birth Certificate' }, qty: { km: '១ច្បាប់', en: '1 Copy' } },
+    { no: '៥', name: { km: 'អត្តសញ្ញាណប័ណ្ណសញ្ជាតិខ្មែរ', en: 'Identity Card' }, qty: { km: '១ច្បាប់', en: '1 Copy' } },
+    { no: '៦', name: { km: 'សៀវភៅគ្រួសារ ឬសៀវភៅស្នាក់នៅ', en: 'Family / Residence Book' }, qty: { km: '១ច្បាប់', en: '1 Copy' } },
+    { no: '៧', name: { km: 'លិខិតបញ្ជាក់ការសិក្សា ឬលិខិតកោតសរសើរ', en: 'Recommendation / Transcript' }, qty: { km: '១ច្បាប់', en: '1 Copy' } }
+];
+
+const defaultScholarshipPortals = [
+    { title: { km: 'ពាក្យស្នើសុំអាហារូបករណ៍', en: 'Scholarship Form' }, link: 'https://t.me/Digitaluniversityofcambodia1', desc: { km: 'ដាក់ពាក្យស្នើសុំអាហារូបករណ៍', en: 'Apply for Scholarship' }, svg: '<svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>' },
+    { title: { km: 'ឆានែលតេឡេក្រាម', en: 'Telegram Channel' }, link: 'https://t.me/Digitaluniversityofcambodia1', desc: { km: 'ឆានែលព័ត៌មានផ្លូវការ', en: 'Official Info Channel' }, svg: '<svg class="w-6 h-6 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.16l-1.97 9.28c-.15.67-.54.83-1.1.52l-3.04-2.24-1.47 1.41c-.16.16-.3.3-.61.3l.22-3.1 5.64-5.1c.25-.22-.05-.34-.38-.12l-6.97 4.39-3.01-.94c-.65-.2-.67-.65.14-.97l11.76-4.53c.54-.2 1.02.13.79 1.1z"/></svg>' },
+    { title: { km: 'ទំព័រហ្វេសប៊ុក', en: 'Facebook Page' }, link: '#', desc: { km: 'ទំព័រហ្វេសប៊ុកផ្លូវការ', en: 'Official Facebook Page' }, svg: '<svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' },
+    { title: { km: 'ឆានែលយូធូប', en: 'YouTube Channel' }, link: '#', desc: { km: 'វីដេអូសកម្មភាពនិស្សិត', en: 'Student Activities Video' }, svg: '<svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>' },
+    { title: { km: 'ទីកតុក', en: 'TikTok' }, link: '#', desc: { km: 'វីដេអូខ្លីៗបច្ចេកវិទ្យា', en: 'Short Tech Videos' }, svg: '<svg class="w-6 h-6 text-slate-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.98-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.31 1.52-1.31 2.52.02 1.14.67 2.18 1.68 2.67.97.46 2.14.39 3.03-.18.84-.53 1.34-1.49 1.34-2.48.03-5.46.01-10.92.02-16.38z"/></svg>' },
+    { title: { km: 'ផែនទី Google Map', en: 'Google Map' }, link: '#', desc: { km: 'ទីតាំងសាកលវិទ្យាល័យ', en: 'University Location' }, svg: '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' }
+];
+
+const defaultScholarshipHero = {
+    badge: { km: 'អាហារូបករណ៍ ១០០% ថ្នាក់បរិញ្ញាបត្រ • ឆ្នាំសិក្សា ២០២៤-២០២៥', en: '100% Bachelor Degree Scholarship • Academic Year 2024-2025' },
+    title: { km: 'សេចក្តីជូនដំណឹង អាហារូបករណ៍ ១០០%', en: '100% Scholarship Announcement' },
+    description: { km: 'ការជ្រើសរើសនិស្សិតអាហារូបករណ៍ថ្នាក់បរិញ្ញាបត្រ នៅសាកលវិទ្យាល័យឌីជីថលកម្ពុជា (Digital University of Cambodia)', en: 'Bachelor Degree Scholarship Recruitment at Digital University of Cambodia' },
+    doc_button: { km: 'មើលលិខិតផ្លូវការ (View Official Documents)', en: 'View Official Documents' },
+    official_doc_title: { km: 'លិខិតប្រកាសអាហារូបករណ៍ផ្លូវការ', en: 'Official Scholarship Announcement Document' },
+    click_to_zoom: { km: 'ចុចលើរូបភាពដើម្បីពង្រីកមើលលម្អិត', en: 'Click any document to view in high resolution' },
+    apply_telegram: { km: 'ដាក់ពាក្យតាម Telegram', en: 'Apply via Telegram' },
+    req_docs_title: { km: 'សំណុំឯកសារភ្ជាប់សម្រាប់ស្នើសុំអាហារូបករណ៍', en: 'Required Documents for Scholarship Application' },
+    table_no: { km: 'ល.រ', en: 'No.' },
+    table_doc_name: { km: 'ឈ្មោះឯកសារ', en: 'Document Name' },
+    table_qty: { km: 'ចំនួន', en: 'Qty' },
+    all_pages: { km: 'ទំព័រទាំង ៣ នៃសេចក្តីជូនដំណឹង៖', en: 'All 3 pages of the announcement:' },
+    page: { km: 'ទំព័រ', en: 'Page' },
+    of: { km: 'នៃ', en: 'of' },
+    close: { km: 'បិទ', en: 'Close' },
+    zoom_document: { km: 'ពង្រីករូបភាព', en: 'Zoom Document' }
+};
+
+const scholarshipForm = useForm({
+    hero: { ...JSON.parse(JSON.stringify(defaultScholarshipHero)), ...(props.scholarshipSettings?.hero || {}) },
+    documents: [...(props.scholarshipSettings?.documents?.length ? props.scholarshipSettings.documents.map(d => ({...d, title: typeof d.title === 'string' ? {km: d.title, en: d.titleEn || d.title} : d.title})) : defaultScholarshipDocs)],
+    requirements: [...(props.scholarshipSettings?.requirements?.length ? props.scholarshipSettings.requirements.map(r => ({...r, name: typeof r.name === 'string' ? {km: r.name, en: r.name} : r.name, qty: typeof r.qty === 'string' ? {km: r.qty, en: r.qty} : r.qty})) : defaultScholarshipReqs)],
+    portals: [...(props.scholarshipSettings?.portals?.length ? props.scholarshipSettings.portals.map(p => ({...p, title: typeof p.title === 'string' ? {km: p.title, en: p.title} : p.title, desc: typeof p.desc === 'string' ? {km: p.desc, en: p.desc} : p.desc})) : defaultScholarshipPortals)],
+    benefits: props.scholarshipSettings?.benefits?.title ? props.scholarshipSettings.benefits : JSON.parse(JSON.stringify(defaultScholarshipBenefits))
+});
+
+const handleScholarshipDocUpload = (event, index) => {
+    const file = event.target.files[0];
+    if (file) {
+        scholarshipForm.documents[index].image_file = file;
+        scholarshipForm.documents[index].src = URL.createObjectURL(file);
+    }
+};
+
+const addScholarshipDoc = () => {
+    scholarshipForm.documents.push({ title: { km: '', en: '' }, src: '', image_file: null });
+};
+const removeScholarshipDoc = (idx) => scholarshipForm.documents.splice(idx, 1);
+
+const addScholarshipRequirement = () => {
+    scholarshipForm.requirements.push({ no: String(scholarshipForm.requirements.length + 1), name: { km: '', en: '' }, qty: { km: '', en: '' } });
+};
+const removeScholarshipRequirement = (idx) => scholarshipForm.requirements.splice(idx, 1);
+
+const addScholarshipPortal = () => {
+    scholarshipForm.portals.push({ title: { km: '', en: '' }, desc: { km: '', en: '' }, link: '', svg: '' });
+};
+
+const addScholarshipBenefitItem = () => {
+    if (!scholarshipForm.benefits.items) scholarshipForm.benefits.items = [];
+    scholarshipForm.benefits.items.push({ text: { km: '', en: '' } });
+};
+const removeScholarshipBenefitItem = (idx) => scholarshipForm.benefits.items.splice(idx, 1);
+const removeScholarshipPortal = (idx) => scholarshipForm.portals.splice(idx, 1);
+
+const saveScholarshipSettings = () => {
+    scholarshipForm.post(route('admin.scholarship.save'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Scholarship settings saved successfully', 'success');
+        }
+    });
+};
+
 const settingsForm = useForm({
     copyright: props.settings.copyright ? (typeof props.settings.copyright === 'string' ? parseTranslatable(props.settings.copyright) : props.settings.copyright) : { en: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.', km: 'Copyright © 2024 Digital University of Cambodia. All rights reserved.' },
     social_links: [...(props.settings.social_links || [])],
     header_bg_color: props.settings.header_bg_color || '#ffffff',
-    header_text_color: props.settings.header_text_color || '#000000',
+    header_text_color: props.settings.header_text_color || '#104652',
+    header_subtitle_color: props.settings.header_subtitle_color || '#AF8319',
     footer_bg_color: props.settings.footer_bg_color || '#0d184a',
     footer_border_color: props.settings.footer_border_color || '#04a8f5',
     nav_bg_color: props.settings.nav_bg_color || '#3852a4',
@@ -2066,6 +2205,10 @@ const settingsForm = useForm({
     sub_footer_bg_color: props.settings.sub_footer_bg_color || '#081033',
     sub_footer_text_color: props.settings.sub_footer_text_color || '#94a3b8',
     sub_footer_border_color: props.settings.sub_footer_border_color || '#1e293b',
+    global_bg_color: props.settings.global_bg_color || '#c9e0e4',
+    card_bg_color: props.settings.card_bg_color || '#ffffff',
+    primary_button_color: props.settings.primary_button_color || '#104652',
+    primary_button_hover: props.settings.primary_button_hover || '#316d7a',
     privacy_policy_label: props.settings.privacy_policy_label || 'Privacy Policy',
     privacy_policy_url: props.settings.privacy_policy_url || '#',
     footer_credits: props.settings.footer_credits || 'Made with ♥ by IT Department Students',
@@ -3479,62 +3622,65 @@ const stripHtml = (html) => {
                     <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start">
                         
                         <!-- List Pages Sidebar -->
-                        <div class="sticky top-0 z-10 max-h-[calc(100vh-3rem)] overflow-y-auto rounded-3xl p-6 sm:p-8 relative transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border" :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white border-slate-100'">
+                        <div class="sticky top-0 z-10 max-h-[calc(100vh-3rem)] overflow-y-auto rounded-[2rem] p-6 sm:p-8 relative transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]" :class="isDarkMode ? 'bg-[#0f1524] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white'">
                             <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-opacity">
                                 <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"></path></svg>
                             </div>
 
-                            <div class="flex items-center justify-between mb-4 relative z-10">
-                                <div class="flex items-center gap-2 pl-2">
-                                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                            <div class="flex items-center justify-between mb-5 relative z-10">
+                                <div class="flex items-center gap-2 pl-1">
+                                    <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
-                                    <h4 class="text-sm font-black uppercase tracking-widest" :class="isDarkMode ? 'text-white' : 'text-slate-800'">Pages</h4>
+                                    <h4 class="text-[13px] font-black uppercase tracking-[0.15em]" :class="isDarkMode ? 'text-white' : 'text-slate-700'">Pages</h4>
                                 </div>
-                                <button type="button" @click="restoreDefaultPageContent('all')" title="Restore Default Pages" class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500 hover:text-white px-2.5 py-1.5 rounded-xl transition-all border border-amber-500/20 shadow-sm flex items-center gap-1">
+                                <button type="button" @click="restoreDefaultPageContent('all')" title="Restore Default Pages" class="text-[10px] font-extrabold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                     Redo
                                 </button>
                             </div>
 
-                            <div class="flex gap-2 mb-3 relative z-10">
-                                <button @click="startCreatePage('custom')" class="flex-1 py-2 text-[10px] font-extrabold rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-500/30 transition-all border border-blue-500/20">+ Custom Page</button>
-                                <button @click="startCreatePage('office')" class="flex-1 py-2 text-[10px] font-extrabold rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30 transition-all border border-amber-500/20">+ Office</button>
+                            <div class="flex gap-2.5 mb-5 relative z-10">
+                                <button @click="startCreatePage('custom')" class="flex-1 py-2 text-[10px] font-extrabold rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors">+ Custom Page</button>
+                                <button @click="startCreatePage('office')" class="flex-1 py-2 text-[10px] font-extrabold rounded-full bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors">+ Office</button>
                             </div>
 
                             <!-- Page Search Bar -->
-                            <div class="mb-3 relative z-10">
+                            <div class="mb-5 relative z-10">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
                                 <input 
                                     type="text" 
                                     v-model="pagesSearchQuery" 
-                                    placeholder="🔍 Search page or office..." 
-                                    class="w-full text-xs font-medium rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all" 
-                                    :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'"
+                                    placeholder="Search page or office..." 
+                                    class="w-full text-xs font-bold rounded-full border-none pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all" 
+                                    :class="isDarkMode ? 'bg-[#1a2333] text-white placeholder-slate-500' : 'bg-[#e5eff1]/60 text-slate-800 placeholder-slate-400'"
                                 />
                             </div>
 
-                            <div class="space-y-1.5 relative z-10 max-h-[500px] overflow-y-auto pr-1">
+                            <div class="space-y-1 relative z-10 max-h-[500px] overflow-y-auto pr-1">
                                 <button 
                                     v-for="page in filteredPageContents" 
                                     :key="page.id"
                                     @click="startEditPage(page)"
-                                    class="w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group"
+                                    class="w-full text-left px-4 py-3 rounded-2xl text-[13px] font-bold transition-all flex items-center justify-between group"
                                     :class="selectedPage && selectedPage.id === page.id 
                                         ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
-                                        : (isDarkMode ? 'text-slate-400 hover:bg-[#1a2333] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100')"
+                                        : (isDarkMode ? 'text-slate-400 hover:bg-[#1a2333] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900')"
                                 >
                                     <span>{{ parseTranslatable(page.title).en || parseTranslatable(page.title).km || page.title }}</span>
-                                    <span v-if="page.is_office" class="text-[9px] uppercase font-black px-2 py-1 rounded-md transition-colors shrink-0 ml-2" :class="selectedPage && selectedPage.id === page.id ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-600 group-hover:bg-amber-500/20'">Office</span>
+                                    <span v-if="page.is_office" class="text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full transition-colors shrink-0 ml-2" :class="selectedPage && selectedPage.id === page.id ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600 group-hover:bg-orange-200'">Office</span>
                                 </button>
-                                <div v-if="filteredPageContents.length === 0" class="text-center py-6 text-xs text-slate-500">
-                                    No pages found matching "{{ pagesSearchQuery }}".
+                                <div v-if="filteredPageContents.length === 0" class="text-center py-6 text-xs font-bold text-slate-500">
+                                    No pages found.
                                 </div>
                             </div>
                         </div>
 
                         <!-- Editor Form Panel -->
-                        <div class="rounded-3xl p-6 sm:p-8 relative transition-all duration-300 border shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white border-slate-100'">
-                            <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transition-opacity overflow-hidden rounded-3xl">
+                        <div class="rounded-[2rem] p-6 sm:p-8 relative transition-all duration-300 border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)]" :class="isDarkMode ? 'bg-[#0f1524] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white'">
+                            <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transition-opacity overflow-hidden rounded-[2rem]">
                                 <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M11 2v4.09C13.29 6.27 15.35 7.15 17 8.52V4.5C17 3.12 14.31 2 11 2zm6 7.5c-1.39-1.12-3.52-1.91-6-2.09V20.1C14.33 19.92 17 18.24 17 16V9.5zM4.5 9.5v6.5C4.5 18.24 7.17 19.92 10 20.1V7.41c-2.48.18-4.61.97-6 2.09zm0-5V8.52c1.65-1.37 3.71-2.25 6-2.43V2c-3.31 0-6 1.12-6 2.5z"></path></svg>
                             </div>
 
@@ -3549,52 +3695,53 @@ const stripHtml = (html) => {
 
                             <!-- Live form -->
                             <form v-else @submit.prevent="submitPage" class="space-y-8 relative z-10">
-                                <div class="flex flex-col gap-4 bg-slate-50/50 dark:bg-[#090d16]/50 p-5 rounded-2xl border border-slate-100 dark:border-[#1a2333]">
+                                <div class="flex flex-col gap-5 p-6 rounded-3xl" :class="isDarkMode ? 'bg-[#0c101b] border border-[#1a2333]' : 'bg-[#e5eff1]/60'">
                                     <!-- Title Row (Bilingual Title Fields) -->
                                     <div class="space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shrink-0" :class="selectedPage.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'">
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[9px] font-black uppercase tracking-[0.15em] px-3 py-1 rounded-full shrink-0" :class="selectedPage.id ? 'bg-teal-500/10 text-teal-600' : 'bg-blue-500/10 text-blue-500'">
                                                 {{ selectedPage.id ? 'Edit Mode' : 'Create Mode' }} {{ pageContentForm.is_office ? 'Office' : 'Page' }}
                                             </span>
-                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Page / Office Title (EN & KM)</span>
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Page / Office Title (EN & KM)</span>
                                         </div>
                                         
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">EN</span></div>
-                                                <input type="text" v-model="pageContentForm.title.en" placeholder="Page Title (English)" class="w-full rounded-xl text-sm font-bold border pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" />
+                                            <div class="relative group">
+                                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400 group-focus-within:text-blue-500 transition-colors">EN</span></div>
+                                                <input type="text" v-model="pageContentForm.title.en" placeholder="Page Title (English)" class="w-full rounded-full text-[13px] font-bold border-none pl-11 pr-4 py-3 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-white/60 focus:bg-white text-slate-800 shadow-sm'" />
                                             </div>
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400">KM</span></div>
-                                                <input type="text" v-model="pageContentForm.title.km" placeholder="ចំណងជើងទំព័រ/ការិយាល័យ (ខ្មែរ)" class="w-full rounded-xl text-sm font-bold border pl-9 py-2.5 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'" />
+                                            <div class="relative group">
+                                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><span class="text-[10px] font-black text-slate-400 group-focus-within:text-blue-500 transition-colors">KM</span></div>
+                                                <input type="text" v-model="pageContentForm.title.km" placeholder="ចំណងជើងទំព័រ/ការិយាល័យ (ខ្មែរ)" class="w-full rounded-full text-[13px] font-bold border-none pl-11 pr-4 py-3 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-white/60 focus:bg-white text-slate-800 shadow-sm'" />
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Controls + Buttons Row -->
-                                    <div class="flex flex-wrap items-center gap-3">
+                                    <div class="flex flex-wrap items-center gap-4 mt-2">
                                         <!-- Page Slug -->
-                                        <div class="flex items-center gap-2">
-                                            <label class="text-[10px] font-black tracking-widest uppercase text-slate-500 shrink-0">Page Slug</label>
-                                            <div class="flex items-center w-44 shadow-sm rounded-xl overflow-hidden border transition-all" :class="isDarkMode ? 'border-[#1a2333] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20' : 'border-slate-200 focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20'">
-                                                <span class="px-3 py-2 text-xs font-mono font-black" :class="isDarkMode ? 'bg-[#0c101b] text-slate-600' : 'bg-slate-100 text-slate-400'">/</span>
+                                        <div class="flex items-center gap-2.5">
+                                            <label class="text-[9px] font-black tracking-widest uppercase text-slate-500 shrink-0">Page Slug</label>
+                                            <div class="flex items-center w-48 rounded-full overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-500/30 shadow-sm" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-white/60'">
+                                                <span class="pl-4 pr-1 py-2 text-xs font-mono font-black" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">/</span>
                                                 <input 
                                                     type="text" 
                                                     v-model="pageContentForm.slug" 
-                                                    class="w-full text-xs font-mono font-black py-2 px-3 focus:outline-none"
-                                                    :class="isDarkMode ? 'bg-[#090d16] text-white' : 'bg-white text-slate-900'" 
+                                                    class="w-full text-xs font-mono font-black py-2.5 px-2 bg-transparent border-none focus:outline-none focus:ring-0"
+                                                    :class="isDarkMode ? 'text-white' : 'text-slate-800'" 
                                                     placeholder="page-url-path"
                                                 />
                                             </div>
                                         </div>
 
                                         <!-- Title Size -->
-                                        <div class="flex items-center gap-2">
-                                            <label class="text-[10px] font-black tracking-widest uppercase text-slate-500 shrink-0">Title Size</label>
+                                        <div class="flex items-center gap-2.5">
+                                            <label class="text-[9px] font-black tracking-widest uppercase text-slate-500 shrink-0">Title Size</label>
                                             <select 
                                                 v-model="pageContentForm.content.title_font_size" 
-                                                class="text-xs font-bold rounded-xl py-2 px-3 border focus:outline-none transition-all"
-                                                :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-white border-slate-200 text-slate-900 focus:border-blue-650'"
+                                                class="text-xs font-bold rounded-full py-2.5 px-4 border-none focus:outline-none transition-all shadow-sm focus:ring-2 focus:ring-blue-500/30 appearance-none bg-no-repeat bg-right pr-10"
+                                                :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-white/60 focus:bg-white text-slate-800'"
+                                                style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-size: .65em auto;"
                                             >
                                                 <option value="text-2xl sm:text-3xl lg:text-4xl">Default (30px)</option>
                                                 <option value="text-xl sm:text-2xl lg:text-3xl">XS (24px)</option>
@@ -3606,13 +3753,13 @@ const stripHtml = (html) => {
                                         </div>
 
                                         <!-- Apply to All Offices -->
-                                        <label v-if="pageContentForm.is_office" class="flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-xl border border-dashed transition-all" :class="isDarkMode ? 'border-blue-500/30 bg-blue-500/10 text-blue-400 hover:border-blue-500' : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400'">
+                                        <label v-if="pageContentForm.is_office" class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-full transition-all" :class="isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-white/40 text-blue-700'">
                                             <input 
                                                 type="checkbox" 
                                                 v-model="pageContentForm.apply_to_all_offices" 
                                                 class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                                             />
-                                            <span class="text-[11px] font-extrabold">Apply to ALL Offices</span>
+                                            <span class="text-[10px] font-extrabold uppercase tracking-wide">Apply to ALL Offices</span>
                                         </label>
 
                                         <!-- Spacer -->
@@ -3620,15 +3767,15 @@ const stripHtml = (html) => {
 
                                         <!-- Action Buttons -->
                                         <div class="flex gap-2 shrink-0">
-                                            <button v-if="selectedPage.id" type="button" @click="restoreDefaultPageContent(selectedPage.id)" class="bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-600 dark:text-amber-400 rounded-xl px-4 py-2.5 text-xs font-black transition-all border border-amber-500/20 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                            <button v-if="selectedPage.id" type="button" @click="restoreDefaultPageContent(selectedPage.id)" class="bg-[#f2ead0] hover:bg-orange-100 text-[#d39644] rounded-full px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap shadow-sm">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                                 Redo Defaults
                                             </button>
-                                            <button v-if="selectedPage.id" type="button" @click="confirmDeletePage(selectedPage)" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-xl px-4 py-2.5 text-xs font-black transition-all border border-red-500/20 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                            <button v-if="selectedPage.id" type="button" @click="confirmDeletePage(selectedPage)" class="bg-[#f0d6d5] hover:bg-red-100 text-[#de5959] rounded-full px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap shadow-sm">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 Delete
                                             </button>
-                                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/40 hover:scale-[1.02] text-white rounded-xl px-5 py-2.5 text-xs font-black shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5 whitespace-nowrap">
+                                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] text-white rounded-full px-5 py-2.5 text-xs font-black shadow-lg shadow-blue-500/30 transition-all flex items-center gap-1.5 whitespace-nowrap">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                                                 Save Changes
                                             </button>
@@ -3853,12 +4000,20 @@ const stripHtml = (html) => {
                                         </div>
 
                                         <div class="space-y-2">
-                                            <div v-for="fac in props.faculties" :key="fac.id" class="flex justify-between items-center p-3 rounded-xl border transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-white border-slate-200'">
+                                            <div v-for="(fac, index) in props.faculties" :key="fac.id" class="flex justify-between items-center p-3 rounded-xl border transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-white border-slate-200'">
                                                 <div class="flex items-center gap-3">
                                                     <span class="text-blue-600 font-bold">•</span>
                                                     <span class="text-xs font-bold" :class="isDarkMode ? 'text-slate-200' : 'text-slate-800'">{{ getAdminLabel(fac.name) }}</span>
                                                 </div>
                                                 <div class="flex items-center gap-2">
+                                                    <div class="flex flex-col gap-0.5 mr-2">
+                                                        <button type="button" @click="moveFacultyUp(index)" :disabled="index === 0" class="text-slate-400 hover:text-blue-500 disabled:opacity-30 disabled:hover:text-slate-400">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+                                                        </button>
+                                                        <button type="button" @click="moveFacultyDown(index)" :disabled="index === props.faculties.length - 1" class="text-slate-400 hover:text-blue-500 disabled:opacity-30 disabled:hover:text-slate-400">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                                        </button>
+                                                    </div>
                                                     <button type="button" @click="startEditFaculty(fac)" class="text-xs font-bold text-blue-600 hover:underline px-2 py-1">Edit</button>
                                                     <button type="button" @click="deleteFaculty(fac.id)" class="text-xs font-bold text-red-500 hover:underline px-2 py-1">Delete</button>
                                                 </div>
@@ -4163,39 +4318,39 @@ const stripHtml = (html) => {
                                         </div>
                                     </div>
                                     <!-- Office Custom Sections -->
-                                    <div class="border-t pt-4 mt-4" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
-                                        <div class="flex justify-between items-center mb-3">
-                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Custom Office Sections</label>
-                                            <button type="button" @click="addCustomSection" class="text-xs font-bold text-blue-500 hover:underline">+ Add Section</button>
+                                    <div class="pt-4 mt-2">
+                                        <div class="flex justify-between items-center mb-4 px-2">
+                                            <label class="block text-[11px] font-black uppercase tracking-[0.15em]" :class="isDarkMode ? 'text-slate-400' : 'text-slate-400'">Custom Office Sections</label>
+                                            <button type="button" @click="addCustomSection" class="text-[10px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full px-3 py-1.5 transition-colors">+ Add Section</button>
                                         </div>
                                         
-                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-8 border-2 border-dashed rounded-xl" :class="isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-400'">
+                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-10 bg-slate-50 dark:bg-[#0c101b] rounded-3xl" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
                                             <p class="text-xs font-bold">This office has no custom sections yet.</p>
-                                            <button type="button" @click="addCustomSection" class="mt-2 text-xs font-bold text-blue-500">Click here to add one</button>
+                                            <button type="button" @click="addCustomSection" class="mt-3 text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Click here to add one</button>
                                         </div>
                                         
                                         <div class="space-y-6">
-                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-4 p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
+                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-5 p-6 border rounded-3xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white shadow-sm'">
                                                 <div class="flex justify-between items-center">
-                                                    <span class="text-xs font-bold">Section #{{ idx + 1 }}</span>
-                                                    <div class="flex items-center gap-3">
-                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
-                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
-                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove ✕</button>
+                                                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Section #{{ idx + 1 }}</span>
+                                                    <div class="flex items-center gap-2">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-white hover:bg-red-500 bg-red-50 text-[10px] font-bold px-3 py-1 rounded-full transition-colors">Remove ✕</button>
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
-                                                        <input type="text" v-model="section.title.en" placeholder="E.g., About Us, Responsibilities" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" />
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
+                                                        <input type="text" v-model="section.title.en" placeholder="E.g., About Us, Responsibilities" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
-                                                        <input type="text" v-model="section.title.km" placeholder="E.g., អំពីយើង, តួនាទី" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" />
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
+                                                        <input type="text" v-model="section.title.km" placeholder="E.g., អំពីយើង, តួនាទី" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
-                                                        <select v-model="section.title_font_size" class="w-full rounded-xl text-xs font-bold border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'">
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
+                                                        <select v-model="section.title_font_size" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'">
                                                             <option value="">Default (30px / Large)</option>
                                                             <option value="text-base sm:text-lg">XS (18px)</option>
                                                             <option value="text-lg sm:text-xl">Small (20px)</option>
@@ -4208,12 +4363,12 @@ const stripHtml = (html) => {
                                                 </div>
                                                 <div class="grid grid-cols-1 gap-4">
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
-                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html"></QuillEditor></div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
-                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html"></QuillEditor></div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4223,51 +4378,51 @@ const stripHtml = (html) => {
                                 
                                 <!-- Generic Page Form -->
                                 <div v-else class="space-y-4">
-                                    <div class="border-t pt-4" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
-                                        <div class="flex justify-between items-center mb-3">
-                                            <label class="block text-[10px] font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Custom Page Content Sections</label>
-                                            <button type="button" @click="addCustomSection" class="text-xs font-bold text-blue-500 hover:underline">+ Add Content Block</button>
+                                    <div class="pt-4 mt-2">
+                                        <div class="flex justify-between items-center mb-4 px-2">
+                                            <label class="block text-[11px] font-black uppercase tracking-[0.15em]" :class="isDarkMode ? 'text-slate-400' : 'text-slate-400'">Custom Page Content Sections</label>
+                                            <button type="button" @click="addCustomSection" class="text-[10px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full px-3 py-1.5 transition-colors">+ Add Content Block</button>
                                         </div>
                                         
-                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-8 border-2 border-dashed rounded-xl" :class="isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-400'">
+                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-10 bg-slate-50 dark:bg-[#0c101b] rounded-3xl" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
                                             <p class="text-xs font-bold">This page has no content blocks yet.</p>
-                                            <button type="button" @click="addCustomSection" class="mt-2 text-xs font-bold text-blue-500">Click here to add one</button>
+                                            <button type="button" @click="addCustomSection" class="mt-3 text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Click here to add one</button>
                                         </div>
                                         
                                         <div class="space-y-6">
-                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-4 p-4 border rounded-xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white'">
+                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-5 p-6 border rounded-3xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white shadow-sm'">
                                                 <div class="flex justify-between items-center">
-                                                    <span class="text-xs font-bold">Custom Block #{{ idx + 1 }}</span>
-                                                    <div class="flex items-center gap-3">
-                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Up">↑ Up</button>
-                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-blue-400 text-xs font-bold" title="Move Down">↓ Down</button>
-                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-red-400 text-xs font-bold">Remove Block ✕</button>
+                                                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Custom Block #{{ idx + 1 }}</span>
+                                                    <div class="flex items-center gap-2">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-white hover:bg-red-500 bg-red-50 text-[10px] font-bold px-3 py-1 rounded-full transition-colors">Remove Block ✕</button>
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
                                                         <input 
                                                             type="text" 
                                                             v-model="section.title.en" 
                                                             placeholder="E.g., Welcome to DUC"
-                                                            class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5"
-                                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
+                                                            class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                            :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" 
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
                                                         <input 
                                                             type="text" 
                                                             v-model="section.title.km" 
                                                             placeholder="E.g., សូមស្វាគមន៍មកកាន់ DUC"
-                                                            class="w-full rounded-xl text-sm border focus:outline-none px-3 py-1.5"
-                                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'" 
+                                                            class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                            :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" 
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
-                                                        <select v-model="section.title_font_size" class="w-full rounded-xl text-xs font-bold border focus:outline-none px-3 py-1.5" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-650'">
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title Size</label>
+                                                        <select v-model="section.title_font_size" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'">
                                                             <option value="">Default (30px / Large)</option>
                                                             <option value="text-base sm:text-lg">XS (18px)</option>
                                                             <option value="text-lg sm:text-xl">Small (20px)</option>
@@ -4280,12 +4435,12 @@ const stripHtml = (html) => {
                                                 </div>
                                                 <div class="grid grid-cols-1 gap-4">
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
-                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html"  ></QuillEditor></div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 mt-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
-                                                        <div class="bg-white text-black rounded min-h-[200px] overflow-hidden"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html"  ></QuillEditor></div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4857,6 +5012,50 @@ const stripHtml = (html) => {
                                 </div>
                             </div>
 
+                            <!-- Global Theme Colors Section -->
+                            <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center dark:bg-blue-500/20 dark:text-blue-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black uppercase tracking-wider" :class="isDarkMode ? 'text-white' : 'text-slate-900'">Global Theme Colors</h4>
+                                        <p class="text-xs" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Customize the main background, card, and button colors across the entire site.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Web Background</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" v-model="settingsForm.global_bg_color" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
+                                            <input type="text" v-model="settingsForm.global_bg_color" placeholder="#c9e0e4" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                        </div>
+                                    </div>
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Card Background</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" v-model="settingsForm.card_bg_color" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
+                                            <input type="text" v-model="settingsForm.card_bg_color" placeholder="#ffffff" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                        </div>
+                                    </div>
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Button Color</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" v-model="settingsForm.primary_button_color" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
+                                            <input type="text" v-model="settingsForm.primary_button_color" placeholder="#104652" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                        </div>
+                                    </div>
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Button Hover Color</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" v-model="settingsForm.primary_button_hover" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
+                                            <input type="text" v-model="settingsForm.primary_button_hover" placeholder="#316d7a" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Header & Footer Colors Section -->
                             <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
                                 <div class="flex items-center gap-3 mb-6">
@@ -4913,7 +5112,15 @@ const stripHtml = (html) => {
                                         <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Header Text Color</label>
                                         <div class="flex items-center gap-2">
                                             <input type="color" v-model="settingsForm.header_text_color" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
-                                            <input type="text" v-model="settingsForm.header_text_color" placeholder="#000000" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                            <input type="text" v-model="settingsForm.header_text_color" placeholder="#104652" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
+                                        </div>
+                                    </div>
+                                    <!-- Header Subtitle Color -->
+                                    <div class="p-4 rounded-2xl border" :class="isDarkMode ? 'border-[#1a2333] bg-[#0c101b]' : 'border-slate-100 bg-slate-50'">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Header Subtitle Color</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" v-model="settingsForm.header_subtitle_color" class="h-10 w-12 rounded-xl border p-1 cursor-pointer bg-transparent shrink-0">
+                                            <input type="text" v-model="settingsForm.header_subtitle_color" placeholder="#AF8319" class="w-full rounded-xl text-sm border focus:outline-none px-3 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white' : 'bg-white border-slate-200'">
                                         </div>
                                     </div>
 
@@ -5260,6 +5467,84 @@ const stripHtml = (html) => {
                                         <div v-else class="text-xs text-slate-400 italic">No image selected</div>
                                     </div>
                                 </div>
+                                <div class="mt-6">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Google Maps Link</label>
+                                    <input type="url" v-model="contactSettingsForm.contact_map_link" placeholder="e.g. https://maps.app.goo.gl/..." class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    <p class="text-[10px] mt-1.5" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">Paste a direct link to Google Maps (e.g. from the 'Share' button). The address text on the contact page will become a clickable link.</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center dark:bg-blue-500/20 dark:text-blue-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black uppercase tracking-wider" :class="isDarkMode ? 'text-white' : 'text-slate-900'">Contact Form Text</h4>
+                                        <p class="text-xs" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Manage the text labels displayed on the contact form itself.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Form Title (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_title.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Form Title (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_title.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Name Label (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_name_label.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Name Label (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_name_label.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Email Label (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_email_label.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Email Label (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_email_label.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Subject Label (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_subject_label.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Subject Label (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_subject_label.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Message Label (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_message_label.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Message Label (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_message_label.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Submit Button (English)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_submit_label.en" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Submit Button (Khmer)</label>
+                                        <input type="text" v-model="contactSettingsForm.contact_form_submit_label.km" class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500'" />
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="border-t pt-8 mt-10 relative z-10" :class="isDarkMode ? 'border-slate-800' : 'border-slate-100'">
@@ -5435,6 +5720,382 @@ const stripHtml = (html) => {
                             </div>
                         </div>
                     </form>
+                </div>
+
+                <!-- TAB: SCHOLARSHIP -->
+                <div v-if="activeTab === 'scholarship'" class="animate-fadeIn space-y-8">
+                    <!-- Sticky Header -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-50 p-4 sm:px-6 bg-white/70 dark:bg-[#0c101b]/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-blue-900/5 dark:shadow-black/20 transition-all">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                                <svg class="w-7 h-7 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+                                Scholarship Page Settings
+                            </h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 font-bold mt-1">Manage official documents, requirements, and contact portals for the 100% Scholarship page.</p>
+                        </div>
+                        <button @click="saveScholarshipSettings" :disabled="scholarshipForm.processing" class="btn-primary shrink-0 relative overflow-hidden group w-full md:w-auto">
+                            <span class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
+                            <span class="relative flex items-center justify-center gap-2">
+                                <svg v-if="scholarshipForm.processing" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                {{ scholarshipForm.processing ? 'Saving Changes...' : 'Save Settings' }}
+                            </span>
+                        </button>
+                    </div>
+
+                    
+                    <!-- 0. Hero Section -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                    Hero Section
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage the top banner texts on the scholarship page.</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (Khmer)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.badge.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (English)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.badge.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Title (Khmer)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Title (English)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Khmer)</label>
+                                    <textarea v-model="scholarshipForm.hero.description.km" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (English)</label>
+                                    <textarea v-model="scholarshipForm.hero.description.en" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button Text (Khmer)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.doc_button.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button Text (English)</label>
+                                    <input type="text" v-model="scholarshipForm.hero.doc_button.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. Official Documents Showcase -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Official Documents Gallery
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Images of the official announcement letters</p>
+                            </div>
+                            <button @click="addScholarshipDoc" type="button" class="btn-secondary text-sm px-4 py-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add Document
+                            </button>
+                        </div>
+
+                        <!-- Document Section Header Texts -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-slate-50 dark:bg-[#0c101b] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.official_doc_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#131927] border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:border-blue-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.official_doc_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#131927] border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:border-blue-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle / Hint (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.click_to_zoom.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#131927] border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:border-blue-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle / Hint (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.click_to_zoom.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#131927] border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:border-blue-500'" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div v-for="(doc, idx) in scholarshipForm.documents" :key="idx" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131927] flex flex-col md:flex-row gap-4 items-start">
+                                <!-- Image Upload -->
+                                <div class="w-full md:w-48 shrink-0">
+                                    <div class="relative group rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-[#0c101b] h-32 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-blue-500">
+                                        <img v-if="doc.src" :src="doc.src" class="absolute inset-0 w-full h-full object-cover z-10" />
+                                        <div :class="{'opacity-0 group-hover:opacity-100': doc.src, 'opacity-100': !doc.src}" class="absolute inset-0 z-20 bg-black/40 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer">
+                                            <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                            <span class="text-xs font-bold">Upload Image</span>
+                                            <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" @change="(e) => handleScholarshipDocUpload(e, idx)" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 grid grid-cols-1 gap-4 w-full">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ">Title (Khmer)</label>
+                                        <input type="text" v-model="doc.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. ទំព័រទី ១៖ សេចក្តីជូនដំណឹង" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ">Title (English)</label>
+                                        <input type="text" v-model="doc.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. Page 1: Scholarship Announcement" />
+                                    </div>
+                                </div>
+                                <button @click="removeScholarshipDoc(idx)" type="button" class="btn-danger p-2 shrink-0 self-start md:self-center" title="Remove Document">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                            <div v-if="!scholarshipForm.documents.length" class="text-center p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-slate-500">
+                                No documents added yet.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Required Documents Checklist -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                    Required Documents Checklist
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">List of documents needed for application</p>
+                            </div>
+                            <button @click="addScholarshipRequirement" type="button" class="btn-secondary text-sm px-4 py-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add Requirement
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="(req, idx) in scholarshipForm.requirements" :key="idx" class="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131927]">
+                                <div class="w-16">
+                                    <input type="text" v-model="req.no" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-center font-bold" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="No." />
+                                </div>
+                                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <input type="text" v-model="req.name.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="Name (KM) e.g. អត្តសញ្ញាណប័ណ្ណ" />
+                                    <input type="text" v-model="req.name.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="Name (EN) e.g. Identity Card" />
+                                </div>
+                                <div class="w-full md:w-48 grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 md:mt-0">
+                                    <input type="text" v-model="req.qty.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-2 py-2 transition-all text-center" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="Qty (KM) ១ច្បាប់" />
+                                    <input type="text" v-model="req.qty.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-2 py-2 transition-all text-center" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="Qty (EN) 1 Copy" />
+                                </div>
+                                <button @click="removeScholarshipRequirement(idx)" type="button" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <!-- Privilege & Benefits -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Privilege & Benefits
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage the benefits checklist section.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Title (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.benefits.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" placeholder="អត្ថប្រយោជន៍ទទួលបានពីអាហារូបករណ៍" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Title (English)</label>
+                                <input type="text" v-model="scholarshipForm.benefits.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-emerald-500'" placeholder="Privilege & Benefits" />
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">Benefit Items</h4>
+                            <button @click="addScholarshipBenefitItem" type="button" class="btn-secondary text-sm px-4 py-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add Item
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div v-for="(item, idx) in scholarshipForm.benefits.items" :key="idx" class="flex flex-col gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131927]">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-400">Item {{ idx + 1 }}</span>
+                                    <button @click="removeScholarshipBenefitItem(idx)" type="button" class="text-slate-400 hover:text-red-500 bg-white dark:bg-[#0c101b] rounded-full p-1 border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Text (Khmer)</label>
+                                    <input type="text" v-model="item.text.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. ទទួលបានអាហារូបករណ៍ ១០០%..." />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Text (English)</label>
+                                    <input type="text" v-model="item.text.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. Get a 100% full scholarship..." />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Portals & Links -->
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    QR Code Portals & Links
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Social media channels and application links</p>
+                            </div>
+                            <button @click="addScholarshipPortal" type="button" class="btn-secondary text-sm px-4 py-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add Portal
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div v-for="(portal, idx) in scholarshipForm.portals" :key="idx" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131927] space-y-4 relative group">
+                                <button @click="removeScholarshipPortal(idx)" type="button" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 bg-white dark:bg-[#0c101b] rounded-full p-1 border border-slate-200 dark:border-slate-700 shadow-sm transition-colors z-10 opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs">Title (Khmer)</label>
+                                        <input type="text" v-model="portal.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-sm" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. ឆានែលតេឡេក្រាម" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs">Title (English)</label>
+                                        <input type="text" v-model="portal.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-sm" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. Telegram Channel" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs">Description (Khmer)</label>
+                                        <input type="text" v-model="portal.desc.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-sm" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. ឆានែលព័ត៌មានផ្លូវការ" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs">Description (English)</label>
+                                        <input type="text" v-model="portal.desc.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-sm" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="e.g. Official News Channel" />
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs">Target Link URL</label>
+                                        <input type="text" v-model="portal.link" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-sm" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="https://t.me/..." />
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-xs flex justify-between">
+                                            <span>SVG Icon Code</span>
+                                            <span v-if="portal.svg" class="text-xs text-blue-500">Preview: <span class="inline-block w-4 h-4 ml-1 align-middle" v-html="portal.svg"></span></span>
+                                        </label>
+                                        <textarea v-model="portal.svg" rows="3" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500/30 px-4 py-2 transition-all text-xs font-mono" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-emerald-500' : 'bg-white border-slate-200 focus:bg-slate-50 focus:border-emerald-500'" placeholder="<svg>...</svg>"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Page UI Translations -->
+                    <div class="card p-6 mt-6">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <svg class="w-5 h-5 text-fuchsia-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                5. Page UI Translations
+                            </h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Translate the various buttons, headers, and table labels found across the scholarship page.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Telegram Button -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Telegram Button (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.apply_telegram.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Telegram Button (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.apply_telegram.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            
+                            <!-- Required Docs Title -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Required Docs Title (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.req_docs_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Required Docs Title (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.req_docs_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <!-- All Pages Info -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"All Pages" Info (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.all_pages.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"All Pages" Info (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.all_pages.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <!-- Table No -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "No." (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_no.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "No." (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_no.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <!-- Table Doc Name -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "Doc Name" (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_doc_name.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "Doc Name" (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_doc_name.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <!-- Table Qty -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "Qty" (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_qty.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Table "Qty" (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.table_qty.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <!-- Lightbox Texts -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"Page" (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.page.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"Page" (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.page.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"of" (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.of.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"of" (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.of.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"Close" (Khmer)</label>
+                                <input type="text" v-model="scholarshipForm.hero.close.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"Close" (English)</label>
+                                <input type="text" v-model="scholarshipForm.hero.close.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- TAB: TRANSLATIONS -->

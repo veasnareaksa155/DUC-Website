@@ -56,7 +56,7 @@ const paragraphs = computed(() => {
 <template>
     <Head :title="$t(event.title)" />
 
-    <div class="min-h-screen bg-[#c9e0e4] font-sans text-slate-900">
+    <div class="min-h-screen bg-global-bg font-sans text-slate-900">
         <SiteHeader />
 
         <main class="mx-auto w-full max-w-[1400px] px-4 py-12 md:px-6">

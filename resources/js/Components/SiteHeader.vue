@@ -231,17 +231,22 @@ const getActiveLinks = (menuLabel) => {
 
 const page = usePage();
 
-const headerBgColor = computed(() => '#ebf4f6');
-const headerTextColor = computed(() => '#115D6D');
-const navBgColor = computed(() => '#0d4a57');
-const navTextColor = computed(() => '#ffffff');
-const navActiveColor = computed(() => '#ffb800');
+const headerBgColor = computed(() => page.props.settings?.header_bg_color || '#ebf4f6');
+const headerTextColor = computed(() => page.props.settings?.header_text_color || '#115D6D');
+const navBgColor = computed(() => page.props.settings?.nav_bg_color || '#0d4a57');
+const navTextColor = computed(() => page.props.settings?.nav_text_color || '#ffffff');
+const navActiveColor = computed(() => page.props.settings?.nav_active_color || '#ffb800');
 
 const isActive = (href) => {
     if (!href || href === '#') return false;
     
     const currentUrl = String(page.url || '');
     const targetHref = String(href);
+    
+    // Exact match for links with query parameters
+    if (targetHref.includes('?')) {
+        return currentUrl === targetHref;
+    }
     
     let currentPath = currentUrl.split('?')[0].trim().toLowerCase();
     if (!currentPath.startsWith('/')) currentPath = '/' + currentPath;
@@ -416,38 +421,7 @@ const navItems = computed(() => {
         }
     }
 
-    // Inject the 5 requested ABOUT items if not present
-    const aboutItem = items.find(it => {
-        const l = (typeof it.label === 'object' ? (it.label.en || it.label.km || '') : String(it.label)).toLowerCase();
-        return l === 'about' || l.includes('about');
-    });
 
-    if (aboutItem) {
-        const additionalAboutLinks = [
-            { id: 'about-building', title: { en: 'Building', km: 'អគារ' }, href: '/about?tab=building', links: [] },
-            { id: 'about-sub-decree', title: { en: 'Sub-Decree on University Establishment', km: 'អនុក្រឹត្យស្តីពីការបង្កើតសាកលវិទ្យាល័យ' }, href: '/about?tab=sub-decree', links: [] },
-            { id: 'about-degree-certificate', title: { en: 'Sample Degree Certificate', km: 'គំរូសញ្ញាបត្រ' }, href: '/about?tab=degree-certificate', links: [] },
-            { id: 'about-graduation-gown', title: { en: 'Sample Graduation Gown', km: 'គំរូអាវពាក់បញ្ចប់ការសិក្សា' }, href: '/about?tab=graduation-gown', links: [] },
-            { id: 'about-student-uniform', title: { en: 'Sample Student Uniform', km: 'គំរូឯកសណ្ឋាននិស្សិត' }, href: '/about?tab=student-uniform', links: [] },
-        ];
-
-        if (!aboutItem.megaMenu) {
-            aboutItem.megaMenu = [];
-        }
-
-        additionalAboutLinks.forEach(newLnk => {
-            const exists = aboutItem.megaMenu.some(m => {
-                const t = (typeof m.title === 'object' ? (m.title.en || m.title.km || '') : String(m.title)).toLowerCase();
-                const targetT = newLnk.title.en.toLowerCase();
-                return t === targetT || m.href === newLnk.href;
-            });
-            if (!exists) {
-                aboutItem.megaMenu.push(newLnk);
-            }
-        });
-
-        aboutItem.hasMenu = aboutItem.megaMenu.length > 0;
-    }
 
     // Deduplicate top-level items strictly by label content and href
     const seen = new Set();
@@ -468,9 +442,9 @@ const navItems = computed(() => {
         <!-- Spacer to prevent content jump on scroll -->
         <div class="w-full h-[75px] sm:h-[90px] md:h-[95px] lg:h-[166px]"></div>
 
-        <header class="font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500 pt-3.5 pb-0" :style="{ backgroundColor: headerBgColor || '#115D6D', color: headerTextColor || '#ffffff' }">
+        <header class="font-sans fixed w-full left-0 top-0 z-50 transition-all duration-500 pt-2 pb-0" :style="{ backgroundColor: headerBgColor || '#115D6D', color: headerTextColor || '#ffffff' }">
         
-        <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 pb-3 transition-all duration-300">
+        <div class="mx-auto flex max-w-[1410px] items-center justify-between gap-4 px-6 pb-1.5 transition-all duration-300">
             
             <Link href="/" class="flex items-center z-50">
                 <img src="./path/to/duc-logo.png" alt="DUC Logo" 
@@ -479,12 +453,12 @@ const navItems = computed(() => {
                 
                 <div class="flex flex-col justify-center drop-shadow-md transition-all duration-300">
                     <h1 class="leading-none tracking-wide transition-all duration-300" 
-                        :style="{ color: '#115D6D', fontFamily: '\'Moul\', \'Khmer OS Moul\', serif' }"
+                        :style="{ color: $page.props.settings?.header_text_color || '#104652', fontFamily: '\'Moul\', \'Khmer OS Moul\', serif' }"
                         :class="isScrolled ? 'text-[13px] sm:text-[18px] md:text-[20px] lg:text-[22px]' : 'text-[13px] sm:text-[20px] md:text-[20px] lg:text-[26px]'">
                         សាកលវិទ្យាល័យឌីជីថលកម្ពុជា
                     </h1>
-                    <h2 class="mt-1 font-[900] leading-none tracking-[0.03em] transition-all duration-300" 
-                        :style="{ color: '#AF8319', fontFamily: '\'Old English Text MT\', \'UnifrakturMaguntia\', serif' }"
+                    <h2 class="mt-1.5 font-[900] leading-none tracking-[0.03em] transition-all duration-300" 
+                        :style="{ color: $page.props.settings?.header_subtitle_color || '#AF8319', fontFamily: '\'Old English Text MT\', \'UnifrakturMaguntia\', serif' }"
                         :class="isScrolled ? 'text-[14px] sm:text-[20px] md:text-[22px] lg:text-[25px]' : 'text-[14px] sm:text-[22px] md:text-[22px] lg:text-[29px]'">
                         Digital University of Cambodia
                     </h2>
@@ -554,9 +528,9 @@ const navItems = computed(() => {
                                     :href="cat.href"
                                     @mouseenter="activeMegaMenuTabs[item.label] = null"
                                     class="text-left px-4 py-3 rounded-r-md transition-all duration-200 outline-none flex items-center justify-between group/btn"
-                                    :class="(isCatActive(cat) && !activeMegaMenuTabs[item.label])
-                                        ? 'bg-[#f4f7fb] text-[#b38b1d] font-extrabold border-l-4 border-[#b38b1d]'
-                                        : 'text-[#1c244b] font-bold border-l-4 border-transparent hover:bg-gray-50 hover:text-[#3852a4]'"
+                                    :class="isCatActive(cat)
+                                        ? 'bg-[#f4f7fb] text-[#AF8319] font-extrabold border-l-4 border-[#AF8319]'
+                                        : 'text-[#1c244b] font-bold border-l-4 border-transparent hover:bg-gray-50 hover:text-[#AF8319]'"
                                 >
                                     {{ $t(cat.title) }}
                                 </Link>
@@ -566,9 +540,11 @@ const navItems = computed(() => {
                                     :href="cat.href"
                                     @mouseenter="activeMegaMenuTabs[item.label] = cat.title"
                                     class="text-left px-4 py-3 rounded-r-md transition-all duration-200 outline-none flex items-center justify-between group/btn"
-                                    :class="(activeMegaMenuTabs[item.label] === cat.title)
-                                        ? 'bg-[#f4f7fb] text-[#b38b1d] font-extrabold border-l-4 border-[#b38b1d]'
-                                        : 'text-[#1c244b] font-bold border-l-4 border-transparent hover:bg-gray-50 hover:text-[#3852a4]'"
+                                    :class="isCatActive(cat)
+                                        ? 'bg-[#f4f7fb] text-[#AF8319] font-extrabold border-l-4 border-[#AF8319]'
+                                        : (activeMegaMenuTabs[item.label] === cat.title
+                                            ? 'bg-[#f4f7fb] text-[#AF8319] font-bold border-l-4 border-transparent'
+                                            : 'text-[#1c244b] font-bold border-l-4 border-transparent hover:bg-gray-50 hover:text-[#AF8319]')"
                                 >
                                     <span class="text-[16px]">{{ $t(cat.title) }}</span>
 
@@ -596,10 +572,10 @@ const navItems = computed(() => {
                                     :key="link.label"
                                     :href="link.href"
                                     class="group/link flex items-center text-[15px] transition-colors"
-                                    :class="isActive(link.href) ? 'text-[#b38b1d] font-extrabold' : 'text-[#1c244b] font-bold hover:text-[#0056b3]'"
+                                    :class="isActive(link.href) ? 'text-[#AF8319] font-extrabold' : 'text-[#1c244b] font-bold hover:text-[#AF8319]'"
                                 >
                                     <svg class="w-4 h-4 mr-2 transition-all duration-300 transform" 
-                                         :class="isActive(link.href) ? 'text-[#b38b1d] opacity-100 translate-x-0' : 'text-[#b38b1d] opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0'" 
+                                         :class="isActive(link.href) ? 'text-[#AF8319] opacity-100 translate-x-0' : 'text-[#AF8319] opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0'" 
                                          fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                     <span :class="{ 'underline decoration-2 underline-offset-4': isActive(link.href), 'group-hover/link:underline decoration-2 underline-offset-4': !isActive(link.href) }">{{ $t(link.label) }}</span>
                                 </Link>

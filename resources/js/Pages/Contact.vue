@@ -71,7 +71,7 @@ onUnmounted(() => {
     <Head :title="$t('Contact Us')" />
 
     <SiteHeader />
-    <div class="min-h-screen bg-[#c9e0e4] text-slate-900 overflow-x-hidden">
+    <div class="min-h-screen bg-global-bg text-slate-900 overflow-x-hidden">
 
         <main class="bg-gray-50/50">
             <section class="relative w-full bg-[#115D6D] text-white py-16 sm:py-24 px-4 overflow-hidden shadow-sm">
@@ -102,7 +102,9 @@ onUnmounted(() => {
                             </div>
                             <div>
                                 <h3 class="font-bold text-slate-800 text-base sm:text-lg">{{ $t('Address') }}</h3>
-                                <p class="mt-1 text-sm sm:text-base text-slate-600 font-medium">{{ $t(typeof settings.address === 'object' ? (settings.address[$page.props.locale] || settings.address.en) : settings.address) }}</p>
+                                <a :href="settings.contact_map_link || '#'" target="_blank" rel="noopener noreferrer" class="mt-1 text-sm sm:text-base text-[#00a0e9] font-semibold hover:underline block">
+                                    {{ $t(typeof settings.address === 'object' ? (settings.address[$page.props.locale] || settings.address.en) : settings.address) }}
+                                </a>
                             </div>
                         </div>
 
@@ -158,28 +160,28 @@ onUnmounted(() => {
                     <div class="lg:col-span-7 flex flex-col gap-6">
                         
                         <div class="scroll-reveal opacity-0 translate-y-8 scale-95 transition-all duration-700 ease-out bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-                            <h2 class="text-xl sm:text-2xl font-bold text-[#0f2154] mb-2">{{ $t('Send Us a Message') }}</h2>
+                            <h2 class="text-xl sm:text-2xl font-bold text-[#0f2154] mb-2">{{ typeof settings.contact_form_title === 'object' ? (settings.contact_form_title[$page.props.locale] || settings.contact_form_title.en) : (settings.contact_form_title || $t('Send Us a Message')) }}</h2>
                             <p class="text-xs sm:text-sm text-slate-500 mb-6">{{ $t('Required fields are marked with an asterisk (*)') }}</p>
                             
                             <form @submit.prevent="handleSubmit" class="space-y-4">
                                 <div class="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ $t('Full Name *') }}</label>
-                                        <input type="text" v-model="form.name" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200" :placeholder="$t('John Doe')" />
+                                        <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ typeof settings.contact_form_name_label === 'object' ? (settings.contact_form_name_label[$page.props.locale] || settings.contact_form_name_label.en) : (settings.contact_form_name_label || $t('Full Name *')) }}</label>
+                                        <input type="text" v-model="form.name" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200" :placeholder="$t('')" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ $t('Email Address *') }}</label>
-                                        <input type="email" v-model="form.email" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200" :placeholder="$t('yourname@domain.com')" />
+                                        <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ typeof settings.contact_form_email_label === 'object' ? (settings.contact_form_email_label[$page.props.locale] || settings.contact_form_email_label.en) : (settings.contact_form_email_label || $t('Email Address *')) }}</label>
+                                        <input type="email" v-model="form.email" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200" :placeholder="$t('')" />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ $t('Subject *') }}</label>
+                                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ typeof settings.contact_form_subject_label === 'object' ? (settings.contact_form_subject_label[$page.props.locale] || settings.contact_form_subject_label.en) : (settings.contact_form_subject_label || $t('Subject *')) }}</label>
                                     <input type="text" v-model="form.subject" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200" :placeholder="$t('How can we help you?')" />
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ $t('Message *') }}</label>
+                                    <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{{ typeof settings.contact_form_message_label === 'object' ? (settings.contact_form_message_label[$page.props.locale] || settings.contact_form_message_label.en) : (settings.contact_form_message_label || $t('Message *')) }}</label>
                                     <textarea v-model="form.message" rows="4" required class="w-full text-sm rounded-xl border-gray-200 focus:border-[#2f47aa] focus:ring-2 focus:ring-[#2f47aa]/20 bg-gray-50/50 p-2.5 sm:p-3 transition-all duration-200 resize-none" :placeholder="$t('Type your message here...')"></textarea>
                                 </div>
 
@@ -187,9 +189,9 @@ onUnmounted(() => {
                                     {{ $t(successMessage) }}
                                 </div>
 
-                                <button type="submit" :disabled="isSubmitting" class="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-[#2f47aa] text-white font-semibold text-sm shadow-sm hover:bg-[#1f3284] active:scale-95 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                                <button type="submit" :disabled="isSubmitting" class="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-btn-primary text-white font-semibold text-sm shadow-sm hover:bg-btn-primary-hover active:scale-95 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2">
                                     <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                    {{ isSubmitting ? $t('Sending...') : $t('Send Message') }}
+                                    {{ isSubmitting ? $t('Sending...') : (typeof settings.contact_form_submit_label === 'object' ? (settings.contact_form_submit_label[$page.props.locale] || settings.contact_form_submit_label.en) : (settings.contact_form_submit_label || $t('Send Message'))) }}
                                 </button>
                             </form>
                         </div>

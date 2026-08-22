@@ -342,9 +342,9 @@ const formatCellHtml = (text) => {
     <Head :title="pageTitle" />
 
     <SiteHeader/>
-    <div class="bg-[#c9e0e4] font-sans min-h-screen">
+    <div class="bg-global-bg font-sans min-h-screen">
         <!-- Page header / breadcrumb block -->
-        <div class="bg-[#c9e0e4] border-b border-slate-300/80">
+        <div class="bg-global-bg border-b border-slate-300/80">
             <div class="mx-auto max-w-[1400px] px-4 py-8 md:px-6 md:py-10">
                 <Link
                     :href="facultyHref"
@@ -376,7 +376,7 @@ const formatCellHtml = (text) => {
         </div>
 
         <!-- Mobile TOC: horizontal chip scroller -->
-        <div ref="mobileTocRef" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-30 overflow-x-auto border-b border-gray-300/70 bg-[#c9e0e4]/95 backdrop-blur px-4 py-3 lg:hidden no-scrollbar">
+        <div ref="mobileTocRef" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-30 overflow-x-auto border-b border-gray-300/70 bg-global-bg/95 backdrop-blur px-4 py-3 lg:hidden no-scrollbar">
             <div class="flex w-max gap-2">
                 <button
                     v-for="s in sections"

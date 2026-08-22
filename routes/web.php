@@ -41,7 +41,15 @@
     })->name('/contact');
 
     Route::get('/scholarship', function () {
-        return Inertia::render('Scholarship');
+        return Inertia::render('Scholarship', [
+            'scholarshipSettings' => [
+                'hero' => json_decode(\App\Models\Setting::getValue('scholarship_hero', '[]'), true),
+                'documents' => json_decode(\App\Models\Setting::getValue('scholarship_documents', '[]'), true),
+                'requirements' => json_decode(\App\Models\Setting::getValue('scholarship_requirements', '[]'), true),
+                'portals' => json_decode(\App\Models\Setting::getValue('scholarship_portals', '[]'), true),
+                'benefits' => json_decode(\App\Models\Setting::getValue('scholarship_benefits', '[]'), true),
+            ]
+        ]);
     })->name('scholarship');
 
     Route::get('/events', function () {
@@ -77,6 +85,7 @@
 
         Route::post('/admin/faculties', [AdminController::class, 'saveFaculty'])->name('admin.faculties.save');
         Route::post('/admin/faculties/restore-defaults', [AdminController::class, 'restoreDefaultFaculties'])->name('admin.faculties.restoreDefaults');
+        Route::post('/admin/faculties/reorder', [AdminController::class, 'reorderFaculties'])->name('admin.faculties.reorder');
         Route::delete('/admin/faculties/{faculty}', [AdminController::class, 'deleteFaculty'])->name('admin.faculties.delete');
 
         Route::post('/admin/departments', [AdminController::class, 'saveDepartment'])->name('admin.departments.save');
@@ -90,11 +99,13 @@
         Route::post('/admin/translations', [AdminController::class, 'saveTranslation'])->name('admin.translations.save');
         Route::post('/admin/translations/restore-defaults', [AdminController::class, 'restoreDefaultTranslations'])->name('admin.translations.restoreDefaults');
         Route::delete('/admin/translations/{translation}', [AdminController::class, 'deleteTranslation'])->name('admin.translations.delete');
+
+        Route::post('/admin/scholarship-settings', [AdminController::class, 'saveScholarshipSettings'])->name('admin.scholarship.save');
     });
 
     Route::get('/faculties', function () {
         return Inertia::render('Faculties', [
-            'faculties' => \App\Models\Faculty::all()
+            'faculties' => \App\Models\Faculty::orderBy('sort_order')->get()
         ]);
     })->name('faculties');
 
@@ -139,6 +150,13 @@ require __DIR__.'/auth.php';
         if ($page->is_office) {
             $officeData = json_decode($page->content, true) ?? [];
             $officeData['title'] = $page->title;
+            if ($slug === 'library') {
+                return Inertia::render('OfficePages/LibraryShow', [
+                    'office' => $slug,
+                    'officeData' => $officeData,
+                ]);
+            }
+
             return Inertia::render('OfficePages/OfficeShow', [
                 'office' => $slug,
                 'officeData' => $officeData,
@@ -147,15 +165,15 @@ require __DIR__.'/auth.php';
 
         // Use slug (stable across delete+restore) instead of id to pick the correct template
         $templateMap = [
-            'rector'          => 'AboutPages/RectorMessage',
-            'about'           => 'AboutPages/About',
-            'exam-evaluation' => 'AboutPages/ExamEvaluation',
+            'rector'             => 'AboutPages/RectorMessage',
+            'about'              => 'AboutPages/About',
+            'exam-evaluation'    => 'AboutPages/ExamEvaluation',
         ];
 
         if (isset($templateMap[$page->slug])) {
             return Inertia::render($templateMap[$page->slug], [
                 'pageData' => json_decode($page->content, true),
-                'faculties' => \App\Models\Faculty::all(),
+                'faculties' => \App\Models\Faculty::orderBy('sort_order')->get(),
             ]);
         }
 

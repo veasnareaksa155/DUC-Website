@@ -28,13 +28,13 @@ const parsedCustomSections = computed(() => {
 <template>
     <Head :title="$t(facultyData.name)" />
     
-    <div class="min-h-screen flex flex-col bg-white text-gray-900 font-sans">
+    <div class="min-h-screen flex flex-col bg-global-bg text-slate-900 font-sans">
         <SiteHeader />
 
         <main class="flex-grow mx-auto w-full max-w-[1400px] px-4 py-12 md:px-6">
             
-            <div class="mb-8 border-b pb-4">
-                <h1 class="text-3xl md:text-4xl font-bold text-blue-900 mb-2">
+            <div class="mb-8 border-b border-slate-300/60 pb-4">
+                <h1 class="text-3xl md:text-4xl font-bold text-[#115D6D] mb-2">
                     {{ $t(facultyData.name) }}
                 </h1>
     <p class="text-gray-600 font-medium text-lg">

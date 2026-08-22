@@ -32,13 +32,13 @@ const footerLabelContactInfo = computed(() => getLocLabel(page.props.settings?.f
 const footerLabelDirectLines = computed(() => getLocLabel(page.props.settings?.footer_label_direct_lines, 'Direct Lines'));
 
 
-const footerBgColor = computed(() => '#115D6D');
-const footerBorderColor = computed(() => '#00a0e9');
-const footerTextColor = computed(() => '#ffffff');
+const footerBgColor = computed(() => page.props.settings?.footer_bg_color || '#115D6D');
+const footerBorderColor = computed(() => page.props.settings?.footer_border_color || '#00a0e9');
+const footerTextColor = computed(() => page.props.settings?.footer_text_color || '#ffffff');
 
-const subFooterBgColor = computed(() => '#0d4a57');
-const subFooterTextColor = computed(() => '#cbd5e1');
-const subFooterBorderColor = computed(() => '#0f4e5c');
+const subFooterBgColor = computed(() => page.props.settings?.sub_footer_bg_color || '#0d4a57');
+const subFooterTextColor = computed(() => page.props.settings?.sub_footer_text_color || '#cbd5e1');
+const subFooterBorderColor = computed(() => page.props.settings?.sub_footer_border_color || '#0f4e5c');
 
 const privacyPolicyLabel = computed(() => page.props.settings?.privacy_policy_label ?? 'Privacy Policy');
 const privacyPolicyUrl = computed(() => page.props.settings?.privacy_policy_url ?? '#');
@@ -218,7 +218,9 @@ onMounted(() => {
                             </div>
                             <div>
                                 <span class="block text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{{ $t('Address') }}</span>
-                                <span class="text-white text-sm">{{ $t(address) }}</span>
+                                <a :href="page.props.settings?.contact_map_link || '#'" target="_blank" rel="noopener noreferrer" class="text-white text-sm hover:text-[#f5d98f] hover:underline transition-colors block">
+                                    {{ $t(address) }}
+                                </a>
                             </div>
                         </li>
                         

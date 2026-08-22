@@ -147,8 +147,7 @@ const currentDegreePrograms = computed(() => {
                 (s.type === 'custom_table' && s.customTable && s.customTable.headers && s.customTable.rows);
             if (!hasContent) return false;
 
-            const labelStr = (typeof s.label === 'object' ? (s.label.en || s.label.km || '') : String(s.label || '')).toLowerCase();
-            return labelStr.includes('career');
+            return true;
         });
     }
     
@@ -159,10 +158,6 @@ const currentDegreePrograms = computed(() => {
         if (progObj[sec.key]) {
             const isCourseStruct = sec.key === 'courseStructure' && Array.isArray(progObj[sec.key]);
             if (isCourseStruct || progObj[sec.key].en || progObj[sec.key].km) {
-                const labelStr = (typeof sec.label === 'object' ? (sec.label.en || sec.label.km || '') : String(sec.label || '')).toLowerCase();
-                if (!labelStr.includes('career')) {
-                    continue;
-                }
                 filledSections.push({
                     idx: i,
                     type: isCourseStruct ? 'course_structure' : 'richtext',
@@ -253,11 +248,11 @@ const formatTextToList = (text) => {
 <template>
     <Head :title="$t(department.title)" />
 
-    <div class="min-h-screen bg-[#c9e0e4] font-sans flex flex-col">
+    <div class="min-h-screen bg-global-bg font-sans flex flex-col">
         <SiteHeader />
 
         <!-- Page Header Block -->
-        <div class="bg-[#c9e0e4] border-b border-slate-300/60">
+        <div class="bg-global-bg border-b border-slate-300/60">
             <div class="mx-auto max-w-[1400px] px-4 py-8 md:px-6 md:py-10">
                 <Link
                     :href="`/department/${facultyId}`"
@@ -308,7 +303,7 @@ const formatTextToList = (text) => {
 
 
         <!-- Mobile TOC: horizontal chip scroller -->
-        <div ref="mobileTocRef" v-if="currentDegreePrograms.length > 0" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-40 overflow-x-auto border-b border-gray-300/70 bg-[#c9e0e4]/95 backdrop-blur px-4 py-3 lg:hidden shadow-sm no-scrollbar">
+        <div ref="mobileTocRef" v-if="currentDegreePrograms.length > 0" class="sticky top-[45px] sm:top-[60px] md:top-[70px] z-40 overflow-x-auto border-b border-gray-300/70 bg-global-bg/95 backdrop-blur px-4 py-3 lg:hidden shadow-sm no-scrollbar">
             <div class="flex w-max gap-2">
                 <button
                     v-for="(prog, idx) in currentDegreePrograms"

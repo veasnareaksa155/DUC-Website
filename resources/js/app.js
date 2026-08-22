@@ -1,7 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp, usePage } from '@inertiajs/vue3';
+import { createInertiaApp, usePage, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { QuillEditor } from '@vueup/vue-quill';
@@ -22,6 +22,23 @@ createInertiaApp({
         ),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
+
+        const syncThemeColors = (settings) => {
+            if (!settings) return;
+            const root = document.documentElement;
+            if (settings.global_bg_color) root.style.setProperty('--global-bg', settings.global_bg_color);
+            if (settings.card_bg_color) root.style.setProperty('--card-bg', settings.card_bg_color);
+            if (settings.primary_button_color) root.style.setProperty('--btn-primary', settings.primary_button_color);
+            if (settings.primary_button_hover) root.style.setProperty('--btn-primary-hover', settings.primary_button_hover);
+        };
+
+        // Sync initially
+        syncThemeColors(props.initialPage.props.settings);
+
+        // Sync on navigation
+        router.on('navigate', (event) => {
+            syncThemeColors(event.detail.page.props.settings);
+        });
 
         // Register global translation helper
         app.config.globalProperties.$t = (val) => {

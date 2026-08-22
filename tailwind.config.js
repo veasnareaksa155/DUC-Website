@@ -24,6 +24,12 @@ export default {
             fontFamily: {
                 sans: ['Siemreap', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                'global-bg': 'var(--global-bg)',
+                'card-bg': 'var(--card-bg)',
+                'btn-primary': 'var(--btn-primary)',
+                'btn-primary-hover': 'var(--btn-primary-hover)',
+            },
         },
     },
 
