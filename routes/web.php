@@ -52,6 +52,47 @@
         ]);
     })->name('scholarship');
 
+    Route::get('/sub-decree', function () {
+        return Inertia::render('SubDecree', [
+            'subDecreeSettings' => [
+                'hero' => json_decode(\App\Models\Setting::getValue('subdecree_hero', '[]'), true),
+                'documents' => json_decode(\App\Models\Setting::getValue('subdecree_documents', '[]'), true),
+            ]
+        ]);
+    })->name('sub-decree');
+
+    Route::get('/degree-certificate', function () {
+        return Inertia::render('AboutPages/DegreeCertificate', [
+            'degreeCertificateSettings' => [
+                'hero' => json_decode(\App\Models\Setting::getValue('degree_certificate_hero', '[]'), true),
+                'details' => json_decode(\App\Models\Setting::getValue('degree_certificate_details', '[]'), true),
+            ]
+        ]);
+    })->name('degree-certificate');
+
+    Route::get('/student-uniform', function () {
+        return Inertia::render('AboutPages/StudentUniform', [
+            'studentUniformSettings' => [
+                'hero' => json_decode(\App\Models\Setting::getValue('studentuniform_hero', '[]'), true),
+                'overview' => json_decode(\App\Models\Setting::getValue('studentuniform_overview', '[]'), true),
+                'cards' => json_decode(\App\Models\Setting::getValue('studentuniform_cards', '[]'), true),
+                'genders' => json_decode(\App\Models\Setting::getValue('studentuniform_genders', '[]'), true),
+                'male_details' => json_decode(\App\Models\Setting::getValue('studentuniform_male_details', '[]'), true),
+                'female_details' => json_decode(\App\Models\Setting::getValue('studentuniform_female_details', '[]'), true),
+                'specs' => json_decode(\App\Models\Setting::getValue('studentuniform_specs', '[]'), true),
+            ]
+        ]);
+    })->name('student-uniform');
+
+    Route::get('/graduation-gown', function () {
+        return Inertia::render('AboutPages/GraduationUniform', [
+            'graduationUniformSettings' => [
+                'hero' => json_decode(\App\Models\Setting::getValue('graduationuniform_hero', '[]'), true),
+                'uniforms' => json_decode(\App\Models\Setting::getValue('graduationuniform_images', '[]'), true),
+            ]
+        ]);
+    })->name('graduation-gown');
+
     Route::get('/events', function () {
         return Inertia::render('Events', [
             'events' => \App\Models\Event::where('is_published', true)->latest()->get()
@@ -101,6 +142,10 @@
         Route::delete('/admin/translations/{translation}', [AdminController::class, 'deleteTranslation'])->name('admin.translations.delete');
 
         Route::post('/admin/scholarship-settings', [AdminController::class, 'saveScholarshipSettings'])->name('admin.scholarship.save');
+        Route::post('/admin/subdecree-settings', [AdminController::class, 'saveSubDecreeSettings'])->name('admin.subdecree.save');
+        Route::post('/admin/degree-certificate-settings', [AdminController::class, 'saveDegreeCertificateSettings'])->name('admin.degreeCertificate.save');
+        Route::post('/admin/student-uniform-settings', [AdminController::class, 'saveStudentUniformSettings'])->name('admin.studentUniform.save');
+        Route::post('/admin/graduation-uniform-settings', [AdminController::class, 'saveGraduationUniformSettings'])->name('admin.graduationUniform.save');
     });
 
     Route::get('/faculties', function () {
@@ -168,6 +213,7 @@ require __DIR__.'/auth.php';
             'rector'             => 'AboutPages/RectorMessage',
             'about'              => 'AboutPages/About',
             'exam-evaluation'    => 'AboutPages/ExamEvaluation',
+            'Building'           => 'AboutPages/Building',
         ];
 
         if (isset($templateMap[$page->slug])) {

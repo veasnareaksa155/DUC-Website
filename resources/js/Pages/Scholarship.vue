@@ -190,7 +190,7 @@ const pageText = {
                                 </svg>
                             </div>
                             <div class="pt-1">
-                                <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
+                                <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-relaxed py-2">
                                     {{ tl(scholarshipHero.official_doc_title) }}
                                 </h2>
                                 <p class="text-sm sm:text-base text-slate-500 mt-1.5 font-medium">
@@ -232,14 +232,14 @@ const pageText = {
                                 v-for="(img, idx) in documentImages" 
                                 :key="idx"
                                 @click="selectedPage = idx"
-                                class="flex items-center gap-5 p-3 rounded-2xl transition-all cursor-pointer bg-white group"
+                                class="flex items-center gap-5 p-3 rounded-2xl transition-all cursor-pointer bg-card-bg group"
                                 :class="selectedPage === idx ? 'border-2 border-[#115D6D] shadow-lg shadow-teal-900/5' : 'border-2 border-slate-100 hover:border-slate-300 hover:shadow-md'"
                             >
                                 <div class="w-16 h-20 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-200">
                                     <img :src="img.src" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 </div>
                                 <div class="flex-grow min-w-0 pr-2">
-                                    <h4 class="text-[15px] leading-snug font-bold text-slate-800 group-hover:text-[#115D6D] transition-colors truncate whitespace-normal line-clamp-2">
+                                    <h4 class="text-base leading-relaxed font-bold text-slate-800 group-hover:text-[#115D6D] transition-colors py-1">
                                         {{ tl(img.title) }}
                                     </h4>
                                 </div>
@@ -336,7 +336,7 @@ const pageText = {
                                 <div 
                                     v-for="portal in qrPortals" 
                                     :key="portal.title"
-                                    class="p-4 rounded-2xl border border-slate-200 bg-white hover:shadow-md transition-all text-center flex flex-col items-center gap-2"
+                                    class="p-4 rounded-2xl border border-slate-200 bg-card-bg hover:shadow-md transition-all text-center flex flex-col items-center gap-2"
                                 >
                                     <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50" v-html="portal.svg"></span>
                                     <h4 class="text-sm font-extrabold text-slate-900">{{ tl(portal.title) }}</h4>

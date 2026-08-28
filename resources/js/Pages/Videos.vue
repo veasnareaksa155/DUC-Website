@@ -124,7 +124,7 @@ const getEmbedUrl = (video) => {
                 <div 
                     v-for="(video, index) in videosList" 
                     :key="index"
-                    class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out flex flex-col bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden"
+                    class="scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out flex flex-col bg-card-bg rounded-3xl shadow-sm border border-slate-100 overflow-hidden"
                 >
                     <!-- Video Top -->
                     <div class="relative aspect-video w-full bg-black">
@@ -152,7 +152,7 @@ const getEmbedUrl = (video) => {
                     </div>
 
                     <!-- Text Bottom -->
-                    <div class="p-5 md:p-6 flex flex-col flex-1 bg-white">
+                    <div class="p-5 md:p-6 flex flex-col flex-1 bg-card-bg">
                         <div class="flex items-start gap-3">
                             <span class="text-[#ffb800] text-[18px] leading-none mt-1 shrink-0">◆</span>
                             <div class="flex-1">
@@ -169,7 +169,7 @@ const getEmbedUrl = (video) => {
             </div>
 
             <!-- Empty State -->
-            <div v-else class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out">
+            <div v-else class="text-center py-20 bg-card-bg rounded-3xl border border-dashed border-slate-200 shadow-sm scroll-reveal opacity-0 translate-y-12 transition-all duration-1000 ease-out">
                 <svg class="mx-auto h-16 w-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                 </svg>

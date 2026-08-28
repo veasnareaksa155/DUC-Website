@@ -240,7 +240,7 @@ onMounted(() => {
                             </div>
                             <div>
                                 <span class="block text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{{ $t('Email') }}</span>
-                                <a :href="'mailto:' + email" class="text-white text-sm hover:text-[#f5d98f] transition-colors">{{ $t(email) }}</a>
+                                <a :href="`https://mail.google.com/mail/?view=cm&fs=1&to=${email}`" target="_blank" rel="noopener noreferrer" class="text-white text-sm hover:text-[#f5d98f] transition-colors">{{ $t(email) }}</a>
                             </div>
                         </li>
                     </ul>
@@ -250,10 +250,16 @@ onMounted(() => {
                         
                         <h2 class="mb-2 text-xs font-bold text-gray-300 uppercase tracking-widest relative z-10">{{ $t(footerLabelDirectLines) }}</h2>
                         <div class="space-y-1.5 relative z-10 font-mono text-white text-[13px]">
-                            <p v-for="line in directLines" :key="line" class="flex items-center gap-2 hover:text-[#f5d98f] cursor-default transition-colors">
-                                <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                {{ line }}
-                            </p>
+                            <template v-for="line in directLines" :key="line">
+                                <a v-if="line.startsWith('http')" :href="line" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 hover:text-[#f5d98f] transition-colors break-all">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0"></span>
+                                    {{ line }}
+                                </a>
+                                <a v-else :href="'tel:' + line.replace(/[^0-9+]/g, '')" class="flex items-center gap-2 hover:text-[#f5d98f] transition-colors break-all">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0"></span>
+                                    {{ line }}
+                                </a>
+                            </template>
                         </div>
                     </div>
                 </section>

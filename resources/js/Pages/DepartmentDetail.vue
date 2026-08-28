@@ -58,7 +58,7 @@ const parsedCustomSections = computed(() => {
             </div>
 
             <div
-                class="mb-10 bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm flex items-center justify-center p-2"
+                class="mb-10 bg-card-bg rounded-2xl overflow-hidden border border-gray-200 shadow-sm flex items-center justify-center p-2"
             >
                 <img
                     v-if="facultyData.orgChartImage"
@@ -75,7 +75,7 @@ const parsedCustomSections = computed(() => {
             </div>
 
             <div
-                class="bg-white border border-gray-300 rounded-2xl shadow-sm p-6 md:p-10 mb-10"
+                class="bg-card-bg border border-gray-300 rounded-2xl shadow-sm p-6 md:p-10 mb-10"
                 v-if="parsedCustomSections && parsedCustomSections.length > 0"
             >
                 <template v-for="(section, idx) in parsedCustomSections" :key="'sec-'+idx">

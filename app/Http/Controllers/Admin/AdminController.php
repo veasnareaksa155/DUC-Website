@@ -52,6 +52,10 @@ class AdminController extends Controller
                 'nav_bg_color' => Setting::getValue('nav_bg_color', '#3852a4'),
                 'nav_text_color' => Setting::getValue('nav_text_color', '#ffffff'),
                 'nav_active_color' => Setting::getValue('nav_active_color', '#ffb800'),
+                'global_bg_color' => Setting::getValue('global_bg_color', '#c9e0e4'),
+                'card_bg_color' => Setting::getValue('card_bg_color', '#ffffff'),
+                'primary_button_color' => Setting::getValue('primary_button_color', '#104652'),
+                'primary_button_hover' => Setting::getValue('primary_button_hover', '#316d7a'),
                 'contact_image' => Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80'),
                 'privacy_policy_label' => Setting::getValue('privacy_policy_label', 'Privacy Policy'),
                 'privacy_policy_url' => Setting::getValue('privacy_policy_url', '#'),
@@ -77,8 +81,8 @@ class AdminController extends Controller
                 'videos_list' => json_decode(Setting::getValue('videos_list', '[]'), true),
             ],
             'contactSettings' => [
-                'contact_hero_title' => Setting::getValue('contact_hero_title', 'Contact Us'),
-                'contact_hero_description' => Setting::getValue('contact_hero_description', 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.'),
+                'contact_hero_title' => json_decode(Setting::getValue('contact_hero_title', '{"en":"Contact Us","km":"ទាក់ទងមកយើង"}'), true) ?? Setting::getValue('contact_hero_title', 'Contact Us'),
+                'contact_hero_description' => json_decode(Setting::getValue('contact_hero_description', '{"en":"Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.","km":"តើអ្នកមានសំណួរអំពីការចូលរៀន កម្មវិធីសិក្សា ឬជីវិតក្នុងបរិវេណសាលាដែរឬទេ? សូមទាក់ទងមកយើង ហើយក្រុមការងាររបស់យើងនឹងឆ្លើយតបទៅកាន់អ្នកវិញក្នុងពេលឆាប់ៗនេះ។"}'), true) ?? Setting::getValue('contact_hero_description', 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.'),
                 'contact_image' => Setting::getValue('contact_image', 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80'),
             ],
             'scholarshipSettings' => [
@@ -87,6 +91,27 @@ class AdminController extends Controller
                 'requirements' => json_decode(Setting::getValue('scholarship_requirements', '[]'), true),
                 'portals' => json_decode(Setting::getValue('scholarship_portals', '[]'), true),
                 'benefits' => json_decode(Setting::getValue('scholarship_benefits', '[]'), true),
+            ],
+            'subDecreeSettings' => [
+                'hero' => json_decode(Setting::getValue('subdecree_hero', '[]'), true),
+                'documents' => json_decode(Setting::getValue('subdecree_documents', '[]'), true),
+            ],
+            'studentUniformSettings' => [
+                'hero' => json_decode(Setting::getValue('studentuniform_hero', '[]'), true),
+                'overview' => json_decode(Setting::getValue('studentuniform_overview', '[]'), true),
+                'cards' => json_decode(Setting::getValue('studentuniform_cards', '[]'), true),
+                'genders' => json_decode(Setting::getValue('studentuniform_genders', '[]'), true),
+                'male_details' => json_decode(Setting::getValue('studentuniform_male_details', '[]'), true),
+                'female_details' => json_decode(Setting::getValue('studentuniform_female_details', '[]'), true),
+            ],
+            'degreeCertificateSettings' => [
+                'hero' => json_decode(Setting::getValue('degree_certificate_hero', '[]'), true),
+                'details' => json_decode(Setting::getValue('degree_certificate_details', '[]'), true),
+                'verification' => json_decode(Setting::getValue('degree_certificate_verification', '[]'), true),
+            ],
+            'graduationUniformSettings' => [
+                'hero' => json_decode(Setting::getValue('graduationuniform_hero', '[]'), true),
+                'uniforms' => json_decode(Setting::getValue('graduationuniform_images', '[]'), true),
             ]
         ]);
     }
@@ -1240,8 +1265,8 @@ class AdminController extends Controller
     public function saveContactSettings(Request $request)
     {
         $validated = $request->validate([
-            'contact_hero_title' => 'nullable|string|max:255',
-            'contact_hero_description' => 'nullable|string',
+            'contact_hero_title' => 'nullable|array',
+            'contact_hero_description' => 'nullable|array',
             'contact_image' => 'nullable',
             'contact_map_link' => 'nullable|string',
             'address' => 'nullable|array',
@@ -1257,8 +1282,8 @@ class AdminController extends Controller
             'contact_form_submit_label' => 'nullable|array',
         ]);
 
-        Setting::setValue('contact_hero_title', $validated['contact_hero_title'] ?? 'Contact Us');
-        Setting::setValue('contact_hero_description', $validated['contact_hero_description'] ?? 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.');
+        Setting::setValue('contact_hero_title', isset($validated['contact_hero_title']) && is_array($validated['contact_hero_title']) ? json_encode($validated['contact_hero_title'], JSON_UNESCAPED_UNICODE) : '{"en":"Contact Us","km":"ទាក់ទងមកយើង"}');
+        Setting::setValue('contact_hero_description', isset($validated['contact_hero_description']) && is_array($validated['contact_hero_description']) ? json_encode($validated['contact_hero_description'], JSON_UNESCAPED_UNICODE) : '{"en":"Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.","km":"តើអ្នកមានសំណួរអំពីការចូលរៀន កម្មវិធីសិក្សា ឬជីវិតក្នុងបរិវេណសាលាដែរឬទេ? សូមទាក់ទងមកយើង ហើយក្រុមការងាររបស់យើងនឹងឆ្លើយតបទៅកាន់អ្នកវិញក្នុងពេលឆាប់ៗនេះ។"}');
         Setting::setValue('contact_map_link', $validated['contact_map_link'] ?? '');
         
         if (array_key_exists('contact_form_title', $validated)) Setting::setValue('contact_form_title', json_encode($validated['contact_form_title']));
@@ -1445,5 +1470,161 @@ class AdminController extends Controller
         ActivityLog::log('Updated Scholarship settings', 'settings');
 
         return redirect()->back()->with('success', 'Scholarship settings saved successfully.');
+    }
+    public function saveSubDecreeSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'hero' => 'nullable|array',
+            'documents' => 'nullable|array',
+        ]);
+
+        $docs = $validated['documents'] ?? [];
+        foreach ($docs as $key => $doc) {
+            if ($request->hasFile("documents.{$key}.image_file")) {
+                $path = $request->file("documents.{$key}.image_file")->store('subdecree', 'public');
+                $docs[$key]['src'] = '/storage/' . $path;
+            }
+            // Remove the temporary file object before saving to DB
+            unset($docs[$key]['image_file']);
+        }
+
+        Setting::updateOrCreate(['key' => 'subdecree_hero'], ['value' => json_encode($validated['hero'] ?? [], JSON_UNESCAPED_UNICODE)]);
+        Setting::updateOrCreate(['key' => 'subdecree_documents'], ['value' => json_encode($docs, JSON_UNESCAPED_UNICODE)]);
+
+        ActivityLog::log('Updated Sub-decree settings', 'settings');
+
+        return redirect()->back()->with('success', 'Sub-decree settings saved successfully.');
+    }
+
+    public function saveStudentUniformSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'hero' => 'nullable|array',
+            'overview' => 'nullable|array',
+            'cards' => 'nullable|array',
+            'genders' => 'nullable|array',
+            'male_details' => 'nullable|array',
+            'female_details' => 'nullable|array',
+        ]);
+
+        if (isset($validated['hero'])) {
+            Setting::updateOrCreate(['key' => 'studentuniform_hero'], ['value' => json_encode($validated['hero'], JSON_UNESCAPED_UNICODE)]);
+        }
+        if (isset($validated['overview'])) {
+            Setting::updateOrCreate(['key' => 'studentuniform_overview'], ['value' => json_encode($validated['overview'], JSON_UNESCAPED_UNICODE)]);
+        }
+        if (isset($validated['cards'])) {
+            Setting::updateOrCreate(['key' => 'studentuniform_cards'], ['value' => json_encode($validated['cards'], JSON_UNESCAPED_UNICODE)]);
+        }
+
+        $genders = $validated['genders'] ?? [];
+        if ($request->hasFile('genders.male_img_file')) $genders['male_img'] = '/storage/' . $request->file('genders.male_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('genders.female_img_file')) $genders['female_img'] = '/storage/' . $request->file('genders.female_img_file')->store('student-uniform', 'public');
+        unset($genders['male_img_file'], $genders['female_img_file']);
+        if (!empty($genders)) {
+            Setting::updateOrCreate(['key' => 'studentuniform_genders'], ['value' => json_encode($genders, JSON_UNESCAPED_UNICODE)]);
+        }
+
+        $male_details = $validated['male_details'] ?? [];
+        if ($request->hasFile('male_details.full_img_file')) $male_details['full_img'] = '/storage/' . $request->file('male_details.full_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('male_details.clothing_img_file')) $male_details['clothing_img'] = '/storage/' . $request->file('male_details.clothing_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('male_details.logo_img_file')) $male_details['logo_img'] = '/storage/' . $request->file('male_details.logo_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('male_details.shoes_img_file')) $male_details['shoes_img'] = '/storage/' . $request->file('male_details.shoes_img_file')->store('student-uniform', 'public');
+        unset($male_details['full_img_file'], $male_details['clothing_img_file'], $male_details['logo_img_file'], $male_details['shoes_img_file']);
+        if (!empty($male_details)) {
+            Setting::updateOrCreate(['key' => 'studentuniform_male_details'], ['value' => json_encode($male_details, JSON_UNESCAPED_UNICODE)]);
+        }
+
+        $female_details = $validated['female_details'] ?? [];
+        if ($request->hasFile('female_details.full_img_file')) $female_details['full_img'] = '/storage/' . $request->file('female_details.full_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('female_details.clothing_img_file')) $female_details['clothing_img'] = '/storage/' . $request->file('female_details.clothing_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('female_details.logo_img_file')) $female_details['logo_img'] = '/storage/' . $request->file('female_details.logo_img_file')->store('student-uniform', 'public');
+        if ($request->hasFile('female_details.shoes_img_file')) $female_details['shoes_img'] = '/storage/' . $request->file('female_details.shoes_img_file')->store('student-uniform', 'public');
+        unset($female_details['full_img_file'], $female_details['clothing_img_file'], $female_details['logo_img_file'], $female_details['shoes_img_file']);
+        if (!empty($female_details)) {
+            Setting::updateOrCreate(['key' => 'studentuniform_female_details'], ['value' => json_encode($female_details, JSON_UNESCAPED_UNICODE)]);
+        }
+
+        ActivityLog::log('Updated Student Uniform settings', 'settings');
+
+        return redirect()->back()->with('success', 'Student Uniform settings saved successfully.');
+    }
+
+    public function saveDegreeCertificateSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'hero' => 'nullable|array',
+            'details' => 'nullable|array',
+            'verification' => 'nullable|array',
+        ]);
+
+        if (isset($validated['hero'])) {
+            Setting::updateOrCreate(['key' => 'degree_certificate_hero'], ['value' => json_encode($validated['hero'], JSON_UNESCAPED_UNICODE)]);
+        }
+
+        if (isset($validated['verification'])) {
+            Setting::updateOrCreate(['key' => 'degree_certificate_verification'], ['value' => json_encode($validated['verification'], JSON_UNESCAPED_UNICODE)]);
+        }
+
+        $details = $validated['details'] ?? [];
+        
+        if ($request->hasFile('details.bachelor_img_file')) {
+            $details['bachelor_img'] = '/storage/' . $request->file('details.bachelor_img_file')->store('degree-certificate', 'public');
+        }
+        unset($details['bachelor_img_file']);
+
+        if ($request->hasFile('details.associate_img_file')) {
+            $details['associate_img'] = '/storage/' . $request->file('details.associate_img_file')->store('degree-certificate', 'public');
+        }
+        unset($details['associate_img_file']);
+        
+        if (!empty($details)) {
+            Setting::updateOrCreate(['key' => 'degree_certificate_details'], ['value' => json_encode($details, JSON_UNESCAPED_UNICODE)]);
+        }
+
+        ActivityLog::log('Updated Degree Certificate settings', 'settings');
+
+        return redirect()->back()->with('success', 'Degree Certificate settings saved successfully.');
+    }
+
+    public function saveGraduationUniformSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'hero' => 'nullable|array',
+            'uniforms' => 'nullable|array',
+        ]);
+
+        if (isset($validated['hero'])) {
+            Setting::updateOrCreate(['key' => 'graduationuniform_hero'], ['value' => json_encode($validated['hero'], JSON_UNESCAPED_UNICODE)]);
+        }
+
+        $uniforms = $validated['uniforms'] ?? [];
+        if ($request->hasFile('uniforms.doctorate_img_file')) {
+            $uniforms['doctorate_img'] = '/storage/' . $request->file('uniforms.doctorate_img_file')->store('graduation-uniform', 'public');
+        }
+        unset($uniforms['doctorate_img_file']);
+
+        if ($request->hasFile('uniforms.master_img_file')) {
+            $uniforms['master_img'] = '/storage/' . $request->file('uniforms.master_img_file')->store('graduation-uniform', 'public');
+        }
+        unset($uniforms['master_img_file']);
+
+        if ($request->hasFile('uniforms.bachelor_img_file')) {
+            $uniforms['bachelor_img'] = '/storage/' . $request->file('uniforms.bachelor_img_file')->store('graduation-uniform', 'public');
+        }
+        unset($uniforms['bachelor_img_file']);
+
+        if ($request->hasFile('uniforms.associate_img_file')) {
+            $uniforms['associate_img'] = '/storage/' . $request->file('uniforms.associate_img_file')->store('graduation-uniform', 'public');
+        }
+        unset($uniforms['associate_img_file']);
+        
+        if (!empty($uniforms)) {
+            Setting::updateOrCreate(['key' => 'graduationuniform_images'], ['value' => json_encode($uniforms, JSON_UNESCAPED_UNICODE)]);
+        }
+
+        ActivityLog::log('Updated Graduation Uniform settings', 'settings');
+
+        return redirect()->back()->with('success', 'Graduation Uniform settings saved successfully.');
     }
 }

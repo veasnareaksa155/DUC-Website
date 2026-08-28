@@ -15,6 +15,10 @@ const props = defineProps({
     homeSettings: Object,
     contactSettings: Object,
     scholarshipSettings: Object,
+    studentUniformSettings: Object,
+    degreeCertificateSettings: Object,
+    graduationUniformSettings: Object,
+    subDecreeSettings: Object,
     translationsData: Array,
     activityLogs: Array
 });
@@ -318,9 +322,10 @@ const filteredPageContents = computed(() => {
     const q = pagesSearchQuery.value.toLowerCase().trim();
     if (!q) return props.pageContents;
     return props.pageContents.filter(p => {
-        const title = (p.title || '').toLowerCase();
+        const titleObj = parseTranslatable(p.title);
+        const titleStr = (titleObj.en + ' ' + titleObj.km + ' ' + (typeof p.title === 'string' ? p.title : '')).toLowerCase();
         const slug = (p.slug || '').toLowerCase();
-        return title.includes(q) || slug.includes(q);
+        return titleStr.includes(q) || slug.includes(q);
     });
 });
 const pageContentForm = useForm({
@@ -373,7 +378,11 @@ const startEditPage = (page) => {
         pageContentForm.content.mission = parseTranslatable(pageContentForm.content.mission);
         pageContentForm.content.vision = parseTranslatable(pageContentForm.content.vision);
         pageContentForm.content.goals = (pageContentForm.content.goals || []).map(g => parseTranslatable(g));
-        pageContentForm.content.custom_sections = (pageContentForm.content.custom_sections || []).map(sec => ({
+        let rawSections = pageContentForm.content.custom_sections || [];
+        if (typeof rawSections === 'string') {
+            try { rawSections = JSON.parse(rawSections); } catch(e) { rawSections = []; }
+        }
+        pageContentForm.content.custom_sections = rawSections.map(sec => ({
             title: parseTranslatable(sec.title),
             content: parseTranslatable(sec.content)
         }));
@@ -428,7 +437,11 @@ const startEditPage = (page) => {
         
         pageContentForm.content.custom_sections = customSections;
     } else {
-        pageContentForm.content.custom_sections = (pageContentForm.content.custom_sections || []).map(sec => ({
+        let rawSections = pageContentForm.content.custom_sections || [];
+        if (typeof rawSections === 'string') {
+            try { rawSections = JSON.parse(rawSections); } catch(e) { rawSections = []; }
+        }
+        pageContentForm.content.custom_sections = rawSections.map(sec => ({
             title: parseTranslatable(sec.title),
             content: parseTranslatable(sec.content)
         }));
@@ -446,6 +459,15 @@ watch(() => props.pageContents, (newPages) => {
         }
     }
 }, { deep: true });
+
+watch(activeTab, (newTab) => {
+    if (newTab === 'building') {
+        const bp = props.pageContents?.find(p => p.slug === 'Building' || p.slug === 'building');
+        if (bp) {
+            startEditPage(bp);
+        }
+    }
+}, { immediate: true });
 
 const startCreatePage = (type) => {
     selectedPage.value = { 
@@ -2036,8 +2058,12 @@ const deleteTranslation = (id) => {
 
 // --- CONTACT SETTINGS STATE & ACTIONS ---
 const contactSettingsForm = useForm({
-    contact_hero_title: props.contactSettings?.contact_hero_title || 'Contact Us',
-    contact_hero_description: props.contactSettings?.contact_hero_description || 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.',
+    contact_hero_title: typeof props.contactSettings?.contact_hero_title === 'object' 
+        ? props.contactSettings?.contact_hero_title 
+        : { en: props.contactSettings?.contact_hero_title || 'Contact Us', km: 'ទាក់ទងមកយើង' },
+    contact_hero_description: typeof props.contactSettings?.contact_hero_description === 'object'
+        ? props.contactSettings?.contact_hero_description
+        : { en: props.contactSettings?.contact_hero_description || 'Have questions about admissions, programs, or campus life? Reach out to us, and our team will get back to you shortly.', km: 'តើអ្នកមានសំណួរអំពីការចូលរៀន កម្មវិធីសិក្សា ឬជីវិតក្នុងបរិវេណសាលាដែរឬទេ? សូមទាក់ទងមកយើង ហើយក្រុមការងាររបស់យើងនឹងឆ្លើយតបទៅកាន់អ្នកវិញក្នុងពេលឆាប់ៗនេះ។' },
     contact_image: props.contactSettings?.contact_image || '',
     contact_map_link: props.contactSettings?.contact_map_link || '',
     address: props.settings?.address ? (typeof props.settings.address === 'string' ? parseTranslatable(props.settings.address) : props.settings.address) : { en: 'Kompong Spue, Cambodia', km: 'Kompong Spue, Cambodia' },
@@ -2249,6 +2275,257 @@ const submitSettings = () => {
     });
 };
 const submitFooterSettings = submitSettings;
+
+const defaultStudentUniformHero = { 
+    badge: { en: 'Student Information', km: 'ព័ត៌មាននិស្សិត' }, 
+    title: { en: 'Student Uniform', km: 'ឯកសណ្ឋាននិស្សិត' }, 
+    subtitle: { en: 'Guidelines on Student Uniform.', km: 'សេចក្តីណែនាំអំពីឯកសណ្ឋាននិស្សិត។' }, 
+    button: { en: 'View Details', km: 'មើលសេចក្តីលម្អិត' } 
+};
+const defaultStudentUniformOverview = {
+    title: { km: '១. ឯកសណ្ឋាន', en: '1. Uniform' },
+    subtitle: { km: 'ហេតុអ្វីបានជាឯកសណ្ឋានសាលាសំខាន់?', en: 'Why is school uniform important?' },
+    description: { km: 'ឯកសណ្ឋានសាលាគឺជាផ្នែកមួយដ៏សំខាន់នៃប្រព័ន្ធអប់រំដែលជួយបង្កើត បរិយាកាសសិក្សា ប្រកបដោយវិជ្ជាជីវៈ និងសេចក្តីថ្លៃថ្នូរ។', en: 'School uniform is an important part of the education system that helps create a professional and dignified learning environment.' },
+};
+const defaultStudentUniformGenders = {
+    male_title: { km: 'និស្សិតប្រុស', en: 'Male Student' },
+    male_img: 'https://images.unsplash.com/photo-1594913271166-4177573678da?q=80&w=600&auto=format&fit=crop',
+    male_img_file: null,
+    female_title: { km: 'និស្សិតស្រី', en: 'Female Student' },
+    female_img: 'https://images.unsplash.com/photo-1592837380126-1d15d666d66e?q=80&w=600&auto=format&fit=crop',
+    female_img_file: null,
+};
+const defaultStudentUniformMaleDetails = {
+    section_title: { km: '១.១ ឯកសណ្ឋាននិស្សិតប្រុស', en: '1.1 Male Student Uniform' },
+    full_img: 'https://images.unsplash.com/photo-1594913271166-4177573678da?q=80&w=800&auto=format&fit=crop',
+    full_img_file: null,
+    clothing_title: { km: '១. សម្លៀកបំពាក់សិស្ស', en: '1. Student Clothing' },
+    clothing_img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop',
+    clothing_img_file: null,
+    logo_title: { km: '២. Logo', en: '2. Logo' },
+    logo_img: null,
+    logo_img_file: null,
+    shoes_title: { km: '៣. ស្បែកជើងសិស្ស', en: '3. Student Shoes' },
+    shoes_img: 'https://images.unsplash.com/photo-1614252339474-af32588b35db?q=80&w=600&auto=format&fit=crop',
+    shoes_img_file: null,
+};
+const defaultStudentUniformFemaleDetails = {
+    section_title: { km: '១.២ ឯកសណ្ឋាននិស្សិតស្រី', en: '1.2 Female Student Uniform' },
+    full_img: 'https://images.unsplash.com/photo-1592837380126-1d15d666d66e?q=80&w=800&auto=format&fit=crop',
+    full_img_file: null,
+    clothing_title: { km: '១. សម្លៀកបំពាក់សិស្ស', en: '1. Student Clothing' },
+    clothing_img: 'https://images.unsplash.com/photo-1592837380126-1d15d666d66e?q=80&w=600&auto=format&fit=crop',
+    clothing_img_file: null,
+    logo_title: { km: '២. Logo', en: '2. Logo' },
+    logo_img: null,
+    logo_img_file: null,
+    shoes_title: { km: '៣. ស្បែកជើងសិស្ស', en: '3. Student Shoes' },
+    shoes_img: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=600&auto=format&fit=crop',
+    shoes_img_file: null,
+};
+
+const studentUniformForm = useForm({
+    hero: {
+        ...defaultStudentUniformHero,
+        ...(Array.isArray(props.studentUniformSettings?.hero) ? {} : props.studentUniformSettings?.hero)
+    },
+    overview: {
+        ...defaultStudentUniformOverview,
+        ...(Array.isArray(props.studentUniformSettings?.overview) ? {} : props.studentUniformSettings?.overview)
+    },
+    cards: (Array.isArray(props.studentUniformSettings?.cards) && props.studentUniformSettings?.cards.length > 0) ? props.studentUniformSettings.cards : [
+        { title: { en: 'Equality', km: 'សមភាព' }, desc: { en: 'Equality among all students', km: 'ភាពស្មើគ្នា' }, icon: 'Users' },
+        { title: { en: 'Discipline', km: 'វិន័យ' }, desc: { en: 'Promotes discipline', km: 'លើកកម្ពស់វិន័យ' }, icon: 'ShieldCheck' },
+        { title: { en: 'Professionalism', km: 'វិជ្ជាជីវៈ' }, desc: { en: 'Prepares for future careers', km: 'ត្រៀមសម្រាប់អាជីព' }, icon: 'Briefcase' }
+    ],
+    genders: {
+        ...defaultStudentUniformGenders,
+        ...(Array.isArray(props.studentUniformSettings?.genders) ? {} : props.studentUniformSettings?.genders)
+    },
+    male_details: {
+        ...defaultStudentUniformMaleDetails,
+        ...(Array.isArray(props.studentUniformSettings?.male_details) ? {} : props.studentUniformSettings?.male_details)
+    },
+    female_details: {
+        ...defaultStudentUniformFemaleDetails,
+        ...(Array.isArray(props.studentUniformSettings?.female_details) ? {} : props.studentUniformSettings?.female_details)
+    }
+});
+
+const handleStudentUniformImageUpload = (event, section, field) => {
+    const file = event.target.files[0];
+    if (file) {
+        studentUniformForm[section][field + '_file'] = file;
+        studentUniformForm[section][field] = URL.createObjectURL(file);
+    }
+};
+
+const saveStudentUniformSettings = () => {
+    studentUniformForm.post(route('admin.studentUniform.save'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Student Uniform settings saved successfully', 'success');
+        }
+    });
+};
+
+// --- GRADUATION UNIFORM SETTINGS STATE & ACTIONS ---
+const defaultGraduationUniformHero = {
+    title: { en: 'Graduation Uniform', km: 'កម្រងឯកសណ្ឋានទទួលសញ្ញាបត្រ' },
+    subtitle: { en: 'Guidelines on the graduation uniform of the Digital University of Cambodia.', km: 'គោលការណ៍ណែនាំស្តីពីកម្រងឯកសណ្ឋានទទួលសញ្ញាបត្ររបស់សាកលវិទ្យាល័យឌីជីថលកម្ពុជា។' }
+};
+const defaultGraduationUniformImages = {
+    doctorate_img: '',
+    master_img: '',
+    bachelor_img: '',
+    associate_img: ''
+};
+
+const graduationUniformForm = useForm({
+    hero: {
+        ...defaultGraduationUniformHero,
+        ...(Array.isArray(props.graduationUniformSettings?.hero) ? {} : props.graduationUniformSettings?.hero)
+    },
+    uniforms: {
+        ...defaultGraduationUniformImages,
+        ...(Array.isArray(props.graduationUniformSettings?.uniforms) ? {} : props.graduationUniformSettings?.uniforms)
+    }
+});
+
+const graduationUniformPreviews = ref({
+    doctorate: graduationUniformForm.uniforms.doctorate_img,
+    master: graduationUniformForm.uniforms.master_img,
+    bachelor: graduationUniformForm.uniforms.bachelor_img,
+    associate: graduationUniformForm.uniforms.associate_img
+});
+
+const handleGraduationUniformImageUpload = (e, type) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        graduationUniformForm.uniforms[`${type}_img_file`] = file;
+        
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            graduationUniformPreviews.value[type] = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const saveGraduationUniformSettings = () => {
+    graduationUniformForm.post(route('admin.graduationUniform.save'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Graduation Uniform settings saved successfully', 'success');
+        },
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+            showToast('Please check the form for errors', 'error');
+        }
+    });
+};
+
+// --- SUB-DECREE SETTINGS STATE & ACTIONS ---
+const subDecreeForm = useForm({
+    hero: {
+        badge: { en: 'Sub-decree on the establishment of the university', km: '??????????????????????????????????????' },
+        title: { en: 'Announcement & Sub-decree', km: '??????????????? ?????????????' },
+        description: { en: 'Sub-decree on the establishment of the Digital University of Cambodia.', km: '????????????????????????????????????????????????????' },
+        doc_button: { en: 'View Official Documents', km: '????????????????' },
+        official_doc_title: { en: 'Official Announcement Document', km: '???????????????????' },
+        ...(props.subDecreeSettings?.hero || {})
+    },
+    documents: props.subDecreeSettings?.documents && props.subDecreeSettings.documents.length > 0 
+        ? props.subDecreeSettings.documents 
+        : [
+            { title: { km: '??????? ?', en: 'Page 1' }, src: '', image_file: null },
+            { title: { km: '??????? ?', en: 'Page 2' }, src: '', image_file: null },
+            { title: { km: '??????? ?', en: 'Page 3' }, src: '', image_file: null },
+            { title: { km: '??????? ?', en: 'Page 4' }, src: '', image_file: null }
+        ]
+});
+
+const saveSubDecreeSettings = () => {
+    subDecreeForm.post(route('admin.subdecree.save'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Sub-Decree settings saved successfully', 'success');
+        },
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+            showToast('Please check the form for errors', 'error');
+        }
+    });
+};
+
+const handleSubDecreeDocumentUpload = (e, index) => {
+    const file = e.target.files[0];
+    if (file) {
+        subDecreeForm.documents[index].image_file = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            subDecreeForm.documents[index].src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+// --- DEGREE CERTIFICATE SETTINGS STATE & ACTIONS ---
+const defaultDegreeCertificateHero = {
+    badge: { en: 'CERTIFICATE', km: 'វិញ្ញាបនបត្រ' },
+    title: { en: 'Sample Degree Certificate', km: 'គំរូសញ្ញាបត្រ' },
+    description: { en: 'View the official digital certificate issued by Digital University of Cambodia.', km: 'ពិនិត្យមើលសញ្ញាបត្រឌីជីថលផ្លូវការដែលចេញដោយសាកលវិទ្យាល័យឌីជីថលកម្ពុជា។' },
+};
+const defaultDegreeCertificateDetails = {
+    bachelor_img: '',
+    associate_img: '',
+};
+const defaultDegreeCertificateVerification = {
+    title: { en: 'Authenticity & Verification', km: 'ភាពត្រឹមត្រូវ និងការផ្ទៀងផ្ទាត់' },
+    description: { en: 'Every degree certificate issued by the Digital University of Cambodia features a unique QR Code and serial number for immediate verification. This ensures the integrity of our academic credentials and allows employers to easily authenticate the qualifications of our graduates through our official verification system.', km: 'សញ្ញាបត្រនីមួយៗដែលចេញដោយសាកលវិទ្យាល័យឌីជីថលកម្ពុជា មាន QR Code ពិសេស និងលេខសម្គាល់ដែលអាចផ្ទៀងផ្ទាត់បាន។ នេះធានានូវបូរណភាពនៃកំណត់ត្រាសិក្សារបស់យើង ហើយអនុញ្ញាតឱ្យនិយោជកងាយស្រួលផ្ទៀងផ្ទាត់ភាពត្រឹមត្រូវនៃគុណវុឌ្ឍិរបស់និស្សិតបញ្ចប់ការសិក្សាតាមរយៈប្រព័ន្ធផ្ទៀងផ្ទាត់ផ្លូវការរបស់យើង។' }
+};
+
+const degreeCertificateForm = useForm({
+    hero: {
+        ...defaultDegreeCertificateHero,
+        ...(Array.isArray(props.degreeCertificateSettings?.hero) ? {} : props.degreeCertificateSettings?.hero)
+    },
+    details: {
+        ...defaultDegreeCertificateDetails,
+        ...(Array.isArray(props.degreeCertificateSettings?.details) ? {} : props.degreeCertificateSettings?.details)
+    },
+    verification: {
+        ...defaultDegreeCertificateVerification,
+        ...(Array.isArray(props.degreeCertificateSettings?.verification) ? {} : props.degreeCertificateSettings?.verification)
+    }
+});
+
+const certificatePreviews = ref({
+    bachelor: degreeCertificateForm.details.bachelor_img,
+    associate: degreeCertificateForm.details.associate_img
+});
+
+const handleDegreeCertificateImageUpload = (e, type) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        degreeCertificateForm.details[`${type}_img_file`] = file;
+        
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            certificatePreviews.value[type] = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const saveDegreeCertificateSettings = () => {
+    degreeCertificateForm.post(route('admin.degreeCertificate.save'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Degree Certificate settings saved successfully', 'success');
+        }
+    });
+};
 
 // --- HOME PAGE SETTINGS STATE & ACTIONS ---
 const homeSettingsForm = useForm({
@@ -4376,8 +4653,100 @@ const stripHtml = (html) => {
                                     </div>
                                 </div>
                                 
+                                <!-- Building Page Form -->
+                                <div v-else-if="selectedPage.slug === 'Building' || selectedPage.slug === 'building'" class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Badge Text (EN)</label>
+                                            <input type="text" v-model="pageContentForm.content.badge_en" placeholder="e.g. About University" class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Badge Text (KM)</label>
+                                            <input type="text" v-model="pageContentForm.content.badge_km" placeholder="e.g. អំពីសាកលវិទ្យាល័យ" class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title (EN)</label>
+                                            <input type="text" v-model="pageContentForm.content.title_en" placeholder="e.g. University Building" class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Title (KM)</label>
+                                            <input type="text" v-model="pageContentForm.content.title_km" placeholder="e.g. អគារសាកលវិទ្យាល័យ" class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                                        </div>
+                                        <div class="col-span-1 md:col-span-2">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Subtitle (EN)</label>
+                                            <textarea v-model="pageContentForm.content.subtitle_en" rows="2" placeholder="Explore our state-of-the-art infrastructure..." class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2 resize-y" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'"></textarea>
+                                        </div>
+                                        <div class="col-span-1 md:col-span-2">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Subtitle (KM)</label>
+                                            <textarea v-model="pageContentForm.content.subtitle_km" rows="2" placeholder="ស្វែងយល់ពីហេដ្ឋារចនាសម្ព័ន្ធ..." class="w-full rounded-lg text-sm border focus:outline-none px-3 py-2 resize-y" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'"></textarea>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Image (Building Photo)</label>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            @input="pageContentForm.content.image = $event.target.files[0]" 
+                                            class="w-full rounded-xl text-sm border focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:cursor-pointer hover:file:opacity-90 transition-all"
+                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-slate-300 focus:border-blue-500 file:bg-blue-600 file:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-blue-650 file:bg-blue-600 file:text-white'" 
+                                        />
+                                        <div v-if="typeof pageContentForm.content.image === 'string' && pageContentForm.content.image" class="mt-2 text-[10px] font-bold text-emerald-500 flex items-center gap-1 pl-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            Image uploaded and saved. Select a new file to replace it.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="pt-4 mt-2">
+                                        <div class="flex justify-between items-center mb-4 px-2">
+                                            <label class="block text-[11px] font-black uppercase tracking-[0.15em]" :class="isDarkMode ? 'text-slate-400' : 'text-slate-400'">Custom Building Content Sections</label>
+                                            <button type="button" @click="addCustomSection" class="text-[10px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full px-3 py-1.5 transition-colors">+ Add Content Block</button>
+                                        </div>
+                                        
+                                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-10 bg-slate-50 dark:bg-[#0c101b] rounded-3xl" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
+                                            <p class="text-xs font-bold">This page has no content blocks yet.</p>
+                                            <button type="button" @click="addCustomSection" class="mt-3 text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Click here to add one</button>
+                                        </div>
+                                        
+                                        <div class="space-y-6">
+                                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-5 p-6 border rounded-3xl" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-100 bg-white shadow-sm'">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Custom Block #{{ idx + 1 }}</span>
+                                                    <div class="flex items-center gap-2">
+                                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Up">↑ Up</button>
+                                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Down">↓ Down</button>
+                                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-white hover:bg-red-500 bg-red-50 text-[10px] font-bold px-3 py-1 rounded-full transition-colors">Remove Block ✕</button>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
+                                                        <input type="text" v-model="section.title.en" placeholder="E.g., Facilities, Location" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
+                                                        <input type="text" v-model="section.title.km" placeholder="E.g., ទីតាំង, សម្ភារៈ" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 gap-4">
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
+                                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Generic Page Form -->
                                 <div v-else class="space-y-4">
+                                    
+
+                                    
                                     <div class="pt-4 mt-2">
                                         <div class="flex justify-between items-center mb-4 px-2">
                                             <label class="block text-[11px] font-black uppercase tracking-[0.15em]" :class="isDarkMode ? 'text-slate-400' : 'text-slate-400'">Custom Page Content Sections</label>
@@ -5405,25 +5774,49 @@ const stripHtml = (html) => {
                             :class="isDarkMode ? 'bg-[#0f1524] border-[#1a2333] shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : 'bg-white border-slate-100'"
                         >
                             <div class="grid grid-cols-1 gap-8 relative z-10">
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Title</label>
-                                    <input 
-                                        type="text" 
-                                        v-model="contactSettingsForm.contact_hero_title" 
-                                        required 
-                                        class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                        :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                    />
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Title (EN)</label>
+                                        <input 
+                                            type="text" 
+                                            v-model="contactSettingsForm.contact_hero_title.en" 
+                                            required 
+                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
+                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Title (KM)</label>
+                                        <input 
+                                            type="text" 
+                                            v-model="contactSettingsForm.contact_hero_title.km" 
+                                            required 
+                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300 font-khmer"
+                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Description</label>
-                                    <textarea 
-                                        v-model="contactSettingsForm.contact_hero_description" 
-                                        required 
-                                        rows="3"
-                                        class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
-                                        :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
-                                    ></textarea>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Description (EN)</label>
+                                        <textarea 
+                                            v-model="contactSettingsForm.contact_hero_description.en" 
+                                            required 
+                                            rows="3"
+                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300"
+                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
+                                        ></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black uppercase tracking-widest mb-2" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Contact Page Hero Description (KM)</label>
+                                        <textarea 
+                                            v-model="contactSettingsForm.contact_hero_description.km" 
+                                            required 
+                                            rows="3"
+                                            class="w-full rounded-2xl text-sm border-2 focus:outline-none px-4 py-3 transition-all duration-300 font-khmer"
+                                            :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-100 text-slate-900 focus:bg-white focus:border-indigo-500 focus:shadow-[0_4px_20px_rgb(0,0,0,0.05)]'" 
+                                        ></textarea>
+                                    </div>
                                 </div>
                             </div>
 
@@ -6093,6 +6486,757 @@ const stripHtml = (html) => {
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">"Close" (English)</label>
                                 <input type="text" v-model="scholarshipForm.hero.close.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-fuchsia-500' : 'bg-white border-slate-200 focus:border-fuchsia-500'" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STUDENT UNIFORM TAB -->
+                <div v-if="activeTab === 'student-uniform'" class="animate-fadeIn space-y-8">
+                    <!-- Sticky Header -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-50 p-4 sm:px-6 bg-white/70 dark:bg-[#0c101b]/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-blue-900/5 dark:shadow-black/20 transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
+                                    Student Uniform Settings
+                                </h2>
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage texts and descriptions for the Student Uniform page.</p>
+                            </div>
+                        </div>
+                        <button @click="saveStudentUniformSettings" :disabled="studentUniformForm.processing" class="btn-primary shrink-0 relative overflow-hidden group w-full md:w-auto">
+                            <span class="absolute inset-0 w-full h-full bg-white/20 group-hover:scale-105 transition-transform duration-300"></span>
+                            <div class="relative flex items-center justify-center gap-2">
+                                <svg v-if="studentUniformForm.processing" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                {{ studentUniformForm.processing ? 'Saving Changes...' : 'Save Settings' }}
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg></span>
+                            Hero Section Settings
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (Khmer)</label>
+                                <input type="text" v-model="studentUniformForm.hero.badge.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (English)</label>
+                                <input type="text" v-model="studentUniformForm.hero.badge.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (Khmer)</label>
+                                <input type="text" v-model="studentUniformForm.hero.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (English)</label>
+                                <input type="text" v-model="studentUniformForm.hero.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle (Khmer)</label>
+                                    <textarea v-model="studentUniformForm.hero.subtitle.km" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle (English)</label>
+                                    <textarea v-model="studentUniformForm.hero.subtitle.en" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                      <!-- Overview Settings -->
+                      <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                          <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                              <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span>
+                              Overview Section Settings
+                          </h3>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.overview.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (English)</label>
+                                  <input type="text" v-model="studentUniformForm.overview.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                              </div>
+                              <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle (Khmer)</label>
+                                      <textarea v-model="studentUniformForm.overview.subtitle.km" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                  </div>
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle (English)</label>
+                                      <textarea v-model="studentUniformForm.overview.subtitle.en" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                  </div>
+                              </div>
+                              <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Khmer)</label>
+                                      <textarea v-model="studentUniformForm.overview.description.km" rows="3" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                  </div>
+                                  <div>
+                                      <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (English)</label>
+                                      <textarea v-model="studentUniformForm.overview.description.en" rows="3" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Importance Cards -->
+                      <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                          <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                              <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></span>
+                              Importance Cards
+                          </h3>
+                          <div class="space-y-6">
+                              <div v-for="(card, idx) in studentUniformForm.cards" :key="idx" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131927]">
+                                  <h4 class="text-sm font-bold text-slate-600 dark:text-slate-300 mb-4">Card {{ idx + 1 }}</h4>
+                                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                      <div>
+                                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (Khmer)</label>
+                                          <input type="text" v-model="card.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-white border-slate-200 focus:border-indigo-500'" />
+                                      </div>
+                                      <div>
+                                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (English)</label>
+                                          <input type="text" v-model="card.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-white border-slate-200 focus:border-indigo-500'" />
+                                      </div>
+                                  </div>
+                                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Khmer)</label>
+                                          <input type="text" v-model="card.desc.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-white border-slate-200 focus:border-indigo-500'" />
+                                      </div>
+                                      <div>
+                                          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (English)</label>
+                                          <input type="text" v-model="card.desc.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-white border-slate-200 focus:border-indigo-500'" />
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Male Details -->
+                      <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                          <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                              <span class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
+                              Male Uniform Section
+                          </h3>
+                          
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.genders.male_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.genders.male_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.genders.male_img" :src="studentUniformForm.genders.male_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'genders', 'male_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                  </div>
+                              </div>
+                          </div>
+
+                          <hr class="my-6 border-slate-200 dark:border-slate-700" />
+
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.section_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (English)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.section_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Full Body Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.male_details.full_img" :src="studentUniformForm.male_details.full_img" class="h-24 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'male_details', 'full_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                  </div>
+                              </div>
+                              
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.clothing_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.clothing_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.male_details.clothing_img" :src="studentUniformForm.male_details.clothing_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'male_details', 'clothing_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.logo_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.logo_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.male_details.logo_img" :src="studentUniformForm.male_details.logo_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200 bg-slate-800" />
+                                      <div v-else class="h-16 w-16 rounded-lg border border-slate-200 bg-slate-800 flex items-center justify-center text-amber-400 font-bold">DUC</div>
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'male_details', 'logo_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.shoes_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.male_details.shoes_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.male_details.shoes_img" :src="studentUniformForm.male_details.shoes_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'male_details', 'shoes_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Female Details -->
+                      <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                          <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                              <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
+                              Female Uniform Section
+                          </h3>
+                          
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.genders.female_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.genders.female_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender Card Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.genders.female_img" :src="studentUniformForm.genders.female_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'genders', 'female_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                                  </div>
+                              </div>
+                          </div>
+
+                          <hr class="my-6 border-slate-200 dark:border-slate-700" />
+
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.section_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Section Title (English)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.section_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Full Body Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.female_details.full_img" :src="studentUniformForm.female_details.full_img" class="h-24 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'female_details', 'full_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                                  </div>
+                              </div>
+                              
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.clothing_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.clothing_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Clothing Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.female_details.clothing_img" :src="studentUniformForm.female_details.clothing_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'female_details', 'clothing_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.logo_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.logo_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.female_details.logo_img" :src="studentUniformForm.female_details.logo_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200 bg-slate-800" />
+                                      <div v-else class="h-16 w-16 rounded-lg border border-slate-200 bg-slate-800 flex items-center justify-center text-amber-400 font-bold">DUC</div>
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'female_details', 'logo_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Label (Khmer)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.shoes_title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div>
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Label (English)</label>
+                                  <input type="text" v-model="studentUniformForm.female_details.shoes_title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-amber-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-amber-500'" />
+                              </div>
+                              <div class="md:col-span-2">
+                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shoes Detail Image</label>
+                                  <div class="flex items-center gap-4">
+                                      <img v-if="studentUniformForm.female_details.shoes_img" :src="studentUniformForm.female_details.shoes_img" class="h-16 w-16 object-cover rounded-lg border border-slate-200" />
+                                      <input type="file" @change="(e) => handleStudentUniformImageUpload(e, 'female_details', 'shoes_img')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                </div>
+
+                <!-- DEGREE CERTIFICATE TAB -->
+                <!-- TAB: BUILDING PAGE -->
+                <div v-if="activeTab === 'building'" class="animate-fadeIn space-y-8">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Building Page Settings</h2>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage texts and images for the Building page.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4 p-5 rounded-2xl border mb-6" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-slate-50 border-slate-200'">
+                        <h3 class="text-xs font-black uppercase tracking-widest mb-4" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Building Page Hero Settings</h3>
+                        
+                        <!-- Hero Image -->
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Background Image (Upload File)</label>
+                            <input 
+                                type="file" 
+                                accept="image/*"
+                                @input="pageContentForm.content.building_image = $event.target.files[0]" 
+                                class="w-full rounded-xl text-sm border focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:cursor-pointer hover:file:opacity-90 transition-all"
+                                :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-slate-300 focus:border-blue-500 file:bg-blue-600 file:text-white' : 'bg-white border-slate-300 text-slate-700 focus:border-blue-650 file:bg-blue-600 file:text-white'" 
+                            />
+                            <div v-if="typeof pageContentForm.content.building_image === 'string' && pageContentForm.content.building_image" class="mt-2 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Image uploaded and saved. Select a new file to replace it.
+                            </div>
+                        </div>
+
+                        <!-- Badge Text -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Badge Text (EN)</label>
+                                <input type="text" v-model="pageContentForm.content.badge_en" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Badge Text (KM)</label>
+                                <input type="text" v-model="pageContentForm.content.badge_km" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'" />
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Title (EN)</label>
+                                <input type="text" v-model="pageContentForm.content.title_en" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Title (KM)</label>
+                                <input type="text" v-model="pageContentForm.content.title_km" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'" />
+                            </div>
+                        </div>
+
+                        <!-- Subtitle -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Subtitle (EN)</label>
+                                <textarea v-model="pageContentForm.content.subtitle_en" rows="3" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase tracking-widest mb-1.5" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Hero Subtitle (KM)</label>
+                                <textarea v-model="pageContentForm.content.subtitle_km" rows="3" class="w-full rounded-xl text-sm border focus:outline-none" :class="isDarkMode ? 'bg-[#1a2333] border-[#2a374a] text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-900 focus:border-blue-650'"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Content Sections for Building Page -->
+                    <div class="space-y-4 p-5 rounded-2xl border mb-6" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333]' : 'bg-slate-50 border-slate-200'">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xs font-black uppercase tracking-widest" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">Custom Building Content Sections</h3>
+                            <button type="button" @click="addCustomSection" class="text-[10px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full px-3 py-1.5 transition-colors">+ Add Content Block</button>
+                        </div>
+                        
+                        <div v-if="!pageContentForm.content.custom_sections || pageContentForm.content.custom_sections.length === 0" class="text-center py-10 rounded-3xl" :class="isDarkMode ? 'bg-[#0c101b] text-slate-500' : 'bg-white text-slate-400 border border-dashed border-slate-200'">
+                            <p class="text-xs font-bold">This page has no additional content blocks yet.</p>
+                            <button type="button" @click="addCustomSection" class="mt-3 text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">Click here to add one</button>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div v-for="(section, idx) in pageContentForm.content.custom_sections" :key="idx" class="space-y-5 p-6 border rounded-3xl shadow-sm" :class="isDarkMode ? 'border-slate-800 bg-[#0c101b]' : 'border-slate-200 bg-white'">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Content Block #{{ idx + 1 }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <button v-if="idx > 0" type="button" @click="moveCustomSectionUp(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Up">↑ Up</button>
+                                        <button v-if="idx < pageContentForm.content.custom_sections.length - 1" type="button" @click="moveCustomSectionDown(idx)" class="text-blue-500 hover:text-white hover:bg-blue-500 bg-blue-50 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors" title="Move Down">↓ Down</button>
+                                        <button type="button" @click="removeCustomSection(idx)" class="text-red-500 hover:text-white hover:bg-red-500 bg-red-50 text-[10px] font-bold px-3 py-1 rounded-full transition-colors">Remove Block ✕</button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (EN)</label>
+                                        <input type="text" v-model="section.title.en" placeholder="E.g., Facilities, Location" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Title (KM)</label>
+                                        <input type="text" v-model="section.title.km" placeholder="E.g., ទីតាំង, សម្ភារៈ" class="w-full rounded-full text-xs font-bold border-none px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" :class="isDarkMode ? 'bg-[#1a2333] text-white' : 'bg-slate-50 text-slate-900'" />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (English)</label>
+                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.en" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-black uppercase tracking-widest mb-1.5 mt-2 pl-1" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">Section Content (Khmer)</label>
+                                        <div class="rounded-2xl overflow-hidden" :class="isDarkMode ? 'bg-[#1a2333]' : 'bg-slate-50'"><QuillEditor theme="snow" v-model:content="section.content.km" contentType="html" class="min-h-[200px]" :class="isDarkMode ? 'text-white' : 'text-black'"></QuillEditor></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3 pt-6 border-t" :class="isDarkMode ? 'border-slate-800' : 'border-slate-200'">
+                        <button type="button" @click="submitPage" :disabled="pageContentForm.processing" class="px-8 py-3 rounded-xl text-sm font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 transition-all transform hover:scale-[1.02] flex items-center gap-2">
+                            <svg v-if="pageContentForm.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Save Building Settings
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'degree-certificate'" class="animate-fadeIn space-y-8">
+                    <!-- Sticky Header -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-50 p-4 sm:px-6 bg-white/70 dark:bg-[#0c101b]/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-blue-900/5 dark:shadow-black/20 transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Degree Certificate Settings</h2>
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage texts and image for the Sample Degree Certificate page.</p>
+                            </div>
+                        </div>
+                        <button @click="saveDegreeCertificateSettings" :disabled="degreeCertificateForm.processing" class="btn-primary shrink-0 relative overflow-hidden group w-full md:w-auto">
+                            <span class="absolute inset-0 w-full h-full bg-white/20 group-hover:scale-105 transition-transform duration-300"></span>
+                            <div class="relative flex items-center justify-center gap-2">
+                                <svg v-if="degreeCertificateForm.processing" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                {{ degreeCertificateForm.processing ? 'Saving Changes...' : 'Save Settings' }}
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg></span>
+                            Hero Section Settings
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (Khmer)</label>
+                                <input type="text" v-model="degreeCertificateForm.hero.badge.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Badge Text (English)</label>
+                                <input type="text" v-model="degreeCertificateForm.hero.badge.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (Khmer)</label>
+                                <input type="text" v-model="degreeCertificateForm.hero.title.km" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (English)</label>
+                                <input type="text" v-model="degreeCertificateForm.hero.title.en" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'" />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Khmer)</label>
+                                <textarea v-model="degreeCertificateForm.hero.description.km" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (English)</label>
+                                <textarea v-model="degreeCertificateForm.hero.description.en" rows="2" class="w-full rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 px-4 py-2 transition-all" :class="isDarkMode ? 'bg-[#090d16] border-[#1a2333] text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500'"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></span>
+                            Certificate Image Settings
+                        </h3>
+                        <div class="grid grid-cols-1 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bachelor's Degree Image</label>
+                                <div class="flex items-center gap-4">
+                                    <img v-if="certificatePreviews.bachelor" :src="certificatePreviews.bachelor" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm" />
+                                    <div v-else class="h-48 w-72 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image Uploaded</div>
+                                    <input type="file" @change="e => handleDegreeCertificateImageUpload(e, 'bachelor')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                                </div>
+                                <p class="mt-2 text-xs text-slate-500">Upload the sample image of the Bachelor's Degree Certificate.</p>
+                            </div>
+                            
+                            <hr class="border-slate-100 dark:border-slate-800" />
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Associate's Degree Image</label>
+                                <div class="flex items-center gap-4">
+                                    <img v-if="certificatePreviews.associate" :src="certificatePreviews.associate" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm" />
+                                    <div v-else class="h-48 w-72 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image Uploaded</div>
+                                    <input type="file" @change="e => handleDegreeCertificateImageUpload(e, 'associate')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                                </div>
+                                <p class="mt-2 text-xs text-slate-500">Upload the sample image of the Associate's Degree Certificate.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Authentic Verification Settings -->
+                    <div class="bg-white dark:bg-[#0c101b] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span>
+                            Authentic Verification Notice
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (English)</label>
+                                <input v-model="degreeCertificateForm.verification.title.en" type="text" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Title (Khmer)</label>
+                                <input v-model="degreeCertificateForm.verification.title.km" type="text" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500" style="font-family: 'Khmer OS Siemreap', sans-serif;" />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (English)</label>
+                                <textarea v-model="degreeCertificateForm.verification.description.en" rows="3" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Khmer)</label>
+                                <textarea v-model="degreeCertificateForm.verification.description.km" rows="3" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm focus:ring-orange-500 focus:border-orange-500" style="font-family: 'Khmer OS Siemreap', sans-serif;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRADUATION UNIFORM TAB -->
+                <div v-if="activeTab === 'graduation-gown'" class="animate-fadeIn space-y-8">
+                    <div class="bg-white dark:bg-[#1a2333] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
+                        <div class="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Graduation Uniform Settings</h2>
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage texts and images for the Graduation Uniform page.</p>
+                            </div>
+                            <button @click="saveGraduationUniformSettings" :disabled="graduationUniformForm.processing" class="btn-primary shrink-0 relative overflow-hidden group w-full md:w-auto">
+                                <span class="absolute inset-0 w-full h-full bg-white/20 group-hover:scale-105 transition-transform duration-300"></span>
+                                <div class="relative flex items-center justify-center gap-2">
+                                    <svg v-if="graduationUniformForm.processing" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                                    <span class="font-bold tracking-wide">{{ graduationUniformForm.processing ? 'Saving...' : 'Save Settings' }}</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="p-6 md:p-8 space-y-8 bg-slate-50/50 dark:bg-transparent">
+                            <!-- Hero Section -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">Hero Section</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Title (English)</label>
+                                        <input type="text" v-model="graduationUniformForm.hero.title.en" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Title (Khmer)</label>
+                                        <input type="text" v-model="graduationUniformForm.hero.title.km" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer" />
+                                    </div>
+                                    <div class="space-y-2 md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Subtitle (English)</label>
+                                        <textarea v-model="graduationUniformForm.hero.subtitle.en" rows="2" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20"></textarea>
+                                    </div>
+                                    <div class="space-y-2 md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Subtitle (Khmer)</label>
+                                        <textarea v-model="graduationUniformForm.hero.subtitle.km" rows="2" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-slate-200 dark:border-slate-800" />
+
+                            <!-- Images Section -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">Graduation Gown Images</h3>
+                                
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <!-- Doctorate -->
+                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                                        <label class="block text-sm font-bold text-slate-800 dark:text-white mb-2">Doctorate (បណ្ឌិត)</label>
+                                        <div class="flex items-center gap-4">
+                                            <img v-if="graduationUniformPreviews.doctorate" :src="graduationUniformPreviews.doctorate" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm bg-white" />
+                                            <div v-else class="h-48 w-48 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image</div>
+                                            <input type="file" @change="e => handleGraduationUniformImageUpload(e, 'doctorate')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Master's -->
+                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                                        <label class="block text-sm font-bold text-slate-800 dark:text-white mb-2">Master's (បរិញ្ញាបត្រជាន់ខ្ពស់)</label>
+                                        <div class="flex items-center gap-4">
+                                            <img v-if="graduationUniformPreviews.master" :src="graduationUniformPreviews.master" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm bg-white" />
+                                            <div v-else class="h-48 w-48 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image</div>
+                                            <input type="file" @change="e => handleGraduationUniformImageUpload(e, 'master')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Bachelor's -->
+                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                                        <label class="block text-sm font-bold text-slate-800 dark:text-white mb-2">Bachelor's (បរិញ្ញាបត្រ)</label>
+                                        <div class="flex items-center gap-4">
+                                            <img v-if="graduationUniformPreviews.bachelor" :src="graduationUniformPreviews.bachelor" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm bg-white" />
+                                            <div v-else class="h-48 w-48 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image</div>
+                                            <input type="file" @change="e => handleGraduationUniformImageUpload(e, 'bachelor')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Associate's -->
+                                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                                        <label class="block text-sm font-bold text-slate-800 dark:text-white mb-2">Associate's (បរិញ្ញាបត្ររង)</label>
+                                        <div class="flex items-center gap-4">
+                                            <img v-if="graduationUniformPreviews.associate" :src="graduationUniformPreviews.associate" class="h-48 w-auto object-contain rounded-lg border border-slate-200 shadow-sm bg-white" />
+                                            <div v-else class="h-48 w-48 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm">No Image</div>
+                                            <input type="file" @change="e => handleGraduationUniformImageUpload(e, 'associate')" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: SUB-DECREE -->
+                <div v-if="activeTab === 'subdecree'" class="animate-fadeIn space-y-8">
+                    <div class="bg-white dark:bg-[#1a2333] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800/60 overflow-hidden">
+                        <div class="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h2 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Sub-Decree Settings</h2>
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Manage texts and documents for the Sub-Decree page.</p>
+                            </div>
+                            <button @click="saveSubDecreeSettings" :disabled="subDecreeForm.processing" class="btn-primary shrink-0 relative overflow-hidden group w-full md:w-auto">
+                                <span class="absolute inset-0 w-full h-full bg-white/20 group-hover:scale-105 transition-transform duration-300"></span>
+                                <div class="relative flex items-center justify-center gap-2">
+                                    <svg v-if="subDecreeForm.processing" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                                    <span class="font-bold tracking-wide">{{ subDecreeForm.processing ? 'Saving...' : 'Save Settings' }}</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="p-6 md:p-8 space-y-8 bg-slate-50/50 dark:bg-transparent">
+                            <!-- Hero Section -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">Hero Section</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Badge (English)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.badge.en" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Badge (Khmer)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.badge.km" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Title (English)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.title.en" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Title (Khmer)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.title.km" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer" />
+                                    </div>
+                                    <div class="space-y-2 md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Description (English)</label>
+                                        <textarea v-model="subDecreeForm.hero.description.en" rows="2" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20"></textarea>
+                                    </div>
+                                    <div class="space-y-2 md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Description (Khmer)</label>
+                                        <textarea v-model="subDecreeForm.hero.description.km" rows="2" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer"></textarea>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Doc Button (English)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.doc_button.en" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Doc Button (Khmer)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.doc_button.km" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Official Doc Title (English)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.official_doc_title.en" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Official Doc Title (Khmer)</label>
+                                        <input type="text" v-model="subDecreeForm.hero.official_doc_title.km" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2333] px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 font-khmer" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-slate-200 dark:border-slate-800" />
+
+                            <!-- Documents Section -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">Documents / Pages</h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div v-for="(doc, index) in subDecreeForm.documents" :key="index" class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                                        <div class="flex items-center gap-4">
+                                            <div class="h-40 w-full rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 overflow-hidden relative group">
+                                                <img v-if="doc.src" :src="doc.src" class="w-full h-full object-cover" />
+                                                <div v-else class="text-xs">No Image</div>
+                                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <label class="cursor-pointer text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                                        Change
+                                                        <input type="file" class="hidden" accept="image/*" @change="(e) => handleSubDecreeDocumentUpload(e, index)" />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div class="space-y-1">
+                                                <label class="text-[10px] font-bold text-slate-500 uppercase">Title (EN)</label>
+                                                <input type="text" v-model="doc.title.en" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a2333] px-3 py-2 text-xs" placeholder="Page 1" />
+                                            </div>
+                                            <div class="space-y-1">
+                                                <label class="text-[10px] font-bold text-slate-500 uppercase">Title (KM)</label>
+                                                <input type="text" v-model="doc.title.km" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a2333] px-3 py-2 text-xs font-khmer" placeholder="??????? ?" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -7758,4 +8902,9 @@ const stripHtml = (html) => {
         transform: translateY(0);
     }
 }
+
+.btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2;
+}
 </style>
+

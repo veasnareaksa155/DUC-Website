@@ -67,15 +67,15 @@ const paragraphs = computed(() => {
             class="mx-auto w-full max-w-[1400px] px-4 py-12 md:px-6 flex-grow"
         >
             <section
-                class="grid grid-cols-1 gap-10 md:grid-cols-[350px_1fr] lg:grid-cols-[420px_1fr] lg:gap-16 items-start animate-[fadeIn_0.8s_ease-out]"
+                class="block animate-[fadeIn_0.8s_ease-out] relative"
             >
                 <div
-                    class="w-full overflow-hidden rounded-[24px] bg-slate-100 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl group"
+                    class="float-none md:float-left w-full md:w-[350px] lg:w-[420px] mb-8 md:mb-6 md:mr-8 lg:mr-10 overflow-hidden rounded-[24px] bg-slate-100 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl group"
                 >
                     <img
                         :src="pageData?.rector_image || directorImage"
                         alt="Rector of Digital University of Cambodia"
-                        class="h-[400px] lg:h-[480px] w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        class="h-auto w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                         onerror="
                             this.src =
                                 'https://placehold.co/400x500/1e293b/ffffff.png?text=Director'
@@ -83,24 +83,23 @@ const paragraphs = computed(() => {
                     />
                 </div>
 
-                <div class="pt-2 md:pt-4 min-w-0">
-                    <h2
-                        class="text-[32px] font-black leading-tight text-[#1c244b] tracking-tight"
-                    >
-                        {{ rectorName }}
-                    </h2>
-                    <p class="text-[24px] font-semibold text-slate-700 mt-1">{{ rectorTitle }}</p>
-
+                <h2
+                    class="text-[28px] md:text-[32px] font-black leading-tight text-[#1c244b] tracking-tight pt-2 md:pt-4"
+                >
+                    {{ rectorName }}
+                </h2>
+                <p class="text-[20px] md:text-[24px] font-semibold text-slate-700 mt-2 mb-6">{{ rectorTitle }}</p>
 
                 <div
-                    class="mt-3 space-y-6 text-[18px] leading-relaxed text-black/80 text-justify">
+                    class="space-y-6 text-[16px] md:text-[18px] leading-relaxed text-black/80 text-justify">
                 
                     <div v-if="Array.isArray(paragraphs)" v-for="(para, idx) in paragraphs" :key="idx" :class="{ 'font-semibold text-[#1c244b]': idx === paragraphs.length - 1 }">
                         {{ $t(para) }}
                     </div>
-                    <div v-else class="ql-editor px-0" v-html="paragraphs"></div>
+                    <div v-else class="ql-editor !overflow-visible px-0" v-html="paragraphs"></div>
                 </div>
-                </div>
+                
+                <div class="clear-both"></div>
             </section>
 
             

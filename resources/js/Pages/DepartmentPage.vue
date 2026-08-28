@@ -476,7 +476,7 @@ const formatTextToList = (text) => {
                     <!-- Main Content for Custom Sections -->
                     <div class="lg:col-span-3">
                         <div v-if="getCustomSections().length > 0" class="space-y-12">
-                            <section v-for="(section, idx) in getCustomSections()" :key="idx" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-[#1c244b] prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl">
+                            <section v-for="(section, idx) in getCustomSections()" :key="idx" class="bg-card-bg rounded-2xl shadow-sm border border-gray-100 p-8 prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-[#1c244b] prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl">
                                 <h2 v-if="section.title" class="text-2xl font-bold mb-6 text-[#1c244b] pb-3 border-b border-gray-100">{{ $t(section.title) }}</h2>
                                 <div v-html="$t(section.content)"></div>
                             </section>

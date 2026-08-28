@@ -426,7 +426,7 @@ const videoBgColor = computed(() => {
                 </div>
 
                 <div class="mt-12 grid items-center gap-10 lg:grid-cols-12">
-                    <div class="lg:col-span-5 overflow-hidden rounded-2xl shadow-sm bg-white p-2 border border-gray-100">
+                    <div class="lg:col-span-5 overflow-hidden rounded-2xl shadow-sm bg-card-bg p-2 border border-gray-100">
                         <img :src="scholarship.bg_image" alt="Campus Life" class="w-full rounded-xl object-cover aspect-[4/3]" />
                     </div>
 
@@ -454,9 +454,8 @@ const videoBgColor = computed(() => {
                 </div>
 
                 <div class="mt-12 grid gap-8 sm:grid-cols-2 w-full">
-                    <div v-for="(year, index) in fourYears" :key="index"
-                         class="rounded-xl p-8 shadow-sm flex flex-col justify-center min-h-[220px] hover:shadow-lg transition duration-300"
-                         :class="(index === 0 || index === 3) ? 'bg-[#115D6D] text-white' : 'bg-white text-slate-800 border border-gray-200'">
+                    <div v-for="(year, index) in fourYears" :key="index" class="p-8 rounded-3xl"
+                         :class="(index === 0 || index === 3) ? 'bg-[#115D6D] text-white' : 'bg-card-bg text-slate-800 border border-gray-200'">
                         <h3 class="text-xl font-bold text-center" :class="(index === 0 || index === 3) ? 'text-white' : 'text-slate-900'">{{ $t(year.title) }}</h3>
                         <div class="mt-4 text-sm text-center leading-relaxed ql-editor px-0" :class="(index === 0 || index === 3) ? 'text-slate-200' : 'text-slate-500'" v-html="$t(year.description)">
                         </div>
@@ -493,7 +492,7 @@ const videoBgColor = computed(() => {
                         class="w-full !pt-4 !pb-12"
                     >
                         <SwiperSlide v-for="(slide, index) in activitiesSlides" :key="index" class="h-auto">
-                            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow p-3 h-full cursor-pointer group">
+                            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-card-bg shadow-sm hover:shadow-md transition-shadow p-3 h-full cursor-pointer group">
                                 <div class="overflow-hidden rounded-xl h-64">
                                     <img :src="slide.img" :alt="$t(slide.alt)" class="w-full h-full object-cover select-none transform group-hover:scale-105 transition-transform duration-500" />
                                 </div>
@@ -529,7 +528,7 @@ const videoBgColor = computed(() => {
                         <div 
                             v-for="(item, index) in statsItems" 
                             :key="'stat-card-'+index"
-                            class="group relative bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-[0_10px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(17,93,109,0.12)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center"
+                            class="group relative bg-card-bg rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-[0_10px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(17,93,109,0.12)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center"
                         >
                             <!-- Icon Badge -->
                             <div class="w-16 h-16 rounded-2xl bg-teal-50 text-[#115D6D] border border-teal-100 flex items-center justify-center mb-4 shadow-inner group-hover:scale-110 group-hover:bg-[#115D6D] group-hover:text-white transition-all duration-300">
@@ -567,7 +566,7 @@ const videoBgColor = computed(() => {
                     <div class="mt-12 flex flex-col md:flex-row gap-8 w-full items-stretch">
                         <!-- Text-only cards column -->
                         <div v-if="graduateAttributes.cards.some(c => !c.image)" class="flex-1 flex flex-col gap-8">
-                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => !c.image)" :key="'text-'+index" class="rounded-[32px] bg-white border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => !c.image)" :key="'text-'+index" class="rounded-[32px] bg-card-bg border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
                                 <h3 class="text-xl font-bold text-[#115D6D] tracking-tight">{{ $t(card.title) }}</h3>
                                 <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
                                     {{ $t(card.description) }}
@@ -577,7 +576,7 @@ const videoBgColor = computed(() => {
                         
                         <!-- Image cards column -->
                         <div v-if="graduateAttributes.cards.some(c => c.image)" class="flex-1 flex flex-col gap-8">
-                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => c.image)" :key="'img-'+index" class="rounded-[32px] bg-white border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
+                            <div v-for="(card, index) in graduateAttributes.cards.filter(c => c.image)" :key="'img-'+index" class="rounded-[32px] bg-card-bg border border-slate-200/80 p-8 sm:p-10 flex flex-col hover:-translate-y-1 shadow-md hover:shadow-xl transition-all duration-300 flex-1">
                                 <div class="flex flex-col">
                                     <h3 class="text-xl font-bold text-[#115D6D] tracking-tight">{{ $t(card.title) }}</h3>
                                     <p class="mt-4 text-sm md:text-base text-slate-700 leading-relaxed">
@@ -610,8 +609,8 @@ const videoBgColor = computed(() => {
 .hero-swiper .swiper-slide-active {
     opacity: 1;
 }
-.hero-swiper .swiper-slide-active img {
-}
+/* .hero-swiper .swiper-slide-active img {
+} */
 
 .hero-swiper .swiper-button-next, .hero-swiper .swiper-button-prev { 
     display: none;
