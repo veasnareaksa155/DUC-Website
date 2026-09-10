@@ -20,6 +20,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            UsersTableSeeder::class,
+            DepartmentsTableSeeder::class,
+            FacultiesTableSeeder::class,
+            EventsTableSeeder::class,
+            NavigationItemsTableSeeder::class,
+            PageContentsTableSeeder::class,
+            SettingsTableSeeder::class,
+            TranslationsTableSeeder::class,
+            ActivityLogsTableSeeder::class,
+        ]);
         // Truncate tables before seeding to prevent duplicates on re-seeding/re-uploading
         Schema::disableForeignKeyConstraints();
         NavigationItem::truncate();
@@ -45,7 +56,7 @@ class DatabaseSeeder extends Seeder
             'icon' => '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 012 0v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>',
             'order' => 1
         ]);
-        
+
         $about = NavigationItem::create([
             'label' => ['en' => 'ABOUT', 'km' => 'អំពីយើង'],
             'href' => '/about',
@@ -53,7 +64,7 @@ class DatabaseSeeder extends Seeder
             'order' => 2
         ]);
         NavigationItem::create(['label' => ['en' => "Rector's Message", 'km' => 'សាររបស់សាកលវិទ្យាធិការ'], 'href' => '/rector', 'parent_id' => $about->id, 'order' => 1]);
-        
+
         $officesMenu = NavigationItem::create(['label' => ['en' => 'Offices', 'km' => 'ការិយាល័យ'], 'href' => '#', 'parent_id' => $about->id, 'order' => 2]);
         NavigationItem::create(['label' => ['en' => 'Personnel and Human Resources Office', 'km' => 'ការិយាល័យបុគ្គលិក និងអភិវឌ្ឍន៍ធនធានមនុស្ស'], 'href' => '/personnel_and_human_resources', 'parent_id' => $officesMenu->id, 'order' => 1]);
         NavigationItem::create(['label' => ['en' => 'Student Affairs Office', 'km' => 'ការិយាល័យកិច្ចការនិស្សិត'], 'href' => '/student_affairs_office', 'parent_id' => $officesMenu->id, 'order' => 2]);
@@ -62,7 +73,7 @@ class DatabaseSeeder extends Seeder
         NavigationItem::create(['label' => ['en' => 'Dormitory Office', 'km' => 'ការិយាល័យអន្តេវាសិកដ្ឋាន'], 'href' => '/dormitory_office', 'parent_id' => $officesMenu->id, 'order' => 5]);
         NavigationItem::create(['label' => ['en' => 'Internal Quality Assurance Office', 'km' => 'ការិយាល័យធានាគុណភាពផ្ទៃក្នុង'], 'href' => '/internal_quality_assurance_office', 'parent_id' => $officesMenu->id, 'order' => 6]);
         NavigationItem::create(['label' => ['en' => 'Planning and Research Office', 'km' => 'ការិយាល័យផែនការ និងស្រាវជ្រាវ'], 'href' => '/planning_and_research_office', 'parent_id' => $officesMenu->id, 'order' => 7]);
-        
+
         NavigationItem::create(['label' => ['en' => 'Exam and Evaluation', 'km' => 'ការវាយតម្លៃ និងការប្រឡង'], 'href' => '/exam-evaluation', 'parent_id' => $about->id, 'order' => 3]);
 
         $facultiesMenu = NavigationItem::create([
@@ -85,7 +96,7 @@ class DatabaseSeeder extends Seeder
             'icon' => '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>',
             'order' => 5
         ]);
-        
+
         // 3. Bilingual Faculties & Departments seeding
         $facultiesData = [
             1 => [
@@ -96,23 +107,23 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Maintain a 95% post-graduation employment rate.\n2. Partner with 50+ digital design and marketing firms for student internships.", 'km' => "១. រក្សាអត្រាការងារ ៩៥% ក្រោយពេលបញ្ចប់ការសិក្សា។\n២. ចុះកិច្ចសហការជាមួយក្រុមហ៊ុនរចនាឌីជីថល និងទីផ្សារជាង ៥០ សម្រាប់កម្មសិក្សារបស់និស្សិត។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of Graphic Design', 'km' => 'ដេប៉ាតឺម៉ង់រចនាក្រាហ្វិក'], 
-                        'slug' => 'graphic-design', 
+                        'name' => ['en' => 'Department of Graphic Design', 'km' => 'ដេប៉ាតឺម៉ង់រចនាក្រាហ្វិក'],
+                        'slug' => 'graphic-design',
                         'description' => ['en' => 'Provides students with creative skills in branding, illustration, typography, UI/UX, and digital media design.', 'km' => 'ផ្តល់ជូននិស្សិតនូវជំនាញច្នៃប្រឌិតក្នុងការបង្កើតម៉ាកយីហោ គំនូរ រចនាអក្សរ UI/UX និងការរចនាប្រព័ន្ធផ្សព្វផ្សាយឌីជីថល។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Digital Marketing', 'km' => 'ដេប៉ាតឺម៉ង់ទីផ្សារឌីជីថល'], 
-                        'slug' => 'digital-marketing', 
+                        'name' => ['en' => 'Department of Digital Marketing', 'km' => 'ដេប៉ាតឺម៉ង់ទីផ្សារឌីជីថល'],
+                        'slug' => 'digital-marketing',
                         'description' => ['en' => 'Focuses on SEO, social media marketing, online advertising, branding, and digital analytics.', 'km' => 'ផ្តោតលើ SEO ទីផ្សារបណ្តាញសង្គម ការផ្សាយពាណិជ្ជកម្មតាមអ៊ីនធឺណិត ការបង្កើតម៉ាកយីហោ និងការវិភាគឌីជីថល។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Social Media', 'km' => 'ដេប៉ាតឺម៉ង់បណ្តាញសង្គម'], 
-                        'slug' => 'social-media', 
+                        'name' => ['en' => 'Department of Social Media', 'km' => 'ដេប៉ាតឺម៉ង់បណ្តាញសង្គម'],
+                        'slug' => 'social-media',
                         'description' => ['en' => 'Prepares experts in content strategy, digital communication, brand management, and social media platforms.', 'km' => 'រៀបចំអ្នកជំនាញផ្នែកយុទ្ធសាស្ត្រមាតិកា ទំនាក់ទំនងឌីជីថល ការគ្រប់គ្រងម៉ាកយីហោ និងវេទិកាបណ្តាញសង្គម។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Information Technology', 'km' => 'ដេប៉ាតឺម៉ង់បច្ចេកវិទ្យាព័ត៌មាន'], 
-                        'slug' => 'information-technology', 
+                        'name' => ['en' => 'Department of Information Technology', 'km' => 'ដេប៉ាតឺម៉ង់បច្ចេកវិទ្យាព័ត៌មាន'],
+                        'slug' => 'information-technology',
                         'description' => ['en' => 'Covers web development, databases, programming, networking, and software engineering.', 'km' => 'គ្របដណ្តប់លើការអភិវឌ្ឍន៍គេហទំព័រ មូលដ្ឋានទិន្នន័យ ការសរសេរកម្មវិធី បណ្តាញ និងវិស្វកម្មកម្មវិធីកុំព្យូទ័រ។']
                     ]
                 ],
@@ -125,18 +136,18 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Improve interpretation accuracy and research output.\n2. Conduct regular community outreach programs.", 'km' => "១. កែលម្អភាពត្រឹមត្រូវនៃការបកប្រែផ្ទាល់មាត់ និងលទ្ធផលស្រាវជ្រាវ។\n២. ធ្វើកម្មវិធីចុះជួយសហគមន៍ឱ្យបានទៀងទាត់។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of English for Specific Purposes', 'km' => 'ដេប៉ាតឺម៉ង់ភាសាអង់គ្លេសសម្រាប់គោលបំណងជាក់លាក់'], 
-                        'slug' => 'english-for-specific-purposes', 
+                        'name' => ['en' => 'Department of English for Specific Purposes', 'km' => 'ដេប៉ាតឺម៉ង់ភាសាអង់គ្លេសសម្រាប់គោលបំណងជាក់លាក់'],
+                        'slug' => 'english-for-specific-purposes',
                         'description' => ['en' => 'English training tailored for business, tourism, diplomacy, and aviation.', 'km' => 'ការបណ្តុះបណ្តាលភាសាអង់គ្លេសដែលរៀបចំឡើងសម្រាប់ធុរកិច្ច ទេសចរណ៍ ការទូត និងអាកាសចរណ៍។']
                     ],
                     [
-                        'name' => ['en' => 'Department of English Education', 'km' => 'ដេប៉ាតឺម៉ង់អប់រំភាសាអង់គ្លេស'], 
-                        'slug' => 'english-education', 
+                        'name' => ['en' => 'Department of English Education', 'km' => 'ដេប៉ាតឺម៉ង់អប់រំភាសាអង់គ្លេស'],
+                        'slug' => 'english-education',
                         'description' => ['en' => 'Prepares future high school and university teachers with modern pedagogical models.', 'km' => 'រៀបចំគ្រូបង្រៀនវិទ្យាល័យ និងសាកលវិទ្យាល័យនាពេលអនាគត ជាមួយនឹងគំរគរុកោសល្យទំនើប។']
                     ],
                     [
-                        'name' => ['en' => 'Department of English for Translation and Interpretation', 'km' => 'ដេប៉ាតឺម៉ង់ភាសាអង់គ្លេសសម្រាប់ការបកប្រែ'], 
-                        'slug' => 'english-for-translation-and-interpretation', 
+                        'name' => ['en' => 'Department of English for Translation and Interpretation', 'km' => 'ដេប៉ាតឺម៉ង់ភាសាអង់គ្លេសសម្រាប់ការបកប្រែ'],
+                        'slug' => 'english-for-translation-and-interpretation',
                         'description' => ['en' => 'Focuses on professional translation skills between Khmer and English.', 'km' => 'ផ្តោតលើជំនាញបកប្រែវិជ្ជាជីវៈរវាងភាសាខ្មែរ និងអង់គ្លេស។']
                     ]
                 ],
@@ -149,18 +160,18 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Embed green architecture principles into all studio courses.\n2. Develop student portfolios that win national awards.", 'km' => "១. បញ្ចូលគោលការណ៍ស្ថាបត្យកម្មបៃតងទៅក្នុងគ្រប់វគ្គសិក្សាស្ទូឌីយ៉ូ។\n២. អភិវឌ្ឍផលប័ត្រស្នាដៃរបស់និស្សិតដើម្បីឈ្នះពានរង្វាន់ថ្នាក់ជាតិ។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of Engineering', 'km' => 'ដេប៉ាតឺម៉ង់វិស្វកម្ម'], 
-                        'slug' => 'engineering', 
+                        'name' => ['en' => 'Department of Engineering', 'km' => 'ដេប៉ាតឺម៉ង់វិស្វកម្ម'],
+                        'slug' => 'engineering',
                         'description' => ['en' => 'Covers civil, mechanical, and electronic systems for engineering applications.', 'km' => 'គ្របដណ្តប់លើប្រព័ន្ធសំណង់ស៊ីវិល មេកានិច និងប្រព័ន្ធអេឡិចត្រូនិចសម្រាប់កម្មវិធីវិស្វកម្ម។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Engineering Management', 'km' => 'ដេប៉ាតឺម៉ង់គ្រប់គ្រងវិស្វកម្ម'], 
-                        'slug' => 'engineering-management', 
+                        'name' => ['en' => 'Department of Engineering Management', 'km' => 'ដេប៉ាតឺម៉ង់គ្រប់គ្រងវិស្វកម្ម'],
+                        'slug' => 'engineering-management',
                         'description' => ['en' => 'Bridges technical engineering expertise with business leadership capabilities.', 'km' => 'ភ្ជាប់ទំនាក់ទំនងរវាងជំនាញបច្ចេកទេសវិស្វកម្ម ជាមួយនឹងសមត្ថភាពដឹកនាំអាជីវកម្ម។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Interior Design', 'km' => 'ដេប៉ាតឺម៉ង់រចនាផ្ទៃក្នុង'], 
-                        'slug' => 'interior-design', 
+                        'name' => ['en' => 'Department of Interior Design', 'km' => 'ដេប៉ាតឺម៉ង់រចនាផ្ទៃក្នុង'],
+                        'slug' => 'interior-design',
                         'description' => ['en' => 'Focuses on spatial planning, aesthetics, and material design for interior spaces.', 'km' => 'ផ្តោតលើការរៀបចំលំហ សោភ័ណភាព និងការរចនាសម្ភារៈសម្រាប់លំហខាងក្នុង។']
                     ]
                 ],
@@ -173,18 +184,18 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Setup experimental smart farming facilities.\n2. Establish rural development pilot studies.", 'km' => "១. បង្កើតកសិដ្ឋានវៃឆ្លាតពិសោធន៍។\n២. បង្កើតការសិក្សាសាកល្បងអភិវឌ្ឍន៍ជនបទ។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of Agronomy and Horticulture', 'km' => 'ដេប៉ាតឺម៉ង់ក្សេត្រសាស្ត្រ និងវប្បកម្ម'], 
-                        'slug' => 'agronomy-and-horticulture', 
+                        'name' => ['en' => 'Department of Agronomy and Horticulture', 'km' => 'ដេប៉ាតឺម៉ង់ក្សេត្រសាស្ត្រ និងវប្បកម្ម'],
+                        'slug' => 'agronomy-and-horticulture',
                         'description' => ['en' => 'Focuses on crop production, soil science, plant protection, and nursery management.', 'km' => 'ផ្តោតលើផលិតកម្មដំណាំ វិទ្យាសាស្ត្រដី ការការពាររុក្ខជាតិ និងការគ្រប់គ្រងថ្នាលបណ្តុះ។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Agricultural Economics', 'km' => 'ដេប៉ាតឺម៉ង់សេដ្ឋកិច្ចកសិកម្ម'], 
-                        'slug' => 'agricultural-economics', 
+                        'name' => ['en' => 'Department of Agricultural Economics', 'km' => 'ដេប៉ាតឺម៉ង់សេដ្ឋកិច្ចកសិកម្ម'],
+                        'slug' => 'agricultural-economics',
                         'description' => ['en' => 'Evaluates agri-business strategies, marketing networks, and microfinance in farming.', 'km' => 'វាយតម្លៃយុទ្ធសាស្ត្រធុរកិច្ចកសិកម្ម បណ្តាញទីផ្សារ និងមីក្រូហិរញ្ញវត្ថុក្នុងវិស័យកសិកម្ម។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Rural Development', 'km' => 'ដេប៉ាតឺម៉ង់អភិវឌ្ឍន៍ជនបទ'], 
-                        'slug' => 'rural-development', 
+                        'name' => ['en' => 'Department of Rural Development', 'km' => 'ដេប៉ាតឺម៉ង់អភិវឌ្ឍន៍ជនបទ'],
+                        'slug' => 'rural-development',
                         'description' => ['en' => 'Focuses on project design, sustainable resources, and community leadership models.', 'km' => 'ផ្តោតលើការរចនាគម្រោង ធនធានប្រកបដោយនិរន្តរភាព និងគំរូអ្នកដឹកនាំសហគមន៍។']
                     ]
                 ],
@@ -197,18 +208,18 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Establish legal aid clinics for low-income communities.\n2. Partner with ministries for policy research projects.", 'km' => "១. បង្កើតគ្លីនិកជំនួយផ្នែកច្បាប់សម្រាប់សហគមន៍ដែលមានចំណូលទាប។\n២. សហការជាមួយក្រសួងសម្រាប់គម្រោងស្រាវជ្រាវគោលនយោបាយ។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of Law', 'km' => 'ដេប៉ាតឺម៉ង់ច្បាប់'], 
-                        'slug' => 'law', 
+                        'name' => ['en' => 'Department of Law', 'km' => 'ដេប៉ាតឺម៉ង់ច្បាប់'],
+                        'slug' => 'law',
                         'description' => ['en' => 'Comprehensive studies in civil law, penal code, business contracts, and international agreements.', 'km' => 'ការសិក្សាគ្រប់ជ្រុងជ្រោយលើច្បាប់រដ្ឋប្បវេណី ក្រមព្រហ្មទណ្ឌ កិច្ចសន្យាអាជីវកម្ម និងកិច្ចព្រមព្រៀងអន្តរជាតិ។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Public Administration', 'km' => 'ដេប៉ាតឺម៉ង់រដ្ឋបាលសាធារណៈ'], 
-                        'slug' => 'public-administration', 
+                        'name' => ['en' => 'Department of Public Administration', 'km' => 'ដេប៉ាតឺម៉ង់រដ្ឋបាលសាធារណៈ'],
+                        'slug' => 'public-administration',
                         'description' => ['en' => 'Prepares leaders for government ministries, policy design, and municipality management.', 'km' => 'រៀបចំអ្នកដឹកនាំសម្រាប់ក្រសួងរដ្ឋាភិបាល ការរចនាគោលនយោបាយ និងការគ្រប់គ្រងក្រុង។']
                     ],
                     [
-                        'name' => ['en' => 'Department of Political Science', 'km' => 'ដេប៉ាតឺម៉ង់វិទ្យាសាស្ត្រនយោបាយ'], 
-                        'slug' => 'political-science', 
+                        'name' => ['en' => 'Department of Political Science', 'km' => 'ដេប៉ាតឺម៉ង់វិទ្យាសាស្ត្រនយោបាយ'],
+                        'slug' => 'political-science',
                         'description' => ['en' => 'Analyzes international relations, government systems, and policy trends.', 'km' => 'វិភាគទំនាក់ទំនងអន្តរជាតិ ប្រព័ន្ធរដ្ឋាភិបាល និងនិន្នាការគោលនយោបាយ។']
                     ]
                 ],
@@ -221,13 +232,13 @@ class DatabaseSeeder extends Seeder
                 'goals' => ['en' => "1. Implement blockchain and cryptocurrency modules.\n2. Incubate 5 fintech startups annually.", 'km' => "១. ដាក់បញ្ចូលម៉ូឌុលបច្ចេកវិទ្យា Blockchain និងរូបិយប័ណ្ណឌីជីថល។\n២. បណ្តុះបណ្តាលសហគ្រាស Fintech សាកល្បងចំនួន ៥ ជារៀងរាល់ឆ្នាំ។"],
                 'departments' => [
                     [
-                        'name' => ['en' => 'Department of Digital Economy', 'km' => 'ដេប៉ាតឺម៉ង់សេដ្ឋកិច្ចឌីជីថល'], 
-                        'slug' => 'digital-economy', 
+                        'name' => ['en' => 'Department of Digital Economy', 'km' => 'ដេប៉ាតឺម៉ង់សេដ្ឋកិច្ចឌីជីថល'],
+                        'slug' => 'digital-economy',
                         'description' => ['en' => 'Studies digital transaction economics, finance, and cryptocurrency frameworks.', 'km' => 'សិក្សាអំពីសេដ្ឋកិច្ចប្រតិបត្តិការឌីជីថល ហិរញ្ញវត្ថុ និងក្របខ័ណ្ឌរូបិយប័ណ្ណគ្រីបតូ។']
                     ],
                     [
-                        'name' => ['en' => 'Department of E-Commerce', 'km' => 'ដេប៉ាតឺម៉ង់ពាណិជ្ជកម្មអេឡិចត្រូនិក'], 
-                        'slug' => 'e-commerce', 
+                        'name' => ['en' => 'Department of E-Commerce', 'km' => 'ដេប៉ាតឺម៉ង់ពាណិជ្ជកម្មអេឡិចត្រូនិក'],
+                        'slug' => 'e-commerce',
                         'description' => ['en' => 'Covers dropshipping, digital stores, logistics, online payment, and analytics.', 'km' => 'គ្របដណ្តប់លើការលក់បន្តដោយគ្មានស្តុក (Dropshipping) ហាងឌីជីថល ភស្តុភារ ការទូទាត់ប្រាក់តាមអ៊ីនធឺណិត និងការវិភាគទិន្នន័យ។']
                     ]
                 ],
@@ -272,6 +283,15 @@ class DatabaseSeeder extends Seeder
                     'parent_id' => $facMenu->id,
                     'order' => $dOrder++,
                 ]);
+                $this->call(UsersTableSeeder::class);
+                $this->call(DepartmentsTableSeeder::class);
+                $this->call(FacultiesTableSeeder::class);
+                $this->call(EventsTableSeeder::class);
+                $this->call(NavigationItemsTableSeeder::class);
+                $this->call(PageContentsTableSeeder::class);
+                $this->call(SettingsTableSeeder::class);
+                $this->call(TranslationsTableSeeder::class);
+                $this->call(ActivityLogsTableSeeder::class);
             }
         }
 
