@@ -48,3 +48,4 @@ EXPOSE 80
 
 # Run migrations and start Apache
 CMD php artisan migrate --force && apache2-foreground
+CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground
