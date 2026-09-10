@@ -1,10 +1,10 @@
 FROM php:8.2-apache
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip unzip
+# Install system dependencies (Added libpq-dev for PostgreSQL)
+RUN apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip unzip libpq-dev
 
-# Install PHP extensions required by Laravel
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Install PHP extensions (Added pdo_pgsql for PostgreSQL)
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -31,3 +31,6 @@ RUN a2enmod rewrite
 
 # Expose port 80
 EXPOSE 80
+
+# Run migrations and start server automatically
+CMD php artisan migrate --force && apache2-foreground
