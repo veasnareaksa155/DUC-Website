@@ -32,8 +32,12 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 # Install frontend dependencies and build Vite assets
 RUN npm install && npm run build
 
+# Create storage symlink
+RUN php artisan storage:link || true
+
 # Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Update Apache DocumentRoot to point to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
@@ -46,6 +50,5 @@ RUN a2enmod rewrite
 # Expose port 80
 EXPOSE 80
 
-# Run migrations and start Apache
-CMD php artisan migrate --force && apache2-foreground
+# Run migrations, seed if empty, and start Apache
 CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground
